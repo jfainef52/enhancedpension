@@ -75,6 +75,16 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--off);color:var(--te
 .rate-btn{flex:1;padding:8px 6px;border:1px solid var(--border);border-radius:3px;background:var(--off);font-family:'IBM Plex Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);text-align:center;line-height:1.3}
 .rate-btn.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
 .stateNoteHint{font-size:11px;margin-top:6px;font-style:italic;line-height:1.5;display:none}
+.carrier-instr{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:14px 16px;margin-bottom:14px}
+.carrier-instr h4{font-family:'Playfair Display',serif;font-size:13px;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.carrier-instr h4 .tag{font-size:9px;background:var(--navy);color:var(--gold);padding:2px 7px;border-radius:2px;letter-spacing:1px;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
+.upload-zone{border:1.5px dashed rgba(13,27,46,.2);border-radius:6px;padding:22px 18px;text-align:center;cursor:pointer;position:relative;background:var(--off);transition:all .2s}
+.upload-zone:hover,.upload-zone.has-file{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uz-icon{font-size:24px;margin-bottom:6px}
+.uz-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);font-weight:600;margin-bottom:4px}
+.uz-hint{font-size:10.5px;color:var(--muted)}
+.uz-file{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);margin-top:8px}
 .pda-summary{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:12px 16px;margin-top:12px}
 .pda-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(201,168,76,.12);font-size:11.5px}
 .pda-row:last-child{border-bottom:none;font-weight:600;padding-top:6px}
@@ -222,15 +232,23 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="sep"></div>
           <div class="stag">Financing — Bank Phase → Insurance Phase</div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Bank Rate — Accumulation (%)</label><input type="number" id="bankRate" value="6.15" step="0.25"/></div>
-            <div class="field"><label class="fl">PLR — Distribution (%)</label><input type="number" id="plr" value="5.00" step="0.25"/></div>
+            <div class="field"><label class="fl">Lender Index Rate (%)</label><input type="number" id="lenderIndex" value="4.83" step="0.01" oninput="updateBankRateDisplay()"/></div>
+            <div class="field"><label class="fl">Lender Spread (%)</label><input type="number" id="lenderSpread" value="2.50" step="0.25" oninput="updateBankRateDisplay()"/></div>
+          </div>
+          <div class="rate-display">
+            <span class="rl">Bank Rate — Index + Spread</span>
+            <span class="rv" id="bankRateDisplay">7.33%</span>
+          </div>
+          <div class="fg" style="margin-top:14px">
+            <label class="fl">PLR — Distribution (%)</label>
+            <div class="field"><input type="number" id="plr" value="5.00" step="0.25"/></div>
           </div>
           <div class="rate-env-btns">
-            <button class="rate-btn active" id="rateEnvBtn-easing" onclick="setRateEnv('easing',this)">Easing<br><span style="font-size:9px;opacity:.7">Declines toward a floor</span></button>
-            <button class="rate-btn" id="rateEnvBtn-level" onclick="setRateEnv('level',this)">Level<br><span style="font-size:9px;opacity:.7">Rates stable</span></button>
+            <button class="rate-btn active" id="rateEnvBtn-easing" onclick="setRateEnv('easing',this)">Easing<br><span style="font-size:9px;opacity:.7">Index declines toward a floor</span></button>
+            <button class="rate-btn" id="rateEnvBtn-level" onclick="setRateEnv('level',this)">Level<br><span style="font-size:9px;opacity:.7">Index stable</span></button>
             <button class="rate-btn" id="rateEnvBtn-tightening" onclick="setRateEnv('tightening',this)">Tightening<br><span style="font-size:9px;opacity:.7">Stress test</span></button>
           </div>
-          <div class="hint">Applies to the bank rate during the accumulation years only (Policy Year 1 through refinance). Easing steps the rate down 0.20%/yr to a floor of Bank Rate − 2% (min 4%); Tightening steps it up 0.15%/yr to a cap of Bank Rate + 2%. The PLR is unaffected — it is fixed once the carrier refinances the loan.</div>
+          <div class="hint">Applies to the lender's index rate during the bank phase only (Policy Year 1 through refinance) — the spread stays fixed on top of it. Easing steps the index down toward a 1.5% floor over the first 11 years; Tightening steps it up 0.5%/yr, capped at Index + 2%. All-in rate floors at 4%. The PLR is unaffected — it is fixed once the carrier refinances the loan.</div>
 
           <div class="sep"></div>
           <div class="fg fr">
@@ -241,9 +259,14 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <span class="rl">Combined Tax Rate — Financed Each Contribution Year</span>
             <span class="rv" id="combinedRateDisplay">37.75%</span>
           </div>
-          <div class="fg" style="margin-top:14px">
-            <label class="fl">PDA Yield Rate (%)</label>
-            <div class="field"><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
+          <div class="fg fr" style="margin-top:14px">
+            <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
+            <div class="field"><label class="fl">PDA Retention Years</label><input type="number" id="pdaRetentionYears" value="2" min="0" max="5" step="1"/></div>
+          </div>
+          <div class="fg">
+            <label class="fl">PDA Retention % (Yrs 1–N Held Back)</label>
+            <div class="field"><input type="number" id="pdaRetentionPct" value="50" min="0" max="90" step="5"/></div>
+            <div class="hint">Client compensation deposits into a Premium Deposit Account earning the PDA rate (interest taxed annually at the combined rate above). In the first N years shown here, only the un-retained share of that year's deposit is paid into the policy as premium — the rest builds a PDA balance. From year N+1 through the end of the contribution period, a level premium is solved so the PDA depletes to ~$0.</div>
           </div>
           <div class="fg" id="refiManualRow">
             <label class="fl">Refinance — Policy Year / Age</label>
@@ -254,8 +277,28 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           </div>
 
           <div class="sep"></div>
-          <div class="stag">Policy — IUL Crediting</div>
-          <div class="fg fr">
+          <div class="stag">Policy — Carrier Illustration</div>
+          <div class="fg">
+            <label class="fl">IUL Carrier & Product</label>
+            <div class="field">
+              <select id="carrier" onchange="onCarrierChange()">
+                <option value="NLG">National Life Group — Summit Pref+</option>
+                <option value="PL">Pacific Life — ECV Pref+</option>
+              </select>
+            </div>
+          </div>
+          <div class="carrier-instr">
+            <h4>Carrier Illustration Required <span class="tag" id="carrierTag">NLG</span></h4>
+            <div class="hint" style="margin:0">Crediting uses the carrier's actual BCF / bonus-credit / persistency schedule against the illustration's charge columns — not a synthetic cap/floor formula. NLG: upload the .csv quickview export. Pacific Life: upload the .xlsx illustration file (Summary of Policy Charges sheet).</div>
+          </div>
+          <div class="upload-zone" id="upload-zone" ondragover="event.preventDefault()" ondrop="onDrop(event)">
+            <input type="file" id="carrier-file" accept=".csv,.xls,.xlsx" onchange="onFileSelect(this)"/>
+            <div class="uz-icon">📊</div>
+            <div class="uz-title" id="uz-title">Drop NLG Summit Illustration Here</div>
+            <div class="uz-hint">CSV or XLS/XLSX — must include Year, Age, Accumulated Value, and Policy/Surrender Charge columns</div>
+            <div class="uz-file" id="uz-file-name"></div>
+          </div>
+          <div class="fg fr" style="margin-top:14px">
             <div class="field"><label class="fl">IUL Annual Cap Rate (%)</label><input type="number" id="capRate" value="9.25" step="0.25"/></div>
             <div class="field"><label class="fl">IUL Floor (%)</label><input type="number" id="floorRate" value="0" step="0.25" readonly class="computed"/></div>
           </div>
@@ -278,13 +321,21 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <div class="field"><label class="fl">COLA (%)</label><input type="number" id="cola" value="3" step="0.25"/></div>
             <div class="field"><label class="fl">Comparator LTCG Rate (%)</label><input type="number" id="ltcgRate" value="20" step="0.5"/></div>
           </div>
-          <div class="hint">Taxable investment account: client pays income tax on compensation annually (no financing), invests the after-tax difference in a account tracking the same bootstrapped S&amp;P 500 sequences, then draws income to $0 by income end age. Gains taxed at the LTCG rate shown; basis returns tax-free.</div>
+          <div class="fg fr">
+            <div class="field"><label class="fl">Investment Acct Management Fee (%/yr)</label><input type="number" id="investFee" value="1.00" step="0.25"/></div>
+            <div class="field"><label class="fl">Investment Acct Equity Allocation (%)</label><input type="number" id="investEqWt" value="70" step="5" min="0" max="100"/></div>
+          </div>
+          <div class="hint">Taxable investment account: client pays income tax on compensation annually (no financing), invests the after-tax difference in a blended equity/bond account (net of the management fee above), drawn from the same paired historical sequence as EP's crediting, then draws income to $0 by income end age. Gains taxed at the LTCG rate shown; basis returns tax-free.</div>
 
           <div class="fg fr" id="qpCompareRow" style="display:none;margin-top:14px">
             <div class="field"><label class="fl">QP/DB Withdrawal Tax Rate (%)</label><input type="number" id="qpTaxRate" value="32" step="0.5"/></div>
-            <div class="field"><label class="fl">QP/DB Contribution</label><input type="text" class="computed" readonly value="Matches EP gross comp"/></div>
+            <div class="field"><label class="fl">QP/DB Management Fee (%/yr)</label><input type="number" id="qpFee" value="2.00" step="0.25"/></div>
           </div>
-          <div class="hint" id="qpCompareHint" style="display:none">Qualified plan (DB / cash balance) comparator: contributes the same gross compensation each year — pre-tax, matching EP's full contribution, dollar for dollar. Grows tax-deferred on the same bootstrapped sequence, then draws income to $0 by income end age, fully taxable as ordinary income at the withdrawal rate above.</div>
+          <div class="fg fr" id="qpBlendRow" style="display:none">
+            <div class="field"><label class="fl">QP/DB Equity Allocation (%)</label><input type="number" id="qpEqWt" value="50" step="5" min="0" max="100"/></div>
+            <div class="field"><label class="fl">QP/DB Bond Allocation</label><input type="text" class="computed" readonly id="qpBdWtDisplay" value="50%"/></div>
+          </div>
+          <div class="hint" id="qpCompareHint" style="display:none">Qualified plan (DB / cash balance) comparator: contributes the same gross compensation each year — pre-tax, matching EP's full contribution, dollar for dollar. Grows in a blended equity/bond portfolio (drawn from the same paired historical sequence as EP's crediting, net of the management fee), then draws income to $0 by income end age, fully taxable as ordinary income at the withdrawal rate above.</div>
 
           <div class="sep"></div>
           <div class="stag">Simulation</div>
@@ -327,12 +378,269 @@ const SP_TOTAL = {
   2023:0.2626,2024:0.2502
 };
 const SP_YEARS = Object.keys(SP_TOTAL).map(Number).sort((a,b)=>a-b);
+const SP_PRICE = {
+  1975:0.3187,1976:0.1906,1977:-0.1151,1978:0.0102,1979:0.1230,1980:0.2574,
+  1981:-0.0973,1982:0.1466,1983:0.2302,1984:0.1532,1985:0.0312,1986:0.2133,
+  1987:0.2704,1988:-0.0529,1989:0.1393,1990:0.1912,1991:-0.0426,1992:0.2783,
+  1993:0.0460,1994:0.0868,1995:-0.0164,1996:0.3206,1997:0.2471,1998:0.2573,
+  1999:0.2963,2000:0.1416,2001:-0.0631,2002:-0.1463,2003:-0.2143,2004:0.2642,
+  2005:0.0432,2006:0.0824,2007:0.1137,2008:-0.0319,2009:-0.3722,2010:0.2981,
+  2011:0.1415,2012:0.0140,2013:0.1383,2014:0.2310,2015:0.1129,2016:-0.0540,
+  2017:0.1858,2018:0.2262,2019:-0.0654,2020:0.2573,2021:0.1573,2022:-0.1605,
+  2023:0.2429,2024:0.2325
+};
+// US 10-year Treasury Bond annual total returns — source: Damodaran, NYU Stern.
+// Same historical-year pairing as SP_PRICE, used to blend the QP/DB comparator.
+const TB10 = {
+  1975:0.0519,1976:0.1675,1977:-0.0067,1978:0.0121,1979:-0.0099,
+  1980:-0.0251,1981:-0.0196,1982:0.4035,1983:0.0065,1984:0.1543,
+  1985:0.3097,1986:0.2447,1987:-0.0494,1988:0.0867,1989:0.2112,
+  1990:0.0617,1991:0.1926,1992:0.0651,1993:0.1824,1994:-0.0841,
+  1995:0.3167,1996:-0.0093,1997:0.1501,1998:0.1327,1999:-0.0866,
+  2000:0.2148,2001:0.0351,2002:0.1737,2003:0.0131,2004:0.0749,
+  2005:0.0252,2006:0.0119,2007:0.1004,2008:0.2587,2009:-0.1183,
+  2010:0.0821,2011:0.2910,2012:0.0432,2013:-0.0921,2014:0.1075,
+  2015:0.0149,2016:0.0069,2017:0.0280,2018:-0.0002,2019:0.0963,
+  2020:0.1133,2021:-0.0445,2022:-0.1769,2023:0.0401,2024:0.0131
+};
+
+// ══════════════════════════════════════════════════════════
+// CARRIER PARAMS — [BCF, BonusCreditFactor, PersistencyBonus] per policy year
+// Ported verbatim from the ETA modeler (shared product configs)
+// ══════════════════════════════════════════════════════════
+const CARRIER_PARAMS = {
+  PL: [
+    [0.0160,1.000,0.000000],[0.0310,1.300,0.000000],[0.0386,1.450,0.000000],
+    [0.0460,1.600,0.000000],[0.0536,1.750,0.000000],[0.0610,1.890,0.000000],
+    [0.0686,2.040,0.000000],[0.0760,2.190,0.000000],[0.0836,2.330,0.000000],
+    [0.0910,2.470,0.000000],[0.0910,2.470,0.002736],[0.0910,2.470,0.005436],
+    [0.0910,2.470,0.007918],[0.0910,2.470,0.010264],[0.0910,2.470,0.012437],
+    [0.0910,2.470,0.014420],[0.0910,2.470,0.016214],[0.0910,2.470,0.017804],
+    [0.0910,2.470,0.019208],[0.0910,2.470,0.020425],[0.0820,2.300,0.021457],
+    [0.0730,2.130,0.020513],[0.0640,1.950,0.019612],[0.0550,1.780,0.018755],
+    [0.0460,1.600,0.017925],[0.0460,1.600,0.017140],[0.0460,1.600,0.016372],
+    [0.0460,1.600,0.015660],[0.0460,1.600,0.014955],[0.0460,1.600,0.014278],
+    [0.0460,1.600,0.013618],[0.0460,1.600,0.010854],[0.0460,1.600,0.008292],
+    [0.0460,1.600,0.005949],[0.0460,1.600,0.003772],[0.0460,1.600,0.001829],
+    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
+    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
+    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
+    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
+    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000]
+  ],
+  NLG: [
+    [0.0300,1.000,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
+    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
+    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
+    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
+    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0200,1.800,0],
+    [0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],
+    [0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],
+    [0.0200,1.800,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
+    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
+    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
+    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
+    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
+    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0]
+  ]
+};
 
 function getPool(dataYears){
   const yrs = SP_YEARS.slice(Math.max(0, SP_YEARS.length-dataYears));
   return yrs.map(y=>SP_TOTAL[y]);
 }
+// Paired pool — ONE historical year drawn per sim-year, shared across EP
+// crediting, the QP/DB comparator, and the taxable investment comparator,
+// so all three see the same market environment (same technique as the
+// ETA modeler's pairedPool). [priceReturn, investBlendedReturn, qpBlendedReturn]
+function getPairedPool(dataYears, qpEqWt, qpFeeAdj, investEqWt, investFeeAdj){
+  const yrs = SP_YEARS.slice(Math.max(0, SP_YEARS.length-dataYears)).filter(y=>SP_PRICE[y]!==undefined);
+  const qpBdWt = 1-qpEqWt, investBdWt = 1-investEqWt;
+  return yrs.map(y=>{
+    const priceRet = SP_PRICE[y];
+    const totalRet = SP_TOTAL[y];
+    const bondRet = TB10[y]!==undefined ? TB10[y] : 0;
+    const investBlended = investEqWt*totalRet + investBdWt*bondRet - investFeeAdj;
+    const qpBlended = qpEqWt*totalRet + qpBdWt*bondRet - qpFeeAdj;
+    return [priceRet, investBlended, qpBlended];
+  });
+}
 function bootstrap(n,arr){ const o=new Array(n); for(let i=0;i<n;i++) o[i]=arr[Math.floor(Math.random()*arr.length)]; return o; }
+function bootstrapTriples(n, arr){
+  const price=new Array(n), invest=new Array(n), qp=new Array(n);
+  for (let i=0;i<n;i++){
+    const t=arr[Math.floor(Math.random()*arr.length)];
+    price[i]=t[0]; invest[i]=t[1]; qp[i]=t[2];
+  }
+  return {price, invest, qp};
+}
+
+// ══════════════════════════════════════════════════════════
+// CARRIER FILE PARSING — ported verbatim from the ETA modeler
+// ══════════════════════════════════════════════════════════
+let _carrierFile = null, _carrierResult = null;
+async function readFile(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(file); }); }
+
+async function parseCarrierFile(file) {
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xls'||ext==='xlsx') return parseXLS(file);
+  return parseCSV(await readFile(file));
+}
+
+function extractNLGMeta(lines) {
+  // NLG CSV: line 0 = metadata headers, line 1 = metadata values
+  try {
+    const hdrs = lines[0].split(',').map(v=>v.replace(/["'\r]/g,'').toLowerCase().trim());
+    const vals = lines[1].split(',').map(v=>v.replace(/["'\r]/g,'').trim());
+    const fh = (...terms) => { for(const t of terms){const i=hdrs.findIndex(h=>h.includes(t));if(i>=0)return i;} return -1; };
+    const cFace   = fh('initial face','face amount');
+    const cModal  = fh('modal premium','annual premium','modal');
+    const cTarget = fh('target premium','target');
+    return {
+      faceAmount:    cFace>=0   ? parseFloat(vals[cFace])||0   : 0,
+      modalPremium:  cModal>=0  ? parseFloat(vals[cModal])||0  : 0,
+      targetPremium: cTarget>=0 ? parseFloat(vals[cTarget])||0 : 0,
+    };
+  } catch(e) { return {faceAmount:0, modalPremium:0, targetPremium:0}; }
+}
+
+async function parseXLS(file) {
+  if(typeof XLSX==='undefined') {
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  }
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('charge'))
+                ||wb.SheetNames.find(n=>n.toLowerCase().includes('ledger'))
+                ||wb.SheetNames[0];
+  const ws=wb.Sheets[sheetName];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+
+  let headerRow=-1, dataStart=-1;
+  for(let i=0;i<raw.length;i++){
+    const r=raw[i];
+    if(!r||!r[0]) continue;
+    const v0=String(r[0]).toLowerCase().trim();
+    if(v0==='year'||v0==='yr'||(r[1]&&String(r[1]).toLowerCase().includes('age'))) {
+      headerRow=i;
+    }
+    if(r[0]!==null&&!isNaN(parseInt(r[0]))&&parseInt(r[0])>=1&&parseInt(r[0])<=99){
+      dataStart=i; break;
+    }
+  }
+  if(dataStart<0) return null;
+
+  let cPolicyChg=-1, cSurrChg=-1, cCSV=-1, cAV=-1;
+  if(headerRow>=0){
+    const hdrs=raw[headerRow].map(v=>v?String(v).toLowerCase().replace(/[\s\r\n]+/g,' ').trim():'');
+    const fh=(...terms)=>{for(const t of terms){const i=hdrs.findIndex(h=>h.includes(t));if(i>=0)return i;}return -1;};
+    cPolicyChg=fh('policy charge','policy charges','total charge');
+    cSurrChg  =fh('surrender charge');
+    cCSV      =fh('cash surrender','cash surr','surr value');
+    cAV = hdrs.findIndex(h=>h==='accumulated value'||h==='account value'||h==='policy value');
+    if(cAV<0) cAV = hdrs.findIndex(h=>h.includes('accumulated value')&&!h.includes('charge'));
+  }
+
+  const rows=[];
+  for(let i=dataStart;i<raw.length;i++){
+    const r=raw[i];
+    const yr=parseInt(r[0]);if(isNaN(yr)||yr<1||yr>99) continue;
+    const age=parseInt(r[1])||0;
+    let stdCharges, illustratedAV, illustratedCSV, surrenderCharge;
+
+    if(cPolicyChg>=0){
+      stdCharges     = Math.abs(parseFloat(r[cPolicyChg])||0);
+      illustratedAV  = cAV>=0  ? Math.abs(parseFloat(r[cAV])||0)  : 0;
+      illustratedCSV = cCSV>=0 ? Math.abs(parseFloat(r[cCSV])||0) : 0;
+      surrenderCharge= cSurrChg>=0 ? Math.abs(parseFloat(r[cSurrChg])||0) : Math.max(0,illustratedAV-illustratedCSV);
+    } else {
+      // PL XLS: confirmed column layout — charges in cols 3-6 are NEGATIVE
+      // 0=Year,1=Age,2=PremOutlay,3=PremLoads,4=AdminRider,5=CoverageChg,6=COI,
+      // 7=TotalChg,8=IntCredit,9=AccumValue,10=SurrChg,11=CSV
+      const adminRider =parseFloat(r[4])||0;
+      const coverageChg=parseFloat(r[5])||0;
+      const coi        =parseFloat(r[6])||0;
+      stdCharges     = Math.abs(adminRider+coverageChg+coi);
+      illustratedAV  = Math.abs(parseFloat(r[9])||0);
+      illustratedCSV = Math.abs(parseFloat(r[11])||0);
+      if(illustratedAV===0){
+        for(let c=7;c<(r.length||16);c++){const v=Math.abs(parseFloat(r[c])||0);if(v>illustratedAV&&v>1000) illustratedAV=v;}
+        for(let c=9;c<(r.length||17);c++){const v=Math.abs(parseFloat(r[c])||0);if(v>illustratedCSV&&v>100&&v<illustratedAV) illustratedCSV=v;}
+      }
+      surrenderCharge= Math.max(0,illustratedAV-illustratedCSV);
+    }
+    rows.push({year:yr,age,premCharges:Math.abs(parseFloat(r[3])||0),stdCharges,illustratedAV,illustratedCSV,surrenderCharge});
+  }
+  const metaLines = raw.slice(0, Math.min(3, dataStart)).map(r=>(r||[]).map(v=>'"'+(v||'')+'"').join(','));
+  const meta = extractNLGMeta(metaLines);
+  return rows.length ? {rows, meta} : null;
+}
+
+function parseCSV(text) {
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const meta = extractNLGMeta(lines);
+  const hIdx=lines.findIndex(l=>{
+    const parts=l.split(',').map(v=>v.replace(/["'\s]/g,'').toLowerCase());
+    return (parts[0]==='year'||parts[0]==='yr') && parts[1]==='age';
+  });
+  if(hIdx<0) return null;
+  const headers=lines[hIdx].split(',').map(v=>v.replace(/["']/g,'').replace(/\s+/g,' ').trim().toLowerCase());
+  const fc=(...terms)=>{for(const t of terms){const i=headers.findIndex(h=>h.includes(t));if(i>=0)return i;}return -1;};
+
+  const cYr =fc('year','yr')>=0?fc('year','yr'):0;
+  const cAge=fc('age')>=0?fc('age'):1;
+  const cPolicyChg =fc('policy charge','policy charges','total charge');
+  const cPremExpChg=fc('premium expense charge','prem expense charge');
+  const cSurrChg   =fc('surrender charge');
+  const cCSV       =fc('cash surrender','cash surr','surr value','csv');
+  const cAV = (()=>{
+    let best=-1;
+    headers.forEach((h,i)=>{
+      if(h==='accumulated value'||h==='account value'||h==='policy value') best=i;
+    });
+    if(best>=0) return best;
+    return headers.findIndex(h=>h.includes('accumulated value')&&!h.includes('charge'));
+  })();
+  const cPC=fc('prem charge','contribution charge','premium expense','prem load','load');
+  const cSC=fc('standard charge','admin','coi','cost of insurance','expense charge','coverage');
+
+  const n=v=>parseFloat((v||'').replace(/[$,\s"]/g,''))||0;
+  const rows=[];
+
+  for(let i=hIdx+1;i<lines.length;i++){
+    const p=lines[i].split(',').map(v=>v.replace(/["'\s]/g,''));
+    const yr=parseInt(p[cYr]);if(isNaN(yr)||yr<1||yr>100) continue;
+    const age=parseInt(p[cAge])||0;
+
+    let stdCharges, illustratedAV, illustratedCSV, surrenderCharge;
+
+    if(cPolicyChg>=0) {
+      stdCharges = Math.abs(n(p[cPolicyChg]));
+      illustratedAV = cAV>=0 ? Math.abs(n(p[cAV])) : 0;
+      illustratedCSV = cCSV>=0 ? Math.abs(n(p[cCSV])) : 0;
+      surrenderCharge = cSurrChg>=0 ? Math.abs(n(p[cSurrChg])) : Math.max(0,illustratedAV-illustratedCSV);
+    } else {
+      const rawPC = cPC>=0 ? n(p[cPC]) : 0;
+      const rawSC = cSC>=0 ? n(p[cSC]) : 0;
+      stdCharges = Math.abs(rawPC) + Math.abs(rawSC);
+      illustratedAV = cAV>=0 ? Math.abs(n(p[cAV])) : 0;
+      illustratedCSV = cCSV>=0 ? Math.abs(n(p[cCSV])) : 0;
+      if(illustratedAV===0){
+        const nums=p.map(v=>Math.abs(n(v))).filter(v=>v>1000).sort((a,b)=>b-a);
+        illustratedAV=nums[0]||0; illustratedCSV=nums[1]||0;
+      }
+      surrenderCharge = Math.max(0,illustratedAV-illustratedCSV);
+    }
+
+    const premExpChg = (cPolicyChg>=0 && cPremExpChg>=0) ? Math.abs(n(p[cPremExpChg])) : 0;
+    rows.push({year:yr, age, premCharges:0, premExpChg, stdCharges, illustratedAV, illustratedCSV, surrenderCharge});
+  }
+  return rows.length ? {rows, meta} : null;
+}
+
+function onDrop(e){e.preventDefault();const f=e.dataTransfer?.files?.[0];if(f){_carrierFile=f;document.getElementById('uz-file-name').textContent='✓ '+f.name;document.getElementById('upload-zone').classList.add('has-file');}}
+function onFileSelect(i){const f=i.files?.[0];if(f){_carrierFile=f;document.getElementById('uz-file-name').textContent='✓ '+f.name;document.getElementById('upload-zone').classList.add('has-file');}}
+
 function pctile(arr,p){ const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(p/100*(s.length-1))]; }
 function tick(){ return new Promise(r=>setTimeout(r,0)); }
 
@@ -352,8 +660,23 @@ function setCompareMode(mode){
   document.getElementById('cmpBtnInvest').classList.toggle('active', mode==='invest');
   document.getElementById('cmpBtnBoth').classList.toggle('active', mode==='both');
   document.getElementById('qpCompareRow').style.display = mode==='both' ? 'grid' : 'none';
+  document.getElementById('qpBlendRow').style.display = mode==='both' ? 'grid' : 'none';
   document.getElementById('qpCompareHint').style.display = mode==='both' ? 'block' : 'none';
 }
+function onCarrierChange(){
+  const key = document.getElementById('carrier').value;
+  const name = key==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
+  const short = key==='NLG' ? 'NLG Summit' : 'Pacific Life ECV';
+  document.getElementById('carrierTag').textContent = key;
+  document.getElementById('uz-title').textContent = 'Drop '+short+' Illustration Here';
+  _carrierFile = null; _carrierResult = null;
+  document.getElementById('uz-file-name').textContent = '';
+  document.getElementById('upload-zone').classList.remove('has-file');
+}
+document.getElementById('qpEqWt')?.addEventListener('input', ()=>{
+  const eq = parseFloat(document.getElementById('qpEqWt').value)||0;
+  document.getElementById('qpBdWtDisplay').value = (100-eq)+'%';
+});
 
 // ══════════════════════════════════════════════════════════
 // STATE TAX RATES (top marginal, for reference — editable)
@@ -386,27 +709,40 @@ function updateCombinedRate(){
   document.getElementById('combinedRateDisplay').textContent = (fed+st).toFixed(2)+'%';
 }
 document.getElementById('fedRate').addEventListener('input', updateCombinedRate);
+function updateBankRateDisplay(){
+  const idx = parseFloat(document.getElementById('lenderIndex').value)||0;
+  const spr = parseFloat(document.getElementById('lenderSpread').value)||0;
+  document.getElementById('bankRateDisplay').textContent = (idx+spr).toFixed(2)+'%';
+}
+document.addEventListener('DOMContentLoaded', updateBankRateDisplay);
+updateBankRateDisplay();
 
 // ══════════════════════════════════════════════════════════
 // BANK RATE ENVIRONMENT — easing / level / tightening
+// Rate = Lender Index + Lender Spread. The schedule below (ported from the
+// ETA modeler's getBankRateForYear) steps the INDEX portion over time;
+// the spread stays fixed. Floor 4% all-in. Applied only during the bank
+// (accumulation) phase — policy years < refiYear. The PLR is untouched;
+// it's a fixed carrier rate from refinance onward.
 // ══════════════════════════════════════════════════════════
 let _rateEnv='easing';
 function setRateEnv(env, btn){
   _rateEnv = env;
   ['easing','level','tightening'].forEach(e=>document.getElementById('rateEnvBtn-'+e).classList.toggle('active', e===env));
 }
-// Applied only during the bank (accumulation) phase — policy years < refiYear.
-// The PLR is untouched; it's a fixed carrier rate from refinance onward.
-function getBankRateForYear(policyYr, baseRate, env){
-  if (env==='level') return baseRate;
-  const step = (policyYr-1);
-  if (env==='easing'){
-    const floor = Math.max(4, baseRate-2);
-    return Math.max(floor, baseRate - 0.20*step);
+function getBankRateForYear(policyYr, indexBase, spread){
+  const FLOOR = 4.0;
+  let idx = indexBase;
+  if (_rateEnv==='level') { idx = indexBase; }
+  else if (_rateEnv==='easing'){
+    if (policyYr<=1) idx=indexBase;
+    else if (policyYr<=5) idx=Math.max(indexBase-(policyYr-1)*0.5, 1.5);
+    else if (policyYr<=11) idx=Math.max(indexBase-4*0.5, 1.5);
+    else idx=Math.min(indexBase-4*0.5+(policyYr-11)*0.12, indexBase);
+  } else if (_rateEnv==='tightening'){
+    idx=Math.min(indexBase+(policyYr-1)*0.5, indexBase+2);
   }
-  // tightening
-  const cap = baseRate+2;
-  return Math.min(cap, baseRate + 0.15*step);
+  return Math.max(idx+spread, FLOOR);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -441,24 +777,53 @@ function handleSignOut(){
 // ══════════════════════════════════════════════════════════
 // EP ENGINE
 // ══════════════════════════════════════════════════════════
-// One continuous loan-balance loop. Rate is bankRate through the
-// accumulation (bank) phase, switches to PLR at the refinance year.
-// The balance itself never resets at refinance.
+// One continuous loan-balance loop. Rate is the lender's index+spread
+// through the accumulation (bank) phase, switches to PLR at the refinance
+// year. The balance itself never resets at refinance. AV crediting uses
+// the carrier's real BCF / bonus-credit / persistency schedule against the
+// uploaded illustration's charge columns — ported verbatim from the ETA
+// modeler's simETAPath, not a synthetic cap/floor formula.
+function creditOneYear(av, prem, carrierRow, cp, capRate, floorRate, ret, carrierKey){
+  const [bcf, bcr, pb] = cp;
+  const CAP = capRate/100, FLOOR = floorRate/100;
+  const stdChg = carrierRow.stdCharges||0;
+  const idx = Math.min(Math.max(ret, FLOOR), CAP);
+  const creditRate = idx*bcr + pb;
+  if (carrierKey === 'NLG'){
+    const premExpChg = carrierRow.premExpChg||0;
+    const avgMonthlyAV = (av + prem + premExpChg/2 - stdChg/2) / (1 + bcf/2);
+    const bonusChg = avgMonthlyAV*bcf;
+    const credits = avgMonthlyAV*creditRate;
+    return Math.max(0, av + prem - stdChg - bonusChg + credits);
+  } else {
+    const premLoad = carrierRow.premCharges||0;
+    const netPrem = Math.max(0, prem - premLoad);
+    const O = Math.max(0, (av + netPrem - 0.5*stdChg) / (1 + 0.5*bcf));
+    const bonusChg = O*bcf;
+    const credits = O*creditRate;
+    return Math.max(0, av + netPrem - stdChg - bonusChg + credits);
+  }
+}
+
 function feasibleIncome(returns, income, floor, p){
+  const params = CARRIER_PARAMS[p.carrierKey];
   let av=0, loan=0;
   for (let i=0;i<returns.length;i++){
     const age=p.issueAge+i, polYr=i+1, ret=returns[i];
-    const credited = Math.max(p.floorRate/100, Math.min(p.capRate/100, ret));
+    const cp = params[Math.min(i, params.length-1)];
+    const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
+    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
+    av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
     const compI = polYr<=p.contribYears ? p.comp : 0;
-    av = (av+compI)*(1+credited);
-    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.bankRate, p.rateEnv)/100 : p.plr/100;
+    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
     loan = loan*(1+rate);
     if (polYr<=p.contribYears) loan += compI*(p.taxRate/100);
     if (income>0 && age>=p.incStart && age<=p.incEnd){
       loan += income*Math.pow(1+p.cola/100, age-p.incStart);
     }
     if (age>=p.incStart && age<=p.incEnd){
-      if ((av-loan) < floor) return false;
+      const csvGross = Math.max(0, av - (carrierRow.surrenderCharge||0));
+      if ((csvGross-loan) < floor) return false;
     }
   }
   return true;
@@ -466,7 +831,7 @@ function feasibleIncome(returns, income, floor, p){
 
 function solveIncome(returns, floor, p){
   if (!feasibleIncome(returns,0,floor,p)) return 0;
-  let lo=0, hi=(p.comp>0?p.comp:10000), guard=0;
+  let lo=0, hi=(p.levelPremium>0?p.levelPremium:10000), guard=0;
   while (feasibleIncome(returns,hi,floor,p) && guard<50){ hi*=2; guard++; }
   for (let it=0; it<50; it++){
     const mid=(lo+hi)/2;
@@ -476,14 +841,17 @@ function solveIncome(returns, floor, p){
 }
 
 function simEPPathFull(returns, income, p){
+  const params = CARRIER_PARAMS[p.carrierKey];
   let av=0, loan=0;
   const rows=[];
   for (let i=0;i<returns.length;i++){
     const age=p.issueAge+i, polYr=i+1, ret=returns[i];
-    const credited = Math.max(p.floorRate/100, Math.min(p.capRate/100, ret));
+    const cp = params[Math.min(i, params.length-1)];
+    const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
+    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
+    av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
     const compI = polYr<=p.contribYears ? p.comp : 0;
-    av = (av+compI)*(1+credited);
-    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.bankRate, p.rateEnv)/100 : p.plr/100;
+    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
     const financedTax = polYr<=p.contribYears ? compI*(p.taxRate/100) : 0;
     loan = loan*(1+rate) + financedTax;
     let inc=0;
@@ -491,9 +859,46 @@ function simEPPathFull(returns, income, p){
       inc = income*Math.pow(1+p.cola/100, age-p.incStart);
       loan += inc;
     }
-    rows.push({age,polYr,ret,credited,comp:compI,financedTax,phase:polYr<p.refiYear?'bank':'plr',av,loan,csvNet:av-loan,income:inc});
+    const surrChg = carrierRow.surrenderCharge||0;
+    const csvGross = Math.max(0, av-surrChg);
+    rows.push({age,polYr,ret,comp:compI,premium:prem,financedTax,phase:polYr<p.refiYear?'bank':'plr',av,csvGross,loan,csvNet:csvGross-loan,income:inc});
   }
   return rows;
+}
+
+// ══════════════════════════════════════════════════════════
+// PDA (PREMIUM DEPOSIT ACCOUNT) — sinking-fund intermediary
+// Annual gross comp deposits into a PDA side account earning the PDA
+// rate; the INTEREST is taxed annually at the combined rate (ordinary
+// cash, not tax-deferred — same mechanic as the ETA modeler's calcPDA).
+// A LEVEL premium is drawn from the PDA into the policy each contribution
+// year, solved by bisection so the PDA depletes to ~$0 by the end of the
+// contribution period.
+// ══════════════════════════════════════════════════════════
+function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct){
+  function simulate(L){
+    let bal=0;
+    const rows=[];
+    for (let yr=1; yr<=contribYears; yr++){
+      bal += comp;
+      const interest = bal*(pdaRate/100);
+      const taxOnInt = interest*(combinedTaxRate/100);
+      bal += (interest-taxOnInt);
+      const premium = yr<=retentionYears ? comp*(1-retentionPct/100) : L;
+      bal -= premium;
+      rows.push({yr, premium, eoy:bal});
+    }
+    return {finalBal: bal, rows};
+  }
+  let lo=0, hi=comp>0?comp*3:10000, guard=0;
+  while (simulate(hi).finalBal > 0 && guard<60){ hi*=1.5; guard++; }
+  for (let it=0; it<60; it++){
+    const mid=(lo+hi)/2;
+    if (simulate(mid).finalBal > 0) lo=mid; else hi=mid;
+  }
+  const levelPremium=(lo+hi)/2;
+  const rows = simulate(levelPremium).rows.map(r=>({...r, eoy:Math.max(0,r.eoy)}));
+  return {levelPremium, retentionYears, rows};
 }
 
 function simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, colaRate, ltcgRate, returns){
@@ -620,7 +1025,8 @@ async function calculate(){
   const contribYears = parseInt(document.getElementById('contribYears').value)||10;
   const incStart = parseInt(document.getElementById('incStart').value);
   const incEnd = parseInt(document.getElementById('incEnd').value)||100;
-  const bankRate = parseFloat(document.getElementById('bankRate').value)||0;
+  const lenderIndex = parseFloat(document.getElementById('lenderIndex').value)||0;
+  const lenderSpread = parseFloat(document.getElementById('lenderSpread').value)||0;
   const plr = parseFloat(document.getElementById('plr').value)||0;
   const fedRate = parseFloat(document.getElementById('fedRate').value)||0;
   const stateRate = parseFloat(document.getElementById('stateRate').value)||0;
@@ -632,33 +1038,71 @@ async function calculate(){
   const cola = parseFloat(document.getElementById('cola').value)||0;
   const ltcgRate = parseFloat(document.getElementById('ltcgRate').value)||20;
   const qpTaxRate = parseFloat(document.getElementById('qpTaxRate').value)||32;
+  const qpFee = parseFloat(document.getElementById('qpFee').value)||0;
+  const qpEqWt = (parseFloat(document.getElementById('qpEqWt').value)||50)/100;
+  const investFee = parseFloat(document.getElementById('investFee').value)||0;
+  const investEqWt = (parseFloat(document.getElementById('investEqWt').value)||70)/100;
   const compareMode = _compareMode;
   const nSims = parseInt(document.getElementById('nSims').value)||10000;
   const dataYears = parseInt(document.getElementById('dataYears').value)||50;
   const refiYear = parseInt(document.getElementById('refiYearManual').value)||contribYears+1;
+  const carrierKey = document.getElementById('carrier').value;
+  const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
+  const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
+  const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
 
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
   if (!incStart){ errEl.textContent='Enter income start age.'; errEl.style.display='block'; return; }
   if (incStart<=issueAge){ errEl.textContent='Income start age must be after issue age.'; errEl.style.display='block'; return; }
   if (incEnd<=incStart){ errEl.textContent='Income end age must be after income start age.'; errEl.style.display='block'; return; }
-
-  const p = {issueAge, contribYears, comp, bankRate, plr, taxRate, rateEnv, capRate, floorRate, refiYear, incStart, incEnd, cola};
-  const pathLen = incEnd - issueAge + 1;
-  const pool = getPool(dataYears);
+  if (!_carrierFile){ errEl.textContent='Upload a carrier illustration file (CSV or XLS/XLSX) before running.'; errEl.style.display='block'; return; }
 
   const ov=document.getElementById('prog-overlay'), fill=document.getElementById('prog-fill'), sub=document.getElementById('prog-sub');
-  ov.style.display='flex'; fill.style.width='2%'; sub.textContent='Bootstrapping return sequences…';
+  ov.style.display='flex'; fill.style.width='2%'; sub.textContent='Reading carrier illustration…';
   await tick();
 
-  const allReturns = new Array(nSims);
+  let carrierResult;
+  try {
+    carrierResult = _carrierResult || await parseCarrierFile(_carrierFile);
+    _carrierResult = carrierResult;
+  } catch(e){
+    ov.style.display='none';
+    errEl.textContent='Could not read carrier file: '+e.message;
+    errEl.style.display='block';
+    return;
+  }
+  if (!carrierResult || !carrierResult.rows || carrierResult.rows.length===0){
+    ov.style.display='none';
+    errEl.textContent='Could not parse carrier file. Check format — needs Year, Age, Accumulated Value, and Policy/Surrender Charge columns.';
+    errEl.style.display='block';
+    return;
+  }
+  const carrierRows = carrierResult.rows;
+
+  sub.textContent='Solving PDA funding schedule…'; fill.style.width='4%'; await tick();
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct);
+
+  const p = {issueAge, contribYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
+             refiYear, incStart, incEnd, cola, carrierKey, carrierRows,
+             pdaSchedule:funding.rows, levelPremium:funding.levelPremium};
+  const pathLen = incEnd - issueAge + 1;
+  const qpFeeAdj = qpFee/100;
+  const investFeeAdj = investFee/100;
+  const pairedPool = getPairedPool(dataYears, qpEqWt, qpFeeAdj, investEqWt, investFeeAdj);
+
+  sub.textContent='Bootstrapping return sequences…'; fill.style.width='6%'; await tick();
+
+  const allPriceRets = new Array(nSims);
+  const allInvestRets = new Array(nSims);
+  const allQPRets = new Array(nSims);
   const allIncome = new Array(nSims);
   for (let j=0;j<nSims;j++){
-    const rets = bootstrap(pathLen, pool);
-    allReturns[j]=rets;
-    allIncome[j]=solveIncome(rets, csvFloor, p);
+    const {price, invest, qp} = bootstrapTriples(pathLen, pairedPool);
+    allPriceRets[j]=price; allInvestRets[j]=invest; allQPRets[j]=qp;
+    allIncome[j]=solveIncome(price, csvFloor, p);
     if (j%500===0){
       sub.textContent = `Solving income: ${j.toLocaleString()} / ${nSims.toLocaleString()}…`;
-      fill.style.width = (2+Math.round(j/nSims*85))+'%';
+      fill.style.width = (6+Math.round(j/nSims*81))+'%';
       await tick();
     }
   }
@@ -672,16 +1116,16 @@ async function calculate(){
     const idx = sortedIdx[Math.floor(pct/100*(nSims-1))];
     bandIdx[pct]=idx;
     bandIncome[pct]=allIncome[idx];
-    bandRows[pct]=simEPPathFull(allReturns[idx], allIncome[idx], p);
-    bandInvest[pct]=simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, cola, ltcgRate, allReturns[idx]);
+    bandRows[pct]=simEPPathFull(allPriceRets[idx], allIncome[idx], p);
+    bandInvest[pct]=simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, cola, ltcgRate, allInvestRets[idx]);
     if (compareMode==='both'){
-      bandQP[pct]=simQualifiedPlan(comp, contribYears, qpTaxRate, issueAge, incStart, incEnd, cola, allReturns[idx]);
+      bandQP[pct]=simQualifiedPlan(comp, contribYears, qpTaxRate, issueAge, incStart, incEnd, cola, allQPRets[idx]);
     }
   });
 
   sub.textContent='Building output…'; fill.style.width='96%'; await tick();
 
-  _bandData = {bandRows, bandInvest, bandQP, bandIncome, p, name, advisor, nSims, dataYears, compareMode};
+  _bandData = {bandRows, bandInvest, bandQP, bandIncome, p, name, advisor, nSims, dataYears, compareMode, funding, carrierKey};
   renderOutput(_bandData);
 
   fill.style.width='100%'; await tick();
@@ -737,6 +1181,8 @@ function renderOutput(d){
   <div class="stat-grid" style="${showQP?'grid-template-columns:1fr 1fr 1fr 1fr 1fr':''}">
     <div class="stat-crd"><div class="sc-label">Total Contribution</div><div class="sc-value">${fmt$(contribTotal)}</div>
       <div class="sc-stat"><span class="sk">Annual comp.</span><span class="sv">${fmt$(p.comp)}</span></div>
+      <div class="sc-stat"><span class="sk">Level premium to policy (Yr ${p.pdaSchedule.filter(r=>r.premium===p.levelPremium).length?p.pdaSchedule.findIndex(r=>r.premium===p.levelPremium)+1:'—'}+)</span><span class="sv">${fmt$(p.levelPremium)}</span></div>
+    </div>
       <div class="sc-stat"><span class="sk">Contribution years</span><span class="sv">${p.contribYears}</span></div>
     </div>
     <div class="stat-crd hl"><div class="sc-label g">Median Lifetime Income — EP</div><div class="sc-value">${fmt$(totalByBand[50])}</div>
@@ -816,11 +1262,20 @@ function renderOutput(d){
       clientName: name, advisor, date: dateStr,
       issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
       incStart: p.incStart, incEnd: p.incEnd, cola: p.cola,
-      bankRate: p.bankRate, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
+      bankRate: (p.lenderIndex+p.lenderSpread), lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
       capRate: p.capRate, csvFloor: parseNum('csvFloor'),
+      carrierKey: p.carrierKey, levelPremium: p.levelPremium,
+      pdaRate: parseFloat(document.getElementById('pdaRate').value)||0,
+      pdaRetentionYears: parseInt(document.getElementById('pdaRetentionYears').value)||0,
+      pdaRetentionPct: parseFloat(document.getElementById('pdaRetentionPct').value)||0,
+      pdaSchedule: p.pdaSchedule,
       ltcgRate: parseFloat(document.getElementById('ltcgRate').value)||20,
+      investFee: parseFloat(document.getElementById('investFee').value)||0,
+      investEqWt: parseFloat(document.getElementById('investEqWt').value)||70,
       compareMode: d.compareMode,
       qpTaxRate: parseFloat(document.getElementById('qpTaxRate').value)||32,
+      qpFee: parseFloat(document.getElementById('qpFee').value)||0,
+      qpEqWt: parseFloat(document.getElementById('qpEqWt').value)||50,
       nSims, dataYears,
       epYr1_25: bandIncome[25], epYr1_50: bandIncome[50], epYr1_75: bandIncome[75],
       epTotal25: totalByBand[25], epTotal50: totalByBand[50], epTotal75: totalByBand[75],
