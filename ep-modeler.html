@@ -277,9 +277,9 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <div class="hint">Client compensation deposits into a Premium Deposit Account earning the PDA rate (interest taxed annually at the combined rate above). In the first N years shown here, only the un-retained share of that year's deposit is paid into the policy as premium — the rest builds a PDA balance. From year N+1 through the end of the contribution period, a level premium is solved so the PDA depletes to ~$0.</div>
           </div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Loan Origination Fee (%)</label><input type="number" id="loanOrigFeeRate" value="0.25" step="0.05" min="0"/></div>
-            <div class="field"><label class="fl">Mail Away Fee ($)</label><input type="number" id="mailAwayFee" value="150" step="10" min="0"/></div>
-            <div class="hint" style="grid-column:1/-1">Both are one-time fees deducted from the first year's PDA deposit before it starts earning interest — the origination fee applied to the total funded amount, the mail away fee flat.</div>
+            <div class="field"><label class="fl">Loan Origination Fee</label><input type="text" id="loanOrigFeeDisplay" class="computed" readonly value="$625"/></div>
+            <div class="field"><label class="fl">Mail Away Fee ($)</label><input type="number" id="mailAwayFee" value="150" step="10" min="0" oninput="updateLoanOrigFeeDisplay()"/></div>
+            <div class="hint" style="grid-column:1/-1">Both are one-time fees deducted from Year 1's premium (not the retained/PDA share) before it reaches the policy. The origination fee is tiered by the size of the annual contribution — ≤$500K: $625 · $500K–750K: $1,250 · $750K–1M: $1,875 · &gt;$1M: $2,500 — and updates automatically as you edit Annual Compensation.</div>
           </div>
           <div class="fg" id="refiManualRow">
             <label class="fl">Refinance — Policy Year / Age</label>
@@ -732,6 +732,13 @@ function updateBankRateDisplay(){
 }
 document.addEventListener('DOMContentLoaded', updateBankRateDisplay);
 updateBankRateDisplay();
+function updateLoanOrigFeeDisplay(){
+  const comp = parseNum('annualComp');
+  const fee = loanOriginationFeeTier(comp);
+  document.getElementById('loanOrigFeeDisplay').value = '$'+fee.toLocaleString('en-US');
+}
+document.getElementById('annualComp')?.addEventListener('input', updateLoanOrigFeeDisplay);
+document.addEventListener('DOMContentLoaded', updateLoanOrigFeeDisplay);
 
 // ══════════════════════════════════════════════════════════
 // BANK RATE ENVIRONMENT — easing / level / tightening
@@ -891,24 +898,57 @@ function simEPPathFull(returns, income, p){
 // year, solved by bisection so the PDA depletes to ~$0 by the end of the
 // contribution period.
 // ══════════════════════════════════════════════════════════
-function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct, loanOrigFeeRate, mailAwayFee){
-  const totalGross = comp*contribYears;
-  const loanOrigFee = totalGross*((loanOrigFeeRate||0)/100);
+// Loan origination fee — TIERED lookup keyed to the deposit size (matches
+// the workbook's bucketed table exactly: 250k/500k/750k/1M reference
+// amounts × 0.25%). NOT a smooth percentage of the deposit.
+function loanOriginationFeeTier(depositAmt){
+  if (depositAmt <= 500000) return 625;
+  if (depositAmt <= 750000) return 1250;
+  if (depositAmt <= 1000000) return 1875;
+  return 2500;
+}
+
+// Premium Deposit Account — sinking-fund intermediary.
+// Years 1..retentionYears: compensation SPLITS at deposit. The retained
+// share (retentionPct) goes straight into the PDA and compounds there —
+// it is never touched by that year's premium. The remaining share is what
+// funds the policy premium that year; in Year 1 only, the loan
+// origination + mail away fees are deducted from THAT remaining share
+// before it reaches the policy (not from the PDA side).
+// From retentionYears+1 on: the full annual deposit goes into the PDA,
+// and a level premium is drawn from the PDA balance — solved by
+// bisection so the PDA depletes to ~$0 by the end of the funding period.
+function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct, mailAwayFee){
+  const loanOrigFee = loanOriginationFeeTier(comp);
   const yr1Fees = loanOrigFee + (mailAwayFee||0);
   function simulate(L){
     let bal=0;
     const rows=[];
     for (let yr=1; yr<=contribYears; yr++){
       const boy = bal;
-      const netDeposit = yr===1 ? Math.max(0, comp-yr1Fees) : comp;
-      bal += netDeposit;
-      const interest = bal*(pdaRate/100);
-      const taxOnInt = interest*(combinedTaxRate/100);
-      const netInt = interest-taxOnInt;
-      bal += netInt;
-      const premium = yr<=retentionYears ? comp*(1-retentionPct/100) : L;
-      bal -= premium;
-      rows.push({yr, boy, deposit:comp, fees:yr===1?yr1Fees:0, netDeposit, interest, taxOnInt, netInt, premium, eoy:bal});
+      let premium, retainedAmt, fees=0;
+      if (yr<=retentionYears){
+        retainedAmt = comp*(retentionPct/100);
+        const premiumBound = comp*(1-retentionPct/100);
+        fees = yr===1 ? yr1Fees : 0;
+        premium = Math.max(0, premiumBound-fees);
+        bal += retainedAmt;
+        const interest = bal*(pdaRate/100);
+        const taxOnInt = interest*(combinedTaxRate/100);
+        const netInt = interest-taxOnInt;
+        bal += netInt;
+        rows.push({yr, boy, retainedAmt, fees, interest, taxOnInt, netInt, premium, eoy:bal});
+      } else {
+        retainedAmt = comp;
+        bal += comp;
+        const interest = bal*(pdaRate/100);
+        const taxOnInt = interest*(combinedTaxRate/100);
+        const netInt = interest-taxOnInt;
+        bal += netInt;
+        premium = L;
+        bal -= premium;
+        rows.push({yr, boy, retainedAmt, fees, interest, taxOnInt, netInt, premium, eoy:bal});
+      }
     }
     return {finalBal: bal, rows};
   }
@@ -942,7 +982,6 @@ function calculateFundingSchedule(){
   const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
   const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
   const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
-  const loanOrigFeeRate = parseFloat(document.getElementById('loanOrigFeeRate').value)||0;
   const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
   const carrierKey = document.getElementById('carrier').value;
   const carrierName = carrierKey==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
@@ -950,7 +989,7 @@ function calculateFundingSchedule(){
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
   if (!contribYears){ errEl.textContent='Enter contribution years.'; errEl.style.display='block'; return; }
 
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, loanOrigFeeRate, mailAwayFee);
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
   const totalPremium = funding.rows.reduce((s,r)=>s+r.premium,0);
   const totalDeposits = comp*contribYears;
   const totalFinancedTax = comp*contribYears*(taxRate/100);
@@ -982,7 +1021,8 @@ function calculateFundingSchedule(){
             <div class="pc-sub">${carrierName} · Issue Age ${issueAge} · ${name}</div>
           </div>
           <div class="pc-stats">
-            <div class="pc-stat"><div class="psl">Yrs 1\u2013${pdaRetentionYears} Premium</div><div class="psv">${fmt$(comp*(1-pdaRetentionPct/100))}/yr</div></div>
+            <div class="pc-stat"><div class="psl">Yr 1 Premium (net of fees)</div><div class="psv">${fmt$(funding.rows[0]?.premium||0)}</div></div>
+            <div class="pc-stat"><div class="psl">Yr 2 Premium</div><div class="psv">${fmt$(funding.rows[1]?.premium||0)}</div></div>
             <div class="pc-stat"><div class="psl">Total Into Policy</div><div class="psv">${fmt$(totalPremium)}</div></div>
             <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${contribYears} yrs</div></div>
             <div class="pc-stat"><div class="psl">Yr 1 Fees</div><div class="psv">${fmt$(funding.loanOrigFee+funding.mailAwayFee)}</div></div>
@@ -1007,7 +1047,7 @@ function calculateFundingSchedule(){
             </tr></tfoot>
           </table>
         </div>
-        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Loan origination fee (${document.getElementById('loanOrigFeeRate').value}% of total funded) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from the Year 1 deposit, before it starts earning PDA interest. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
+        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Loan origination fee (${fmt$(funding.loanOrigFee)}, tiered by contribution size) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from Year 1's premium — not the retained PDA share — before it reaches the policy. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
       </div>
     </div>`;
 
@@ -1163,7 +1203,6 @@ async function calculate(){
   const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
   const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
   const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
-  const loanOrigFeeRate = parseFloat(document.getElementById('loanOrigFeeRate').value)||0;
   const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
 
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
@@ -1195,7 +1234,7 @@ async function calculate(){
   const carrierRows = carrierResult.rows;
 
   sub.textContent='Solving PDA funding schedule…'; fill.style.width='4%'; await tick();
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, loanOrigFeeRate, mailAwayFee);
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
   const p = {issueAge, contribYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
              refiYear, incStart, incEnd, cola, carrierKey, carrierRows,
              pdaSchedule:funding.rows, levelPremium:funding.levelPremium};
