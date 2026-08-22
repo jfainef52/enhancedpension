@@ -85,6 +85,14 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--off);color:var(--te
 .uz-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);font-weight:600;margin-bottom:4px}
 .uz-hint{font-size:10.5px;color:var(--muted)}
 .uz-file{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);margin-top:8px}
+.premium-callout{background:var(--navy);border-radius:6px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.premium-callout .pc-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.premium-callout .pc-value{font-family:'Playfair Display',serif;font-size:32px;color:var(--white);font-weight:600}
+.premium-callout .pc-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
+.premium-callout .pc-stats{display:flex;gap:24px}
+.premium-callout .pc-stat{text-align:right}
+.premium-callout .pc-stat .psl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:3px}
+.premium-callout .pc-stat .psv{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--gold)}
 .pda-summary{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:12px 16px;margin-top:12px}
 .pda-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(201,168,76,.12);font-size:11.5px}
 .pda-row:last-child{border-bottom:none;font-weight:600;padding-top:6px}
@@ -275,6 +283,9 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             </div>
             <div class="hint">The year the insurance company refinances the bank. The loan balance carries over intact — only the accrual rate changes, from the bank rate to the PLR.</div>
           </div>
+
+          <button class="calc-btn" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold);margin-top:16px" onclick="calculateFundingSchedule()">Calculate Funding Schedule</button>
+          <div class="hint" style="text-align:center;margin-top:6px">Solves the PDA sinking-fund schedule and the level premium — the number to input into the carrier's illustration software. Do this first, generate the illustration externally, then upload it below.</div>
 
           <div class="sep"></div>
           <div class="stag">Policy — Carrier Illustration</div>
@@ -880,13 +891,15 @@ function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionY
     let bal=0;
     const rows=[];
     for (let yr=1; yr<=contribYears; yr++){
+      const boy = bal;
       bal += comp;
       const interest = bal*(pdaRate/100);
       const taxOnInt = interest*(combinedTaxRate/100);
-      bal += (interest-taxOnInt);
+      const netInt = interest-taxOnInt;
+      bal += netInt;
       const premium = yr<=retentionYears ? comp*(1-retentionPct/100) : L;
       bal -= premium;
-      rows.push({yr, premium, eoy:bal});
+      rows.push({yr, boy, deposit:comp, interest, taxOnInt, netInt, premium, eoy:bal});
     }
     return {finalBal: bal, rows};
   }
@@ -899,6 +912,93 @@ function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionY
   const levelPremium=(lo+hi)/2;
   const rows = simulate(levelPremium).rows.map(r=>({...r, eoy:Math.max(0,r.eoy)}));
   return {levelPremium, retentionYears, rows};
+}
+
+// ══════════════════════════════════════════════════════════
+// PRE-ILLUSTRATION — solves the PDA funding schedule and level premium
+// on demand, before any carrier file exists, so the advisor has the
+// number to key into the carrier's illustration software.
+// ══════════════════════════════════════════════════════════
+function calculateFundingSchedule(){
+  const errEl=document.getElementById('lerr');
+  errEl.style.display='none';
+
+  const name = document.getElementById('clientName').value.trim() || 'Client';
+  const issueAge = parseInt(document.getElementById('issueAge').value)||50;
+  const comp = parseNum('annualComp');
+  const contribYears = parseInt(document.getElementById('contribYears').value)||10;
+  const fedRate = parseFloat(document.getElementById('fedRate').value)||0;
+  const stateRate = parseFloat(document.getElementById('stateRate').value)||0;
+  const taxRate = fedRate+stateRate;
+  const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
+  const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
+  const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
+  const carrierKey = document.getElementById('carrier').value;
+  const carrierName = carrierKey==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
+
+  if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
+  if (!contribYears){ errEl.textContent='Enter contribution years.'; errEl.style.display='block'; return; }
+
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct);
+  const totalPremium = funding.rows.reduce((s,r)=>s+r.premium,0);
+  const totalDeposits = comp*contribYears;
+  const totalFinancedTax = comp*contribYears*(taxRate/100);
+
+  let tableRows = '';
+  funding.rows.forEach(r=>{
+    const age = issueAge+r.yr-1;
+    const cls = r.yr<=pdaRetentionYears ? '' : (r.yr===pdaRetentionYears+1 ? 'refi-yr' : '');
+    tableRows += `<tr class="${cls}">
+      <td>${r.yr}</td><td>${age}</td>
+      <td>${fmt$(r.boy)}</td>
+      <td>${fmt$(r.interest)}</td>
+      <td>${fmt$(r.taxOnInt)}</td>
+      <td>${fmt$(r.netInt)}</td>
+      <td>${fmt$(r.premium)}</td>
+      <td>${fmt$(r.eoy)}</td>
+    </tr>`;
+  });
+
+  const html = `
+    <div class="card anim">
+      <div class="card-hdr"><div class="step">Pre-Illustration</div><h2>PDA Funding Schedule</h2></div>
+      <div class="card-body">
+        <div class="premium-callout">
+          <div>
+            <div class="pc-label">Level Premium — Input This Into ${carrierKey==='NLG'?'NLG':'Pacific Life'}'s Illustration Software</div>
+            <div class="pc-value">${fmt$(funding.levelPremium)}<span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">/yr, Yrs ${pdaRetentionYears+1}\u2013${contribYears}</span></div>
+            <div class="pc-sub">${carrierName} · Issue Age ${issueAge} · ${name}</div>
+          </div>
+          <div class="pc-stats">
+            <div class="pc-stat"><div class="psl">Yrs 1\u2013${pdaRetentionYears} Premium</div><div class="psv">${fmt$(comp*(1-pdaRetentionPct/100))}/yr</div></div>
+            <div class="pc-stat"><div class="psl">Total Into Policy</div><div class="psv">${fmt$(totalPremium)}</div></div>
+            <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${contribYears} yrs</div></div>
+          </div>
+        </div>
+
+        <div class="carrier-instr">
+          <h4>Next Step <span class="tag">Illustration Software</span></h4>
+          <div class="hint" style="margin:0">Enter the premium amounts above into ${carrierName}'s illustration software (Yrs 1\u2013${pdaRetentionYears} at the lower amount, Yrs ${pdaRetentionYears+1}\u2013${contribYears} at the level amount) at issue age ${issueAge}, running the illustration to age 100. Export the resulting CSV (NLG) or XLSX (Pacific Life) and upload it below to run the Monte Carlo analysis.</div>
+        </div>
+
+        <div class="stag" style="margin-bottom:10px">Premium Deposit Account — Year by Year</div>
+        <div style="overflow-x:auto">
+          <table class="ldg" style="min-width:700px">
+            <thead><tr>
+              <th>Yr</th><th>Age</th><th>BOY PDA</th><th>Gross Int</th><th>Tax on Int</th><th>Net Int</th><th>Premium Paid</th><th>EOY PDA</th>
+            </tr></thead>
+            <tbody>${tableRows}</tbody>
+            <tfoot><tr>
+              <td colspan="6" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${contribYears}</td>
+              <td colspan="2">${fmt$(totalPremium)}</td>
+            </tr></tfoot>
+          </table>
+        </div>
+        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Bank-financed income tax on those deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
+      </div>
+    </div>`;
+
+  document.getElementById('right-panel').innerHTML = html;
 }
 
 function simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, colaRate, ltcgRate, returns){
