@@ -71,6 +71,10 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--off);color:var(--te
 .rate-display{background:var(--navy);border-radius:4px;padding:12px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
 .rate-display .rl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4)}
 .rate-display .rv{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--gold);font-weight:500}
+.rate-env-btns{display:flex;gap:8px;margin-top:10px}
+.rate-btn{flex:1;padding:8px 6px;border:1px solid var(--border);border-radius:3px;background:var(--off);font-family:'IBM Plex Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);text-align:center;line-height:1.3}
+.rate-btn.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+.stateNoteHint{font-size:11px;margin-top:6px;font-style:italic;line-height:1.5;display:none}
 .pda-summary{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:12px 16px;margin-top:12px}
 .pda-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(201,168,76,.12);font-size:11.5px}
 .pda-row:last-child{border-bottom:none;font-weight:600;padding-top:6px}
@@ -188,7 +192,15 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="stag">Client Profile</div>
           <div class="fg fr">
             <div class="field"><label class="fl">Client Name</label><input type="text" id="clientName" placeholder="ex. Suril Patel"/></div>
-            <div class="field"><label class="fl">Issue Age</label><input type="number" id="issueAge" value="50" min="25" max="70"/></div>
+            <div class="field"><label class="fl">Issue Age</label><input type="number" id="issueAge" value="50" min="25" max="70" oninput="rebuildRefiDropdown()"/></div>
+          </div>
+          <div class="fg">
+            <label class="fl">State of Residence</label>
+            <div class="field">
+              <select id="stateRes" onchange="onStateChange()">
+                <option value="AL">Alabama (5.00%)</option><option value="AK">Alaska (0%)</option><option value="AZ">Arizona (2.50%)</option><option value="AR">Arkansas (4.40%)</option><option value="CA">California (13.30%)</option><option value="CO">Colorado (4.40%)</option><option value="CT">Connecticut (6.99%)</option><option value="DE">Delaware (6.60%)</option><option value="FL">Florida (0%)</option><option value="GA">Georgia (5.39%)</option><option value="HI">Hawaii (11.00%)</option><option value="ID">Idaho (5.80%)</option><option value="IL">Illinois (4.95%)</option><option value="IN">Indiana (3.05%)</option><option value="IA">Iowa (5.70%)</option><option value="KS">Kansas (5.70%)</option><option value="KY">Kentucky (4.50%)</option><option value="LA">Louisiana (4.25%)</option><option value="ME">Maine (7.15%)</option><option value="MD" selected>Maryland (5.75%)</option><option value="MA">Massachusetts (5.00%)</option><option value="MI">Michigan (4.25%)</option><option value="MN">Minnesota (9.85%)</option><option value="MS">Mississippi (4.70%)</option><option value="MO">Missouri (4.80%)</option><option value="MT">Montana (6.75%)</option><option value="NE">Nebraska (6.84%)</option><option value="NV">Nevada (0%)</option><option value="NH">New Hampshire (0%)</option><option value="NJ">New Jersey (10.75%)</option><option value="NM">New Mexico (5.90%)</option><option value="NY">New York (10.90%)</option><option value="NC">North Carolina (4.50%)</option><option value="ND">North Dakota (2.50%)</option><option value="OH">Ohio (3.75%)</option><option value="OK">Oklahoma (4.75%)</option><option value="OR">Oregon (9.90%)</option><option value="PA">Pennsylvania (3.07%)</option><option value="RI">Rhode Island (5.99%)</option><option value="SC">South Carolina (6.40%)</option><option value="SD">South Dakota (0%)</option><option value="TN">Tennessee (0%)</option><option value="TX">Texas (0%)</option><option value="UT">Utah (4.65%)</option><option value="VT">Vermont (8.75%)</option><option value="VA">Virginia (5.75%)</option><option value="WA">Washington (0%)</option><option value="WV">West Virginia (5.12%)</option><option value="WI">Wisconsin (7.65%)</option><option value="WY">Wyoming (0%)</option>
+              </select>
+            </div>
           </div>
           <div class="fg">
             <label class="fl">Advisor Name</label>
@@ -199,7 +211,7 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="stag">Contribution / Structure</div>
           <div class="fg fr">
             <div class="field"><label class="fl">Annual Compensation ($)</label><input type="text" id="annualComp" placeholder="ex. $150,000" oninput="formatCurrency(this)"/></div>
-            <div class="field"><label class="fl">Contribution Years</label><input type="number" id="contribYears" value="10" min="1" max="20"/></div>
+            <div class="field"><label class="fl">Contribution Years</label><input type="number" id="contribYears" value="10" min="1" max="20" oninput="rebuildRefiDropdown()"/></div>
           </div>
           <div class="fg fr">
             <div class="field"><label class="fl">Income Start Age</label><input type="number" id="incStart" placeholder="ex. 65" min="45" max="85"/></div>
@@ -210,22 +222,40 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="sep"></div>
           <div class="stag">Financing — Bank Phase → Insurance Phase</div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Bank Rate — Accumulation (%)</label><input type="number" id="bankRate" value="8.00" step="0.25"/></div>
+            <div class="field"><label class="fl">Bank Rate — Accumulation (%)</label><input type="number" id="bankRate" value="6.15" step="0.25"/></div>
             <div class="field"><label class="fl">PLR — Distribution (%)</label><input type="number" id="plr" value="5.00" step="0.25"/></div>
           </div>
+          <div class="rate-env-btns">
+            <button class="rate-btn active" id="rateEnvBtn-easing" onclick="setRateEnv('easing',this)">Easing<br><span style="font-size:9px;opacity:.7">Declines toward a floor</span></button>
+            <button class="rate-btn" id="rateEnvBtn-level" onclick="setRateEnv('level',this)">Level<br><span style="font-size:9px;opacity:.7">Rates stable</span></button>
+            <button class="rate-btn" id="rateEnvBtn-tightening" onclick="setRateEnv('tightening',this)">Tightening<br><span style="font-size:9px;opacity:.7">Stress test</span></button>
+          </div>
+          <div class="hint">Applies to the bank rate during the accumulation years only (Policy Year 1 through refinance). Easing steps the rate down 0.20%/yr to a floor of Bank Rate − 2% (min 4%); Tightening steps it up 0.15%/yr to a cap of Bank Rate + 2%. The PLR is unaffected — it is fixed once the carrier refinances the loan.</div>
+
+          <div class="sep"></div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Financed Income Tax Rate (%)</label><input type="number" id="taxRate" value="42" step="0.5"/><div class="hint">Combined fed + state marginal rate applied to each year's contribution.</div></div>
-            <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
+            <div class="field"><label class="fl">Federal Tax Rate (%)</label><input type="number" id="fedRate" value="32" step="0.25"/></div>
+            <div class="field"><label class="fl">State Tax Rate (%)</label><input type="number" id="stateRate" value="5.75" step="0.25" oninput="updateCombinedRate()"/><div class="hint stateNoteHint" id="stateNote"></div></div>
+          </div>
+          <div class="rate-display">
+            <span class="rl">Combined Tax Rate — Financed Each Contribution Year</span>
+            <span class="rv" id="combinedRateDisplay">37.75%</span>
+          </div>
+          <div class="fg" style="margin-top:14px">
+            <label class="fl">PDA Yield Rate (%)</label>
+            <div class="field"><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
           </div>
           <div class="chk-row">
             <input type="checkbox" id="refiManualChk" onchange="toggleRefiManual()"/>
             <label for="refiManualChk">Set refinance year manually</label>
           </div>
           <div class="fg" id="refiManualRow" style="display:none">
-            <label class="fl">Refinance Policy Year</label>
-            <div class="field"><input type="number" id="refiYearManual" value="11" min="2" max="30"/></div>
+            <label class="fl">Refinance — Policy Year / Age</label>
+            <div class="field">
+              <select id="refiYearManual" style="width:100%;background:var(--off);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:9px 12px;outline:none"></select>
+            </div>
           </div>
-          <div class="hint" id="refiAutoHint">Refinance is calculated automatically — the insurance company refinances the bank the year after the final contribution (Policy Year <span id="refiAutoYearDisp">11</span>). The loan balance carries over intact; only the accrual rate changes, from the bank rate to the PLR.</div>
+          <div class="hint" id="refiAutoHint">Refinance is calculated automatically — the insurance company refinances the bank the year after the final contribution (Policy Year <span id="refiAutoYearDisp">11</span>, Age <span id="refiAutoAgeDisp">60</span>). The loan balance carries over intact; only the accrual rate changes, from the bank rate to the PLR.</div>
 
           <div class="sep"></div>
           <div class="stag">Policy — IUL Crediting</div>
@@ -235,7 +265,7 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           </div>
           <div class="fg">
             <label class="fl">Minimum CSV Floor ($)</label>
-            <div class="field"><input type="text" id="csvFloor" value="$50,000" oninput="formatCurrency(this)"/></div>
+            <div class="field"><input type="text" id="csvFloor" value="$100,000" oninput="formatCurrency(this)"/></div>
             <div class="hint">Income solver keeps CSV net of loans above this floor at every age through income end, on each simulated path.</div>
           </div>
 
@@ -328,15 +358,89 @@ function setCompareMode(mode){
   document.getElementById('qpCompareRow').style.display = mode==='both' ? 'grid' : 'none';
   document.getElementById('qpCompareHint').style.display = mode==='both' ? 'block' : 'none';
 }
+
+// ══════════════════════════════════════════════════════════
+// STATE TAX RATES (top marginal, for reference — editable)
+// ══════════════════════════════════════════════════════════
+const STATE_RATES = {
+  AL:5.00,AK:0,AZ:2.50,AR:4.40,CA:13.30,CO:4.40,CT:6.99,DE:6.60,FL:0,GA:5.39,
+  HI:11.00,ID:5.80,IL:4.95,IN:3.05,IA:5.70,KS:5.70,KY:4.50,LA:4.25,ME:7.15,MD:5.75,
+  MA:5.00,MI:4.25,MN:9.85,MS:4.70,MO:4.80,MT:6.75,NE:6.84,NV:0,NH:0,NJ:10.75,
+  NM:5.90,NY:10.90,NC:4.50,ND:2.50,OH:3.75,OK:4.75,OR:9.90,PA:3.07,RI:5.99,SC:6.40,
+  SD:0,TN:0,TX:0,UT:4.65,VT:8.75,VA:5.75,WA:0,WV:5.12,WI:7.65,WY:0
+};
+const NO_TAX_STATES = new Set(['AK','FL','NV','NH','SD','TN','TX','WA','WY']);
+function onStateChange(){
+  const st = document.getElementById('stateRes').value;
+  const rate = STATE_RATES[st] ?? 0;
+  document.getElementById('stateRate').value = rate.toFixed(2);
+  const note = document.getElementById('stateNote');
+  if (NO_TAX_STATES.has(st)){
+    note.textContent = 'No state income tax.';
+    note.style.color = 'var(--green)';
+    note.style.display = 'block';
+  } else {
+    note.style.display = 'none';
+  }
+  updateCombinedRate();
+}
+function updateCombinedRate(){
+  const fed = parseFloat(document.getElementById('fedRate').value)||0;
+  const st = parseFloat(document.getElementById('stateRate').value)||0;
+  document.getElementById('combinedRateDisplay').textContent = (fed+st).toFixed(2)+'%';
+}
+document.getElementById('fedRate').addEventListener('input', updateCombinedRate);
+
+// ══════════════════════════════════════════════════════════
+// BANK RATE ENVIRONMENT — easing / level / tightening
+// ══════════════════════════════════════════════════════════
+let _rateEnv='easing';
+function setRateEnv(env, btn){
+  _rateEnv = env;
+  ['easing','level','tightening'].forEach(e=>document.getElementById('rateEnvBtn-'+e).classList.toggle('active', e===env));
+}
+// Applied only during the bank (accumulation) phase — policy years < refiYear.
+// The PLR is untouched; it's a fixed carrier rate from refinance onward.
+function getBankRateForYear(policyYr, baseRate, env){
+  if (env==='level') return baseRate;
+  const step = (policyYr-1);
+  if (env==='easing'){
+    const floor = Math.max(4, baseRate-2);
+    return Math.max(floor, baseRate - 0.20*step);
+  }
+  // tightening
+  const cap = baseRate+2;
+  return Math.min(cap, baseRate + 0.15*step);
+}
+
+// ══════════════════════════════════════════════════════════
+// REFINANCE YEAR DROPDOWN — Policy Year / Age pairs
+// ══════════════════════════════════════════════════════════
 function toggleRefiManual(){
   const on = document.getElementById('refiManualChk').checked;
   document.getElementById('refiManualRow').style.display = on ? 'block' : 'none';
   document.getElementById('refiAutoHint').style.display = on ? 'none' : 'block';
 }
-document.getElementById('contribYears').addEventListener('input', ()=>{
+function rebuildRefiDropdown(){
+  const issueAge = parseInt(document.getElementById('issueAge').value)||50;
   const cy = parseInt(document.getElementById('contribYears').value)||10;
   document.getElementById('refiAutoYearDisp').textContent = cy+1;
-});
+  document.getElementById('refiAutoAgeDisp').textContent = issueAge+cy;
+  const sel = document.getElementById('refiYearManual');
+  const prev = sel.value;
+  sel.innerHTML='';
+  for (let py=cy+1; py<=cy+20; py++){
+    const age = issueAge+py-1;
+    const opt = document.createElement('option');
+    opt.value = py;
+    opt.textContent = 'Policy Year '+py+' — Age '+age;
+    sel.appendChild(opt);
+  }
+  if (prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
+}
+document.addEventListener('DOMContentLoaded', ()=>{ rebuildRefiDropdown(); onStateChange(); });
+rebuildRefiDropdown();
+onStateChange();
 
 function handleSignOut(){
   const keys=[];
@@ -358,7 +462,7 @@ function feasibleIncome(returns, income, floor, p){
     const credited = Math.max(p.floorRate/100, Math.min(p.capRate/100, ret));
     const compI = polYr<=p.contribYears ? p.comp : 0;
     av = (av+compI)*(1+credited);
-    const rate = polYr < p.refiYear ? p.bankRate/100 : p.plr/100;
+    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.bankRate, p.rateEnv)/100 : p.plr/100;
     loan = loan*(1+rate);
     if (polYr<=p.contribYears) loan += compI*(p.taxRate/100);
     if (income>0 && age>=p.incStart && age<=p.incEnd){
@@ -390,7 +494,7 @@ function simEPPathFull(returns, income, p){
     const credited = Math.max(p.floorRate/100, Math.min(p.capRate/100, ret));
     const compI = polYr<=p.contribYears ? p.comp : 0;
     av = (av+compI)*(1+credited);
-    const rate = polYr < p.refiYear ? p.bankRate/100 : p.plr/100;
+    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.bankRate, p.rateEnv)/100 : p.plr/100;
     const financedTax = polYr<=p.contribYears ? compI*(p.taxRate/100) : 0;
     loan = loan*(1+rate) + financedTax;
     let inc=0;
@@ -529,7 +633,10 @@ async function calculate(){
   const incEnd = parseInt(document.getElementById('incEnd').value)||100;
   const bankRate = parseFloat(document.getElementById('bankRate').value)||0;
   const plr = parseFloat(document.getElementById('plr').value)||0;
-  const taxRate = parseFloat(document.getElementById('taxRate').value)||0;
+  const fedRate = parseFloat(document.getElementById('fedRate').value)||0;
+  const stateRate = parseFloat(document.getElementById('stateRate').value)||0;
+  const taxRate = fedRate+stateRate;
+  const rateEnv = _rateEnv;
   const capRate = parseFloat(document.getElementById('capRate').value)||0;
   const floorRate = 0;
   const csvFloor = parseNum('csvFloor');
@@ -547,7 +654,7 @@ async function calculate(){
   if (incStart<=issueAge){ errEl.textContent='Income start age must be after issue age.'; errEl.style.display='block'; return; }
   if (incEnd<=incStart){ errEl.textContent='Income end age must be after income start age.'; errEl.style.display='block'; return; }
 
-  const p = {issueAge, contribYears, comp, bankRate, plr, taxRate, capRate, floorRate, refiYear, incStart, incEnd, cola};
+  const p = {issueAge, contribYears, comp, bankRate, plr, taxRate, rateEnv, capRate, floorRate, refiYear, incStart, incEnd, cola};
   const pathLen = incEnd - issueAge + 1;
   const pool = getPool(dataYears);
 
@@ -721,7 +828,7 @@ function renderOutput(d){
       clientName: name, advisor, date: dateStr,
       issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
       incStart: p.incStart, incEnd: p.incEnd, cola: p.cola,
-      bankRate: p.bankRate, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
+      bankRate: p.bankRate, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
       capRate: p.capRate, csvFloor: parseNum('csvFloor'),
       ltcgRate: parseFloat(document.getElementById('ltcgRate').value)||20,
       compareMode: d.compareMode,
