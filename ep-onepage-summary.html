@@ -204,8 +204,9 @@ h1{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:var
     set('doc-box1-val', $f(comp));
     set('doc-box2-val', $f(contribTotal));
 
-    set('doc-rec1-sub', 'Bank rate ' + (r.bankRate||0) + '% during Yrs 1–' + contribYears + ' · financed tax rate ' + (r.taxRate||0) + '%');
-    set('doc-rec2-sub', 'Refinances at Policy Year ' + (r.refiYear||contribYears+1) + ' · participating loan rate ' + (r.plr||0) + '% thereafter');
+    var carrierName = r.carrierKey==='PL' ? 'Pacific Life ECV' : 'NLG Summit';
+    set('doc-rec1-sub', 'Lender rate ' + (r.lenderIndex||0) + '% + ' + (r.lenderSpread||0) + '% spread during Yrs 1–' + contribYears + ' · financed tax rate ' + (r.taxRate||0) + '%');
+    set('doc-rec2-sub', 'Refinances at Policy Year ' + (r.refiYear||contribYears+1) + ' · participating loan rate ' + (r.plr||0) + '% thereafter · illustrated on ' + carrierName);
     set('doc-rec3-sub', $f(epYr1) + '/yr median starting income · ' + cola + '% COLA · policy loans, not reported as income');
 
     set('doc-out2-val', $f(contribTotal));
@@ -217,12 +218,12 @@ h1{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:var
       cmpRow.style.display = 'grid';
       var ratioInv = investTotal>0 ? (epTotal/investTotal) : 0;
       set('doc-cmp1-val', ratioInv.toFixed(2) + '×');
-      set('doc-cmp1-lbl', ratioInv>0 ? 'more lifetime income vs. a taxable investment account (pay tax, invest the difference)' : 'vs. taxable investment account');
+      set('doc-cmp1-lbl', ratioInv>0 ? ('more lifetime income vs. a taxable investment account (' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee)') : 'vs. taxable investment account');
       if (showQP && qpTotal>0) {
         document.getElementById('doc-cmp2-box').style.display='block';
         var ratioQP = (epTotal/qpTotal);
         set('doc-cmp2-val', ratioQP.toFixed(2) + '×');
-        set('doc-cmp2-lbl', 'more lifetime income vs. a qualified plan (DB / cash balance) with matching gross contributions');
+        set('doc-cmp2-lbl', 'more lifetime income vs. a qualified plan (' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee, matching gross contributions)');
       }
     }
 
