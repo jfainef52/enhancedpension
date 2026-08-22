@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EFS Life — Enhanced Pension</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:   #0D1B2E; --navy-2: #142236; --navy-3: #1a2d48;
+    --gold:   #C8A84B; --gold-lt:#D4B96A;
+    --white:  #FFFFFF; --off:    #F8F7F4;
+    --text:   #1C2B3A; --muted:  #6B7C8D; --border: #E2DDD6;
+    --green:  #2A6E45; --green-lt:#EBF4EE;
+    --red:    #8B2020; --red-lt: #FDF0F0;
+  }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: #E8E4DC; color: var(--text); font-size: 14px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page {
+    width: 11in; height: 8.5in; margin: 0 auto 32px;
+    overflow: hidden; position: relative; background: white;
+    box-shadow: 0 8px 40px rgba(0,0,0,.18); display: flex;
+  }
+  @media print {
+    body { background: white; }
+    .page { margin:0; box-shadow:none; page-break-after:always; page-break-inside:avoid; }
+    .page:last-child { page-break-after: avoid !important; }
+    @page { size: 11in 8.5in landscape; margin: 0; }
+  }
+  .serif  { font-family: 'Playfair Display', serif; }
+  .serif2 { font-family: 'Cormorant Garamond', serif; }
+
+  /* ── COVER ── */
+  .cover { flex-direction: column; background: var(--navy); position: relative; overflow: hidden; }
+  .cover-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 70% 40%, rgba(200,168,75,.08) 0%, transparent 70%),
+      linear-gradient(145deg, #0D1B2E 0%, #1a3050 40%, #0f2540 70%, #0D1B2E 100%);
+  }
+  .cover-mountain { position: absolute; bottom: 0; left: 0; right: 0; height: 55%; opacity: .06; }
+  .cover-top-bar {
+    position: relative; z-index: 2; height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 50%, var(--gold) 100%);
+  }
+  .cover-content {
+    position: relative; z-index: 2; flex: 1;
+    display: flex; flex-direction: column; padding: 0.55in 0.7in;
+  }
+  .cover-eyebrow { font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--gold); margin-bottom:.18in; font-weight:500; }
+  .cover-title { font-family:'Playfair Display',serif; font-size:58px; font-weight:700; color:var(--white); line-height:1.08; max-width:7in; margin-bottom:.2in; }
+  .cover-title em { color:var(--gold); font-style:italic; }
+  .cover-subtitle { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:300; color:rgba(255,255,255,.6); letter-spacing:1px; margin-bottom:auto; }
+  .cover-divider { width:60px; height:1px; background:var(--gold); margin:.25in 0; }
+  .cover-meta { display:flex; align-items:flex-end; justify-content:space-between; }
+  .cover-prepared { font-size:12px; color:rgba(255,255,255,.4); letter-spacing:1px; }
+  .cover-prepared strong { display:block; font-size:22px; color:rgba(255,255,255,.9); font-weight:400; margin-top:4px; font-family:'Playfair Display',serif; letter-spacing:1px; }
+  .cover-corner { position:absolute; top:.4in; right:.5in; width:120px; height:120px; border:1px solid rgba(200,168,75,.2); border-radius:50%; z-index:1; }
+  .cover-corner::after { content:''; position:absolute; inset:12px; border:1px solid rgba(200,168,75,.12); border-radius:50%; }
+
+  /* ── SHARED SIDEBAR ── */
+  .sidebar-page { flex-direction: row; }
+  .sidebar {
+    width: 2.4in; background: var(--navy); flex-shrink:0;
+    display:flex; flex-direction:column; padding:.5in .35in; position:relative; overflow:hidden;
+  }
+  .sidebar::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--gold),var(--gold-lt)); }
+  .sidebar::after { content:''; position:absolute; bottom:-60px; left:-60px; width:220px; height:220px; border:1px solid rgba(200,168,75,.08); border-radius:50%; }
+  .sidebar-section { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; font-weight:500; }
+  .sidebar-title { font-family:'Playfair Display',serif; font-size:30px; font-weight:700; color:var(--white); line-height:1.15; margin-bottom:6px; }
+  .sidebar-subtitle { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.3); line-height:1.6; }
+  .sidebar-divider { width:30px; height:1px; background:var(--gold); margin:20px 0; }
+  .sidebar-tagline { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; color:rgba(255,255,255,.4); line-height:1.6; margin-top:auto; }
+  .main-content { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .eyebrow { font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--gold); font-weight:600; }
+
+  /* ── PAGE: SITUATION ── */
+  .situation-main { padding:.45in .5in; background:var(--off); flex:1; display:flex; flex-direction:column; justify-content:center; position:relative; }
+  .situation-main::before { content:''; position:absolute; top:0; right:0; width:50%; height:100%; background:linear-gradient(135deg,rgba(200,168,75,.04) 0%,transparent 60%); }
+  .situation-pull { font-family:'Cormorant Garamond',serif; font-size:20px; font-style:italic; color:var(--muted); border-left:3px solid var(--gold); padding-left:20px; margin-bottom:28px; line-height:1.5; max-width:5in; }
+  .situation-headline { font-family:'Playfair Display',serif; font-size:28px; font-weight:600; color:var(--navy); line-height:1.2; margin-bottom:20px; max-width:6in; }
+  .situation-headline em { color:var(--gold); font-style:italic; }
+  .sit-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:6px; }
+  .sit-card { background:white; border:1px solid var(--border); border-top:3px solid var(--gold); padding:16px 14px; }
+  .sit-icon { font-size:20px; margin-bottom:8px; }
+  .sit-title { font-family:'Playfair Display',serif; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:5px; }
+  .sit-text { font-size:11.5px; color:var(--muted); line-height:1.6; }
+
+  /* ── PAGE: KAI & BRECK ── */
+  .kai-breck-main { flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr auto; overflow:hidden; }
+  .kb-header { grid-column:1/-1; background:white; padding:.3in .5in .2in; border-bottom:1px solid var(--border); }
+  .kb-header h2 { font-family:'Playfair Display',serif; font-size:22px; font-weight:600; color:var(--navy); margin-top:8px; }
+  .kb-brother { padding:.3in .4in; display:flex; flex-direction:column; gap:12px; }
+  .kb-left { background:var(--off); border-right:1px solid var(--border); }
+  .kb-right { background:white; }
+  .kb-name { display:flex; align-items:center; gap:10px; font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--navy); }
+  .kb-badge { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+  .kb-badge-k { background:var(--navy); }
+  .kb-badge-b { background:var(--green); }
+  .kb-retire { font-size:11px; color:var(--muted); letter-spacing:1px; }
+  .kb-body { font-size:12.5px; color:var(--text); line-height:1.7; }
+  .kb-result { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:4px; font-size:12px; font-weight:600; }
+  .kb-result-bad { background:rgba(180,50,50,.08); color:#b43232; border:1px solid rgba(180,50,50,.2); }
+  .kb-result-good { background:var(--green-lt); color:var(--green); border:1px solid rgba(42,110,69,.2); }
+  .kb-footer { grid-column:1/-1; background:var(--navy); padding:.2in .5in; display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; align-items:center; }
+  .kb-stat-num { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; color:var(--gold); margin-bottom:4px; }
+  .kb-stat-label { font-size:11px; color:rgba(255,255,255,.45); line-height:1.5; }
+
+  /* ── PAGE: ACCUMULATION VS DISTRIBUTION ── */
+  .acc-dist-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .acc-dist-header { background:white; padding:.28in .5in .22in; border-bottom:1px solid var(--border); }
+  .acc-dist-header h2 { font-family:'Playfair Display',serif; font-size:22px; font-weight:600; color:var(--navy); margin-top:8px; }
+  .acc-dist-body { flex:1; display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
+  .phase-col { padding:.3in .4in; display:flex; flex-direction:column; gap:14px; }
+  .phase-col-acc { background:var(--off); border-right:1px solid var(--border); }
+  .phase-col-dist { background:white; }
+  .phase-label { display:inline-flex; align-items:center; gap:8px; font-size:9px; letter-spacing:2px; text-transform:uppercase; font-weight:600; margin-bottom:4px; }
+  .phase-label-acc { color:#5BA4CF; }
+  .phase-label-dist { color:#C05C5C; }
+  .phase-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+  .phase-body { font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.7; color:var(--text); }
+  .phase-rows { display:flex; flex-direction:column; gap:0; margin-top:auto; }
+  .phase-row { display:flex; justify-content:space-between; font-size:11px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .phase-row-label { color:var(--muted); }
+  .phase-row-val { font-weight:600; color:var(--navy); }
+  .acc-dist-footer { background:var(--navy); padding:.18in .5in; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .adf-item { display:flex; flex-direction:column; gap:4px; }
+  .adf-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); }
+  .adf-text { font-size:12px; color:rgba(255,255,255,.7); line-height:1.5; }
+
+  /* ── PAGE: HOW EP WORKS ── */
+  .how-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .how-header { background:white; padding:.28in .5in .2in; border-bottom:1px solid var(--border); }
+  .how-header h2 { font-family:'Playfair Display',serif; font-size:22px; font-weight:600; color:var(--navy); margin-top:8px; }
+  .how-body { flex:1; display:grid; grid-template-columns:1fr 1fr; overflow:hidden; }
+  .how-col { padding:.3in .4in; display:flex; flex-direction:column; gap:14px; }
+  .how-col-left { background:var(--off); border-right:1px solid var(--border); }
+  .how-col-right { background:white; }
+  .how-step { display:grid; grid-template-columns:28px 1fr; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .how-step:last-child { border-bottom:none; }
+  .how-step-num { width:28px; height:28px; border-radius:50%; background:var(--navy); color:var(--gold); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .how-step-title { font-family:'Playfair Display',serif; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:3px; }
+  .how-step-text { font-size:11.5px; color:var(--muted); line-height:1.6; }
+  .how-advantage { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .how-advantage:last-child { border-bottom:none; }
+  .how-advantage-icon { font-size:22px; flex-shrink:0; }
+  .how-advantage-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:600; color:var(--navy); margin-bottom:4px; }
+  .how-advantage-text { font-size:12px; color:var(--text); line-height:1.6; }
+
+  /* ── PAGE: YOUR NUMBERS ── */
+  .outcomes-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .outcomes-header { background:white; padding:.18in .4in .14in; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .outcomes-header h2 { font-family:'Playfair Display',serif; font-size:19px; font-weight:600; color:var(--navy); margin:4px 0 2px; }
+  .outcomes-header p { font-size:11px; color:var(--muted); }
+  .outcomes-chart { flex:1; padding:.14in .4in .08in; display:flex; flex-direction:column; background:var(--off); border-bottom:1px solid var(--border); min-height:0; }
+  .outcomes-facts-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; background:white; border-top:1px solid var(--border); flex-shrink:0; }
+  .fact-block { padding:10px 16px; border-right:1px solid var(--border); }
+  .fact-block:last-child { border-right:none; }
+  .fact-label { font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); margin-bottom:3px; }
+  .fact-value { font-family:'Playfair Display',serif; font-size:19px; font-weight:700; color:var(--navy); line-height:1.1; }
+  .fact-value.green { color:var(--green); }
+  .fact-sub { font-size:9.5px; color:var(--muted); margin-top:1px; }
+
+  /* ── PAGE: WHY US ── */
+  .why-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .why-header { background:var(--navy); padding:.3in .5in; border-bottom:2px solid rgba(200,168,75,.3); }
+  .why-header h2 { font-family:'Playfair Display',serif; font-size:24px; font-weight:600; color:var(--white); }
+  .why-body { flex:1; display:grid; grid-template-columns:1fr 1fr; }
+  .why-points { padding:.35in .4in; display:flex; flex-direction:column; gap:18px; background:var(--off); border-right:1px solid var(--border); }
+  .why-point { display:flex; gap:14px; }
+  .why-icon { font-size:22px; flex-shrink:0; }
+  .why-point-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:600; color:var(--navy); margin-bottom:4px; }
+  .why-point-text { font-size:12px; color:var(--text); line-height:1.6; }
+  .why-cta { padding:.35in .4in; background:white; display:flex; flex-direction:column; gap:16px; }
+  .why-cta-headline { font-family:'Playfair Display',serif; font-size:22px; font-weight:600; color:var(--navy); line-height:1.3; }
+  .why-cta-headline em { color:var(--gold); font-style:italic; }
+  .why-cta-text { font-size:13px; color:var(--muted); line-height:1.7; }
+  .why-contact { background:var(--navy); padding:20px 24px; border-radius:4px; display:flex; flex-direction:column; gap:8px; margin-top:auto; }
+  .why-contact-item { font-size:13px; color:rgba(255,255,255,.7); }
+</style>
+</head>
+<body>
+
+<!-- ══ PAGE 1: COVER ══ -->
+<div class="page cover">
+  <div class="cover-bg"></div>
+  <svg class="cover-mountain" viewBox="0 0 1100 480" preserveAspectRatio="none" fill="white">
+    <polygon points="0,480 180,140 340,320 520,80 700,280 850,120 1000,260 1100,160 1100,480"/>
+    <polygon points="0,480 120,260 280,380 440,180 600,340 780,200 950,300 1100,220 1100,480" fill-opacity=".4"/>
+  </svg>
+  <div class="cover-corner"></div>
+  <div class="cover-top-bar"></div>
+  <div class="cover-content">
+    <div class="cover-eyebrow">Confidential &nbsp;·&nbsp; Enhanced Pension Review</div>
+    <div class="cover-title">Gross In.<br><em>Tax-Free Out.</em></div>
+    <div class="cover-subtitle">A Smarter Way to Turn Compensation Into Retirement Income</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <div class="cover-prepared">
+        Prepared for
+        <strong id="cover-client">—</strong>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.25)">EFS Life LLC</div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-top:4px" id="cover-date">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 2: THE SITUATION ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">Context</div>
+    <div class="sidebar-title">The<br>Situ&shy;ation</div>
+    <div class="sidebar-subtitle">WHAT HAPPENS TO<br>COMPENSATION YOU<br>SET ASIDE FOR<br>RETIREMENT</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline">"Every dollar you set aside for later has a lien on it — you just haven't paid it yet."</div>
+  </div>
+  <div class="main-content">
+    <div class="situation-main">
+      <div class="situation-pull">You've built compensation you don't need today. Now the question is — how much of it do you actually get to keep, and how much goes to taxes and market risk along the way?</div>
+      <div class="situation-headline">A conventional qualified plan or taxable account was never built to turn compensation into <em>guaranteed, tax-free</em> retirement income.</div>
+      <div class="sit-grid">
+        <div class="sit-card">
+          <div class="sit-icon">🏛️</div>
+          <div class="sit-title">The Tax Bill Is Always Waiting</div>
+          <div class="sit-text">Whether you pay the tax now on a taxable account or later on a qualified plan distribution, the obligation exists. For most clients that's 30–45% gone before a dollar reaches retirement income.</div>
+        </div>
+        <div class="sit-card">
+          <div class="sit-icon">📊</div>
+          <div class="sit-title">Sequence Risk Hits Hardest at Distribution</div>
+          <div class="sit-text">During accumulation, bad years are absorbed by future contributions. During distribution, bad years force you to sell at the bottom while income demands don't pause.</div>
+        </div>
+        <div class="sit-card">
+          <div class="sit-icon">⏰</div>
+          <div class="sit-title">Neither Path Guarantees Income for Life</div>
+          <div class="sit-text">A taxable account can run out. A qualified plan is subject to RMDs at a schedule you don't control. Neither is built around a principal floor and a lifetime income guarantee.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 3: KAI & BRECK ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">The Story</div>
+    <div class="sidebar-title">Kai &amp; Breck</div>
+    <div class="sidebar-subtitle">SEQUENCE<br>OF RETURNS<br>RISK<br>ILLUSTRATED</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline">Both brothers started with $1,000,000 and withdrew $100,000/yr. The average return for both was 13.68% over 30 years. The only difference: when they retired.</div>
+  </div>
+  <div class="main-content">
+    <div class="kai-breck-main">
+      <div class="kb-header">
+        <div class="eyebrow">Real Market Data — S&amp;P 500 Returns 1972–2001</div>
+        <h2>Is there a way to enjoy retirement stress-free, regardless of timing?</h2>
+      </div>
+      <div class="kb-brother kb-left">
+        <div class="kb-name"><div class="kb-badge kb-badge-k">K</div>Kai — The Older Brother</div>
+        <div class="kb-retire">Retired in 1972 · Age 65</div>
+        <div class="kb-body">Kai retires with $1,000,000 and withdraws $100,000 per year. Year 1 is good — the market returns +19%. He feels confident. Then Year 2: −15%. Then Year 3: −27%. He's been withdrawing throughout, locking in permanent losses. His portfolio never recovers.</div>
+        <div class="kb-result kb-result-bad">⚠️ Out of money in Year 13 · $0 remaining · Same average return as his brother</div>
+      </div>
+      <div class="kb-brother kb-right">
+        <div class="kb-name"><div class="kb-badge kb-badge-b">B</div>Breck — The Younger Brother</div>
+        <div class="kb-retire">Retired in 1976 · Age 65 · 4 Years Later</div>
+        <div class="kb-body">Breck retires just four years later with the same $1,000,000 and the same $100,000 annual withdrawal. His early years happen to be up years. His portfolio compounds without interruption. By the end of the same 30-year period, Breck has over $13 million remaining.</div>
+        <div class="kb-result kb-result-good">✓ $13M+ remaining after 30 years · Identical average return · Only the sequence differed</div>
+      </div>
+      <div class="kb-footer">
+        <div>
+          <div class="kb-stat-num">$0</div>
+          <div class="kb-stat-label">Kai's balance after<br>13 years of retirement</div>
+        </div>
+        <div style="border-left:1px solid rgba(255,255,255,.1);border-right:1px solid rgba(255,255,255,.1);padding:0 20px">
+          <div class="kb-stat-num">13.68%</div>
+          <div class="kb-stat-label">Average annual return<br>for both brothers —<br>averages don't pay bills</div>
+        </div>
+        <div>
+          <div class="kb-stat-num">4 Yrs</div>
+          <div class="kb-stat-label">The difference between<br>$0 and $13M — same<br>starting balance, same return</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 4: ACCUMULATION VS DISTRIBUTION ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">A New Lens</div>
+    <div class="sidebar-title">Change of Per&shy;spective</div>
+    <div class="sidebar-subtitle">ACCUMULATION<br>VS<br>DISTRIBUTION</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline">"The strategy that builds the mountain is not the same strategy that gets you safely down it."</div>
+  </div>
+  <div class="main-content">
+    <div class="acc-dist-main">
+      <div class="acc-dist-header">
+        <div class="eyebrow">The Core Shift</div>
+        <h2>A funding strategy and an income strategy are two entirely different objectives.</h2>
+      </div>
+      <div class="acc-dist-body">
+        <svg style="position:absolute;bottom:0;left:0;width:50%;height:100%;pointer-events:none" viewBox="0 0 400 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="0,300 0,220 60,190 120,160 180,120 240,80 300,50 360,20 400,10 400,300" fill="rgba(200,168,75,.05)"/>
+          <polyline points="0,220 60,190 120,160 180,120 240,80 300,50 360,20 400,10" fill="none" stroke="rgba(200,168,75,.18)" stroke-width="2"/>
+          <text x="360" y="50" font-size="28" fill="rgba(200,168,75,.25)" font-family="sans-serif">↗</text>
+        </svg>
+        <div class="phase-col phase-col-acc">
+          <div class="phase-label phase-label-acc">⬆ Bank Phase — Going Up the Mountain</div>
+          <div class="phase-title">Volatility is manageable.</div>
+          <div class="phase-body" id="acc-body-text">Each year, your full compensation is contributed to the structure. A bank finances the income tax on that contribution — nothing comes out of pocket. The loan balance grows at the bank rate while the policy compounds on the full gross amount.</div>
+          <div class="phase-rows">
+            <div class="phase-row"><span class="phase-row-label">Primary objective</span><span class="phase-row-val">Maximize policy value</span></div>
+            <div class="phase-row"><span class="phase-row-label">Financing rate</span><span class="phase-row-val" id="acc-rate-val">Bank rate</span></div>
+            <div class="phase-row"><span class="phase-row-label">Contribution years</span><span class="phase-row-val" id="acc-years-val">10</span></div>
+          </div>
+        </div>
+        <svg style="position:absolute;bottom:0;right:0;width:50%;height:100%;pointer-events:none" viewBox="0 0 400 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="0,10 40,20 100,50 160,80 220,120 280,160 340,200 400,240 400,300 0,300" fill="rgba(180,50,50,.04)"/>
+          <polyline points="0,10 40,20 100,50 160,80 220,120 280,160 340,200 400,240" fill="none" stroke="rgba(180,50,50,.18)" stroke-width="2"/>
+          <text x="20" y="50" font-size="28" fill="rgba(180,50,50,.2)" font-family="sans-serif">↘</text>
+        </svg>
+        <div class="phase-col phase-col-dist">
+          <div class="phase-label phase-label-dist">⬇ Insurance Phase — Coming Down the Mountain</div>
+          <div class="phase-title">Volatility is now the enemy.</div>
+          <div class="phase-body">At refinance, the insurance company pays off the bank — the loan balance carries over intact, only the rate changes. Income is then drawn as additional policy loans, stacked on the same balance, at the participating loan rate for life.</div>
+          <div class="phase-rows">
+            <div class="phase-row"><span class="phase-row-label">Primary objective</span><span class="phase-row-val">Sustainable tax-free income</span></div>
+            <div class="phase-row"><span class="phase-row-label">Financing rate</span><span class="phase-row-val" id="dist-rate-val">Participating loan rate</span></div>
+            <div class="phase-row"><span class="phase-row-label">Refinance year</span><span class="phase-row-val" id="dist-refi-val">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="acc-dist-footer">
+        <div class="adf-item">
+          <div class="adf-label">The Key Mechanic</div>
+          <div class="adf-text">One continuous loan balance runs the whole way through. It does not reset at refinance — only the rate steps down from the bank rate to the carrier's participating loan rate, right when income begins.</div>
+        </div>
+        <div class="adf-item">
+          <div class="adf-label">Why It Works</div>
+          <div class="adf-text">The full gross compensation — not the after-tax remainder — compounds inside the policy from day one. A 0% floor means market losses never reduce that principal, uncorrelated to the funding source.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 5: HOW EP WORKS ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">The Mechanics</div>
+    <div class="sidebar-title">How EP Works</div>
+    <div class="sidebar-subtitle">TWO PHASES<br>ONE<br>CONTINUOUS LOAN</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline">"The full compensation goes to work. Not the after-tax remainder. All of it, every year."</div>
+  </div>
+  <div class="main-content">
+    <div class="how-main">
+      <div class="how-header">
+        <div class="eyebrow">Step by Step</div>
+        <h2>Enhanced Pension finances the tax on every contribution and deploys the full compensation into a tax-free compounding asset.</h2>
+      </div>
+      <div class="how-body">
+        <div class="how-col how-col-left">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">The Structure, Step by Step</div>
+          <div class="how-step">
+            <div class="how-step-num">1</div>
+            <div>
+              <div class="how-step-title">Annual Contribution &amp; Bank Financing</div>
+              <div class="how-step-text" id="how-step-1-text">Each contribution year, your full compensation is committed to the structure. A bank simultaneously finances the income tax owed on that contribution. Nothing is paid out of pocket.</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">2</div>
+            <div>
+              <div class="how-step-title" id="how-step-2-title">Funding Phase (10 Annual Contributions)</div>
+              <div class="how-step-text">The full compensation funds a tax-free index life insurance asset each year. The tax-free asset begins accumulating from day one, protected by a 0% floor.</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">3</div>
+            <div>
+              <div class="how-step-title">Refinance to the Insurance Company</div>
+              <div class="how-step-text" id="how-step-3-text">At the refinance year, the bank loan is retired via a participating asset loan at the carrier rate. The balance carries over intact — it does not reset. The asset continues compounding on its full value.</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">4</div>
+            <div>
+              <div class="how-step-title">Tax-Free Income Phase</div>
+              <div class="how-step-text">Income is taken as participating policy loans — tax-free, stacked on the same loan balance at the carrier rate, and retired from the death benefit. You control the timing and the amount, for life.</div>
+            </div>
+          </div>
+        </div>
+        <div class="how-col how-col-right">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">Four Structural Advantages</div>
+          <div class="how-advantage">
+            <div class="how-advantage-icon">💰</div>
+            <div>
+              <div class="how-advantage-title">Full Compensation Goes to Work</div>
+              <div class="how-advantage-text">The entire annual compensation — not the after-tax portion — compounds inside the tax-free asset. The amount that would have gone to the IRS now earns for you instead.</div>
+            </div>
+          </div>
+          <div class="how-advantage">
+            <div class="how-advantage-icon">🛡️</div>
+            <div>
+              <div class="how-advantage-title">0% Floor — No Down Years</div>
+              <div class="how-advantage-text">When the index has a negative year, the asset credits 0% — not a negative return. Market losses cannot reduce your index-linked principal. Kai's sequence risk problem is structurally addressed.</div>
+            </div>
+          </div>
+          <div class="how-advantage">
+            <div class="how-advantage-icon">🔗</div>
+            <div>
+              <div class="how-advantage-title">One Continuous Loan Balance</div>
+              <div class="how-advantage-text">The loan does not reset at refinance — only the rate changes, from the bank rate to the participating loan rate, exactly when income begins.</div>
+            </div>
+          </div>
+          <div class="how-advantage">
+            <div class="how-advantage-icon">📋</div>
+            <div>
+              <div class="how-advantage-title">No RMDs — Ever</div>
+              <div class="how-advantage-text">Life insurance is not subject to Required Minimum Distributions. Income is taken on your schedule — not the IRS's.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 6: YOUR NUMBERS ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">The Numbers</div>
+    <div class="sidebar-title">Your<br>Numbers</div>
+    <div class="sidebar-subtitle" id="doc-sidebar-client">CLIENT<br>SPECIFIC<br>RESULTS</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline" id="doc-sidebar-desc">EP vs. Comparators — Median Market Sequence · 10,000 Simulations</div>
+  </div>
+  <div class="main-content">
+    <div class="outcomes-main">
+      <div class="outcomes-header">
+        <div class="eyebrow">Enhanced Pension — Monte Carlo Results</div>
+        <h2 id="doc-outcomes-headline">Tax-Free Income vs. Comparators — Ages <span id="doc-inc-ages">65–100</span></h2>
+        <p id="doc-outcomes-meta">—</p>
+      </div>
+      <div class="outcomes-chart">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Cumulative Income — EP Tax-Free vs. Comparators (50th Percentile)</div>
+        <svg id="doc-chart-svg" viewBox="0 0 1060 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;flex:1">
+          <line id="doc-g3" x1="60" y1="20"  x2="1050" y2="20"  stroke="#e2ddd6" stroke-width=".5"/>
+          <line id="doc-g2" x1="60" y1="95"  x2="1050" y2="95"  stroke="#e2ddd6" stroke-width=".5"/>
+          <line id="doc-g1" x1="60" y1="170" x2="1050" y2="170" stroke="#e2ddd6" stroke-width=".5"/>
+          <line id="doc-g0" x1="60" y1="245" x2="1050" y2="245" stroke="#e2ddd6" stroke-width=".5"/>
+          <line x1="60" y1="335" x2="1050" y2="335" stroke="rgba(200,168,75,.4)" stroke-width="1.5"/>
+          <text id="doc-yl3" x="54" y="24"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl2" x="54" y="99"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl1" x="54" y="174" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl0" x="54" y="249" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <path id="doc-path-ep75" fill="none" stroke="#2a6e45" stroke-width="2" stroke-dasharray="6,3"/>
+          <path id="doc-path-ep50" fill="none" stroke="#c9a84c" stroke-width="3.5"/>
+          <path id="doc-path-ep25" fill="none" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <path id="doc-path-invest50" fill="none" stroke="rgba(100,140,200,.9)" stroke-width="2.5"/>
+          <path id="doc-path-qp50" fill="none" stroke="rgba(180,90,90,.9)" stroke-width="2.5" stroke-dasharray="2,3"/>
+          <line x1="65"  y1="16" x2="85"  y2="14" stroke="#2a6e45" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="90"  y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 75th (Favorable)</text>
+          <line x1="230" y1="16" x2="250" y2="14" stroke="#c9a84c" stroke-width="2.5"/>
+          <text x="255" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 50th — Median</text>
+          <line x1="400" y1="16" x2="420" y2="14" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <text x="425" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 25th (Conservative)</text>
+          <line x1="600" y1="16" x2="620" y2="14" stroke="rgba(100,140,200,.9)" stroke-width="2.5"/>
+          <text x="625" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">Taxable Acct Net (50th)</text>
+          <line id="doc-qp-legend-line" x1="810" y1="16" x2="830" y2="14" stroke="rgba(180,90,90,.9)" stroke-width="2.5" stroke-dasharray="2,3" style="display:none"/>
+          <text id="doc-qp-legend-text" x="835" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif" style="display:none">QP/DB Net (50th)</text>
+          <g id="doc-xlabels"></g>
+        </svg>
+      </div>
+      <div class="outcomes-facts-row">
+        <div class="fact-block">
+          <div class="fact-label">EP Year 1 · Age <span id="doc-inc-start">65</span></div>
+          <div class="fact-value green" id="doc-ep-yr1">—</div>
+          <div class="fact-sub">Tax-free policy loan · <span id="doc-cola">3</span>% COLA</div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label">EP Total Tax-Free Income</div>
+          <div class="fact-value green" id="doc-ep-total">—</div>
+          <div class="fact-sub">Ages <span id="doc-inc-ages2">65–100</span> · Median (50th)</div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label" id="doc-cmp-label">Taxable Acct Net · 50th</div>
+          <div class="fact-value" id="doc-cmp-total">—</div>
+          <div class="fact-sub" id="doc-cmp-sub">Pay tax, invest the difference</div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label">EP Income Advantage</div>
+          <div class="fact-value green" id="doc-advantage">—</div>
+          <div class="fact-vs" id="doc-ratio" style="font-size:10.5px;font-weight:600;color:var(--green);margin-top:2px">—</div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label">Net Policy Value · Age <span id="doc-inc-end">100</span></div>
+          <div class="fact-value" id="doc-nav-end">—</div>
+          <div class="fact-sub">Net of all policy loans · Retires from death benefit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 7: WHY US ══ -->
+<div class="page sidebar-page">
+  <div class="sidebar">
+    <div class="sidebar-section">Our Firm</div>
+    <div class="sidebar-title">Why Us?</div>
+    <div class="sidebar-subtitle">EFS LIFE LLC<br>RetainMoreValue.com</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline">"We advise the way we would want to be advised — with transparency, precision, and a long-term perspective."</div>
+  </div>
+  <div class="main-content">
+    <div class="why-main">
+      <div class="why-header">
+        <div class="eyebrow" style="color:var(--gold);margin-bottom:8px">Why EFS Life LLC</div>
+        <h2>Expertise, Relationships &amp; a Philosophy Born from Experience</h2>
+      </div>
+      <div class="why-body">
+        <div class="why-points">
+          <div class="why-point">
+            <div class="why-icon">💡</div>
+            <div>
+              <div class="why-point-title">Specialists in Structured Funding Strategies</div>
+              <div class="why-point-text">Enhanced Pension is not a product — it is a structure that requires precise coordination of a bank lender, a carrier illustration, a contribution schedule, and an income solve across two financing phases. We design these structures daily.</div>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-icon">🤝</div>
+            <div>
+              <div class="why-point-title">Carrier Relationships &amp; Institutional Access</div>
+              <div class="why-point-text">Our relationships with leading carriers give clients access to preferred product terms and program structures that are not available through general distribution. We know which carriers perform best in each client scenario — and we design accordingly.</div>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-icon">🏈</div>
+            <div>
+              <div class="why-point-title">Built on Team Chemistry</div>
+              <div class="why-point-text">Our founder's 10-year NFL career as an offensive lineman shaped a team-first philosophy. We collaborate directly with your CPA, attorney, and financial advisor to ensure Enhanced Pension is coordinated with the full picture of your financial life.</div>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-icon">🎯</div>
+            <div>
+              <div class="why-point-title">We Were Clients First</div>
+              <div class="why-point-text">Our firm's philosophy was shaped by our own experience as clients. We understand what it means to evaluate these structures from the other side of the table — with real capital and real families at stake.</div>
+            </div>
+          </div>
+        </div>
+        <div class="why-cta">
+          <div class="why-cta-headline">Ready to see what <em>Enhanced Pension</em> can do for your retirement income?</div>
+          <div class="why-cta-text">The next step is a formal carrier illustration built around your specific compensation, age, tax rate, and income timeline. Our team will walk you through every component of the structure before any decision is made.</div>
+          <div class="why-contact">
+            <div class="why-contact-item">🌐 <strong>EnhancedPension.com</strong></div>
+            <div class="why-contact-item">✉️ <strong>support@enhancedfunding.com</strong></div>
+            <div class="why-contact-item" id="doc-advisor-line" style="font-size:12px;color:rgba(255,255,255,.5)"></div>
+            <div class="why-contact-item" style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">Confidential — EFS Life LLC. This document is for discussion purposes only and does not constitute a contract, offer, or guarantee. All Monte Carlo projections are hypothetical based on historical S&amp;P 500 returns 1975–2024. Not valid without a complete carrier illustration.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  try {
+    var raw = localStorage.getItem('ep_mc_data');
+    if (!raw) return;
+    var r = JSON.parse(raw);
+
+    var $f = function(n){ return '$' + Math.round(n||0).toLocaleString(); };
+    var $fk = function(n){ n=n||0; return n>=1000000 ? '$'+(n/1000000).toFixed(1)+'M' : '$'+Math.round(n/1000)+'K'; };
+    var set = function(id, val){ var el=document.getElementById(id); if(el) el.textContent = val; };
+    var setHTML = function(id, val){ var el=document.getElementById(id); if(el) el.innerHTML = val; };
+
+    var comp = r.comp || 0;
+    var contribYears = r.contribYears || 10;
+    var contribTotal = r.contribTotal || (comp*contribYears);
+    var incStart = r.incStart || 65;
+    var incEnd = r.incEnd || 100;
+    var cola = r.cola || 3;
+    var epYr1 = r.epYr1_50 || 0;
+    var epTotal50 = r.epTotal50 || 0;
+    var investTotal = r.investTotalMed || 0;
+    var qpTotal = r.qpTotalMed || 0;
+    var showQP = r.compareMode === 'both';
+    var cmpTotal = showQP ? Math.max(investTotal, qpTotal) : investTotal;
+    var ratio = cmpTotal>0 ? (epTotal50/cmpTotal) : 0;
+
+    // ── COVER ──────────────────────────────────────────────────────────
+    set('cover-client', r.clientName || '—');
+    set('cover-date', r.date || '—');
+
+    // ── ACC/DIST PAGE ─────────────────────────────────────────────────
+    set('acc-rate-val', (r.bankRate||0) + '% bank rate');
+    set('acc-years-val', contribYears);
+    set('dist-rate-val', (r.plr||0) + '% participating rate');
+    set('dist-refi-val', 'Policy Year ' + (r.refiYear||contribYears+1));
+
+    // ── HOW EP WORKS PAGE ─────────────────────────────────────────────
+    set('how-step-1-text', 'Each contribution year, ' + $f(comp) + ' in compensation is committed to the structure. A bank simultaneously finances the income tax owed on that contribution — at a ' + (r.taxRate||0) + '% rate. Nothing is paid out of pocket.');
+    set('how-step-2-title', 'Funding Phase (' + contribYears + ' Annual Contributions)');
+    set('how-step-3-text', 'At Policy Year ' + (r.refiYear||contribYears+1) + ', the bank loan is retired via a participating asset loan at the ' + (r.plr||0) + '% carrier rate. The balance carries over intact — it does not reset. The asset continues compounding on its full value.');
+
+    // ── YOUR NUMBERS PAGE ─────────────────────────────────────────────
+    var adv = r.advisor ? String(r.advisor).replace(' — Advisor','').trim() + ' — Advisor' : '';
+    var advEl = document.getElementById('doc-advisor-line');
+    if (advEl && adv) advEl.textContent = adv;
+
+    var sidebarDesc = document.getElementById('doc-sidebar-desc');
+    var cmpLabel = showQP ? 'Taxable Account &amp; QP/DB' : 'Taxable Account';
+    if (sidebarDesc) sidebarDesc.innerHTML = 'EP vs. ' + cmpLabel + ' — Median Market Sequence · ' + (r.nSims||10000).toLocaleString() + ' Simulations';
+
+    setHTML('doc-outcomes-headline', 'Tax-Free Income vs. ' + (showQP ? 'Comparators' : 'Taxable Account') + ' — Ages <span id="doc-inc-ages">' + incStart + '–' + incEnd + '</span>');
+    set('doc-outcomes-meta', contribYears + ' contribution years of ' + $f(comp) + '/yr · refinances Policy Year ' + (r.refiYear||contribYears+1) + ' · ' + (r.nSims||10000).toLocaleString() + ' bootstrapped simulations, 1975–2024');
+
+    set('doc-inc-start', incStart);
+    set('doc-inc-end', incEnd);
+    set('doc-cola', cola);
+    set('doc-ep-yr1', $f(epYr1));
+    set('doc-ep-total', $f(epTotal50));
+    set('doc-inc-ages2', incStart + '–' + incEnd);
+    set('doc-nav-end', $f(r.navAtEnd||0));
+
+    if (showQP) {
+      set('doc-cmp-label', 'Best Comparator Net · 50th');
+      set('doc-cmp-total', $f(cmpTotal));
+      set('doc-cmp-sub', investTotal>=qpTotal ? 'Taxable investment account (pay tax, invest the difference)' : 'Qualified plan (DB/CB) — matching gross contribution');
+      var qline = document.getElementById('doc-qp-legend-line'), qtext = document.getElementById('doc-qp-legend-text');
+      if (qline) qline.style.display='inline'; if (qtext) qtext.style.display='inline';
+    } else {
+      set('doc-cmp-label', 'Taxable Acct Net · 50th');
+      set('doc-cmp-total', $f(investTotal));
+      set('doc-cmp-sub', 'Pay tax, invest the difference · ' + (r.ltcgRate||20) + '% LTCG on gains');
+    }
+
+    set('doc-advantage', $f(epTotal50-cmpTotal));
+    set('doc-ratio', ratio.toFixed(2) + '× more lifetime income');
+
+    // ── CHART ─────────────────────────────────────────────────────────
+    var ages = r.incomeAges || [];
+    var seriesEP50 = r.cumEP50 || [], seriesEP25 = r.cumEP25 || [], seriesEP75 = r.cumEP75 || [];
+    var seriesInvest = r.cumInvest50 || [], seriesQP = r.cumQP50 || [];
+    var maxVal = Math.max(1, ...seriesEP75, ...seriesEP50, ...seriesInvest, ...(showQP?seriesQP:[0]));
+    var x0=60, x1=1050, y0=335, y1=20;
+    function xFor(i){ return ages.length>1 ? x0 + (x1-x0)*(i/(ages.length-1)) : x0; }
+    function yFor(v){ return y0 - (y0-y1)*(v/maxVal); }
+    function pathFor(series){
+      if (!series.length) return '';
+      return series.map(function(v,i){ return (i===0?'M':'L') + xFor(i).toFixed(1) + ',' + yFor(v).toFixed(1); }).join(' ');
+    }
+    var pEP75=document.getElementById('doc-path-ep75'), pEP50=document.getElementById('doc-path-ep50'),
+        pEP25=document.getElementById('doc-path-ep25'), pInv=document.getElementById('doc-path-invest50'),
+        pQP=document.getElementById('doc-path-qp50');
+    if (pEP75) pEP75.setAttribute('d', pathFor(seriesEP75));
+    if (pEP50) pEP50.setAttribute('d', pathFor(seriesEP50));
+    if (pEP25) pEP25.setAttribute('d', pathFor(seriesEP25));
+    if (pInv) pInv.setAttribute('d', pathFor(seriesInvest));
+    if (pQP && showQP) pQP.setAttribute('d', pathFor(seriesQP));
+
+    [0,1,2,3].forEach(function(i){
+      var v = maxVal * (i/3);
+      var el = document.getElementById('doc-yl'+i);
+      if (el) el.textContent = $fk(v);
+    });
+
+    var xlabels = document.getElementById('doc-xlabels');
+    if (xlabels && ages.length) {
+      var step = Math.max(1, Math.round(ages.length/8));
+      var html='';
+      ages.forEach(function(a,i){
+        if (i % step === 0 || i===ages.length-1) {
+          html += '<text x="'+xFor(i).toFixed(1)+'" y="'+(y0+18)+'" font-size="10.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
+        }
+      });
+      xlabels.innerHTML = html;
+    }
+
+  } catch(e) { console.warn('EP discussion doc data load failed:', e); }
+})();
+</script>
+</body>
+</html>
