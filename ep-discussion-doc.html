@@ -380,7 +380,7 @@
             <div class="how-step-num">2</div>
             <div>
               <div class="how-step-title" id="how-step-2-title">Funding Phase (10 Annual Contributions)</div>
-              <div class="how-step-text">The full compensation funds a tax-free index life insurance asset each year. The tax-free asset begins accumulating from day one, protected by a 0% floor.</div>
+              <div class="how-step-text" id="how-step-2-text">Compensation deposits into a Premium Deposit Account earning a declared rate. A level premium is drawn into the policy each year — sized so the PDA depletes to zero by the end of the funding period — and funds a tax-free index life insurance asset, protected by a 0% floor.</div>
             </div>
           </div>
           <div class="how-step">
@@ -603,7 +603,7 @@
     set('cover-date', r.date || '—');
 
     // ── ACC/DIST PAGE ─────────────────────────────────────────────────
-    set('acc-rate-val', (r.bankRate||0) + '% bank rate');
+    set('acc-rate-val', (r.lenderIndex||0) + '% + ' + (r.lenderSpread||0) + '% spread');
     set('acc-years-val', contribYears);
     set('dist-rate-val', (r.plr||0) + '% participating rate');
     set('dist-refi-val', 'Policy Year ' + (r.refiYear||contribYears+1));
@@ -611,6 +611,9 @@
     // ── HOW EP WORKS PAGE ─────────────────────────────────────────────
     set('how-step-1-text', 'Each contribution year, ' + $f(comp) + ' in compensation is committed to the structure. A bank simultaneously finances the income tax owed on that contribution — at a ' + (r.taxRate||0) + '% rate. Nothing is paid out of pocket.');
     set('how-step-2-title', 'Funding Phase (' + contribYears + ' Annual Contributions)');
+    var carrierName = r.carrierKey==='PL' ? 'Pacific Life — ECV Pref+' : 'National Life Group — Summit Pref+';
+    var pdaYrs = r.pdaRetentionYears || 2;
+    setHTML('how-step-2-text', 'Compensation deposits into a Premium Deposit Account earning ' + (r.pdaRate||0) + '%. In years 1&ndash;' + pdaYrs + ', a smaller premium is paid to the policy while the PDA builds a balance; from year ' + (pdaYrs+1) + ' forward, a level premium of <b>' + $f(r.levelPremium||0) + '</b>/yr is drawn so the PDA depletes to zero by the end of the funding period. Illustrated on ' + carrierName + '.');
     set('how-step-3-text', 'At Policy Year ' + (r.refiYear||contribYears+1) + ', the bank loan is retired via a participating asset loan at the ' + (r.plr||0) + '% carrier rate. The balance carries over intact — it does not reset. The asset continues compounding on its full value.');
 
     // ── YOUR NUMBERS PAGE ─────────────────────────────────────────────
@@ -636,13 +639,13 @@
     if (showQP) {
       set('doc-cmp-label', 'Best Comparator Net · 50th');
       set('doc-cmp-total', $f(cmpTotal));
-      set('doc-cmp-sub', investTotal>=qpTotal ? 'Taxable investment account (pay tax, invest the difference)' : 'Qualified plan (DB/CB) — matching gross contribution');
+      set('doc-cmp-sub', investTotal>=qpTotal ? ('Taxable investment account, ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee') : ('Qualified plan (DB/CB), ' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee'));
       var qline = document.getElementById('doc-qp-legend-line'), qtext = document.getElementById('doc-qp-legend-text');
       if (qline) qline.style.display='inline'; if (qtext) qtext.style.display='inline';
     } else {
       set('doc-cmp-label', 'Taxable Acct Net · 50th');
       set('doc-cmp-total', $f(investTotal));
-      set('doc-cmp-sub', 'Pay tax, invest the difference · ' + (r.ltcgRate||20) + '% LTCG on gains');
+      set('doc-cmp-sub', 'Pay tax, invest the difference · ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee, ' + (r.ltcgRate||20) + '% LTCG on gains');
     }
 
     set('doc-advantage', $f(epTotal50-cmpTotal));
