@@ -245,17 +245,13 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <label class="fl">PDA Yield Rate (%)</label>
             <div class="field"><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
           </div>
-          <div class="chk-row">
-            <input type="checkbox" id="refiManualChk" onchange="toggleRefiManual()"/>
-            <label for="refiManualChk">Set refinance year manually</label>
-          </div>
-          <div class="fg" id="refiManualRow" style="display:none">
+          <div class="fg" id="refiManualRow">
             <label class="fl">Refinance — Policy Year / Age</label>
             <div class="field">
               <select id="refiYearManual" style="width:100%;background:var(--off);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:9px 12px;outline:none"></select>
             </div>
+            <div class="hint">The year the insurance company refinances the bank. The loan balance carries over intact — only the accrual rate changes, from the bank rate to the PLR.</div>
           </div>
-          <div class="hint" id="refiAutoHint">Refinance is calculated automatically — the insurance company refinances the bank the year after the final contribution (Policy Year <span id="refiAutoYearDisp">11</span>, Age <span id="refiAutoAgeDisp">60</span>). The loan balance carries over intact; only the accrual rate changes, from the bank rate to the PLR.</div>
 
           <div class="sep"></div>
           <div class="stag">Policy — IUL Crediting</div>
@@ -416,16 +412,9 @@ function getBankRateForYear(policyYr, baseRate, env){
 // ══════════════════════════════════════════════════════════
 // REFINANCE YEAR DROPDOWN — Policy Year / Age pairs
 // ══════════════════════════════════════════════════════════
-function toggleRefiManual(){
-  const on = document.getElementById('refiManualChk').checked;
-  document.getElementById('refiManualRow').style.display = on ? 'block' : 'none';
-  document.getElementById('refiAutoHint').style.display = on ? 'none' : 'block';
-}
 function rebuildRefiDropdown(){
   const issueAge = parseInt(document.getElementById('issueAge').value)||50;
   const cy = parseInt(document.getElementById('contribYears').value)||10;
-  document.getElementById('refiAutoYearDisp').textContent = cy+1;
-  document.getElementById('refiAutoAgeDisp').textContent = issueAge+cy;
   const sel = document.getElementById('refiYearManual');
   const prev = sel.value;
   sel.innerHTML='';
@@ -646,8 +635,7 @@ async function calculate(){
   const compareMode = _compareMode;
   const nSims = parseInt(document.getElementById('nSims').value)||10000;
   const dataYears = parseInt(document.getElementById('dataYears').value)||50;
-  const refiManual = document.getElementById('refiManualChk').checked;
-  const refiYear = refiManual ? (parseInt(document.getElementById('refiYearManual').value)||contribYears+1) : contribYears+1;
+  const refiYear = parseInt(document.getElementById('refiYearManual').value)||contribYears+1;
 
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
   if (!incStart){ errEl.textContent='Enter income start age.'; errEl.style.display='block'; return; }
