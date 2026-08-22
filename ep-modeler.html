@@ -240,12 +240,12 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="sep"></div>
           <div class="stag">Financing — Bank Phase → Insurance Phase</div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Lender Index Rate (%)</label><input type="number" id="lenderIndex" value="4.83" step="0.01" oninput="updateBankRateDisplay()"/></div>
+            <div class="field"><label class="fl">Lender Index Rate (%)</label><input type="number" id="lenderIndex" value="3.75" step="0.01" oninput="updateBankRateDisplay()"/></div>
             <div class="field"><label class="fl">Lender Spread (%)</label><input type="number" id="lenderSpread" value="2.50" step="0.25" oninput="updateBankRateDisplay()"/></div>
           </div>
           <div class="rate-display">
             <span class="rl">Bank Rate — Index + Spread</span>
-            <span class="rv" id="bankRateDisplay">7.33%</span>
+            <span class="rv" id="bankRateDisplay">6.25%</span>
           </div>
           <div class="fg" style="margin-top:14px">
             <label class="fl">PLR — Distribution (%)</label>
@@ -268,13 +268,18 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <span class="rv" id="combinedRateDisplay">37.75%</span>
           </div>
           <div class="fg fr" style="margin-top:14px">
-            <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="3.50" step="0.25"/></div>
+            <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="2.50" step="0.25"/></div>
             <div class="field"><label class="fl">PDA Retention Years</label><input type="number" id="pdaRetentionYears" value="2" min="0" max="5" step="1"/></div>
           </div>
           <div class="fg">
             <label class="fl">PDA Retention % (Yrs 1–N Held Back)</label>
             <div class="field"><input type="number" id="pdaRetentionPct" value="50" min="0" max="90" step="5"/></div>
             <div class="hint">Client compensation deposits into a Premium Deposit Account earning the PDA rate (interest taxed annually at the combined rate above). In the first N years shown here, only the un-retained share of that year's deposit is paid into the policy as premium — the rest builds a PDA balance. From year N+1 through the end of the contribution period, a level premium is solved so the PDA depletes to ~$0.</div>
+          </div>
+          <div class="fg fr">
+            <div class="field"><label class="fl">Loan Origination Fee (%)</label><input type="number" id="loanOrigFeeRate" value="0.25" step="0.05" min="0"/></div>
+            <div class="field"><label class="fl">Mail Away Fee ($)</label><input type="number" id="mailAwayFee" value="150" step="10" min="0"/></div>
+            <div class="hint" style="grid-column:1/-1">Both are one-time fees deducted from the first year's PDA deposit before it starts earning interest — the origination fee applied to the total funded amount, the mail away fee flat.</div>
           </div>
           <div class="fg" id="refiManualRow">
             <label class="fl">Refinance — Policy Year / Age</label>
@@ -333,8 +338,8 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <div class="field"><label class="fl">Comparator LTCG Rate (%)</label><input type="number" id="ltcgRate" value="20" step="0.5"/></div>
           </div>
           <div class="fg fr">
-            <div class="field"><label class="fl">Investment Acct Management Fee (%/yr)</label><input type="number" id="investFee" value="1.00" step="0.25"/></div>
-            <div class="field"><label class="fl">Investment Acct Equity Allocation (%)</label><input type="number" id="investEqWt" value="70" step="5" min="0" max="100"/></div>
+            <div class="field"><label class="fl">Investment Acct Management Fee (%/yr)</label><input type="number" id="investFee" value="0.75" step="0.25"/></div>
+            <div class="field"><label class="fl">Investment Acct Equity Allocation (%)</label><input type="number" id="investEqWt" value="60" step="5" min="0" max="100"/></div>
           </div>
           <div class="hint">Taxable investment account: client pays income tax on compensation annually (no financing), invests the after-tax difference in a blended equity/bond account (net of the management fee above), drawn from the same paired historical sequence as EP's crediting, then draws income to $0 by income end age. Gains taxed at the LTCG rate shown; basis returns tax-free.</div>
 
@@ -886,20 +891,24 @@ function simEPPathFull(returns, income, p){
 // year, solved by bisection so the PDA depletes to ~$0 by the end of the
 // contribution period.
 // ══════════════════════════════════════════════════════════
-function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct){
+function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct, loanOrigFeeRate, mailAwayFee){
+  const totalGross = comp*contribYears;
+  const loanOrigFee = totalGross*((loanOrigFeeRate||0)/100);
+  const yr1Fees = loanOrigFee + (mailAwayFee||0);
   function simulate(L){
     let bal=0;
     const rows=[];
     for (let yr=1; yr<=contribYears; yr++){
       const boy = bal;
-      bal += comp;
+      const netDeposit = yr===1 ? Math.max(0, comp-yr1Fees) : comp;
+      bal += netDeposit;
       const interest = bal*(pdaRate/100);
       const taxOnInt = interest*(combinedTaxRate/100);
       const netInt = interest-taxOnInt;
       bal += netInt;
       const premium = yr<=retentionYears ? comp*(1-retentionPct/100) : L;
       bal -= premium;
-      rows.push({yr, boy, deposit:comp, interest, taxOnInt, netInt, premium, eoy:bal});
+      rows.push({yr, boy, deposit:comp, fees:yr===1?yr1Fees:0, netDeposit, interest, taxOnInt, netInt, premium, eoy:bal});
     }
     return {finalBal: bal, rows};
   }
@@ -911,7 +920,7 @@ function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionY
   }
   const levelPremium=(lo+hi)/2;
   const rows = simulate(levelPremium).rows.map(r=>({...r, eoy:Math.max(0,r.eoy)}));
-  return {levelPremium, retentionYears, rows};
+  return {levelPremium, retentionYears, loanOrigFee, mailAwayFee:(mailAwayFee||0), rows};
 }
 
 // ══════════════════════════════════════════════════════════
@@ -933,13 +942,15 @@ function calculateFundingSchedule(){
   const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
   const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
   const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
+  const loanOrigFeeRate = parseFloat(document.getElementById('loanOrigFeeRate').value)||0;
+  const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
   const carrierKey = document.getElementById('carrier').value;
   const carrierName = carrierKey==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
 
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
   if (!contribYears){ errEl.textContent='Enter contribution years.'; errEl.style.display='block'; return; }
 
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct);
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, loanOrigFeeRate, mailAwayFee);
   const totalPremium = funding.rows.reduce((s,r)=>s+r.premium,0);
   const totalDeposits = comp*contribYears;
   const totalFinancedTax = comp*contribYears*(taxRate/100);
@@ -951,6 +962,7 @@ function calculateFundingSchedule(){
     tableRows += `<tr class="${cls}">
       <td>${r.yr}</td><td>${age}</td>
       <td>${fmt$(r.boy)}</td>
+      <td>${r.fees>0?fmt$(r.fees):'—'}</td>
       <td>${fmt$(r.interest)}</td>
       <td>${fmt$(r.taxOnInt)}</td>
       <td>${fmt$(r.netInt)}</td>
@@ -973,6 +985,7 @@ function calculateFundingSchedule(){
             <div class="pc-stat"><div class="psl">Yrs 1\u2013${pdaRetentionYears} Premium</div><div class="psv">${fmt$(comp*(1-pdaRetentionPct/100))}/yr</div></div>
             <div class="pc-stat"><div class="psl">Total Into Policy</div><div class="psv">${fmt$(totalPremium)}</div></div>
             <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${contribYears} yrs</div></div>
+            <div class="pc-stat"><div class="psl">Yr 1 Fees</div><div class="psv">${fmt$(funding.loanOrigFee+funding.mailAwayFee)}</div></div>
           </div>
         </div>
 
@@ -983,18 +996,18 @@ function calculateFundingSchedule(){
 
         <div class="stag" style="margin-bottom:10px">Premium Deposit Account — Year by Year</div>
         <div style="overflow-x:auto">
-          <table class="ldg" style="min-width:700px">
+          <table class="ldg" style="min-width:780px">
             <thead><tr>
-              <th>Yr</th><th>Age</th><th>BOY PDA</th><th>Gross Int</th><th>Tax on Int</th><th>Net Int</th><th>Premium Paid</th><th>EOY PDA</th>
+              <th>Yr</th><th>Age</th><th>BOY PDA</th><th>Fees</th><th>Gross Int</th><th>Tax on Int</th><th>Net Int</th><th>Premium Paid</th><th>EOY PDA</th>
             </tr></thead>
             <tbody>${tableRows}</tbody>
             <tfoot><tr>
-              <td colspan="6" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${contribYears}</td>
+              <td colspan="7" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${contribYears}</td>
               <td colspan="2">${fmt$(totalPremium)}</td>
             </tr></tfoot>
           </table>
         </div>
-        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Bank-financed income tax on those deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
+        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Loan origination fee (${document.getElementById('loanOrigFeeRate').value}% of total funded) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from the Year 1 deposit, before it starts earning PDA interest. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
       </div>
     </div>`;
 
@@ -1150,6 +1163,8 @@ async function calculate(){
   const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
   const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
   const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
+  const loanOrigFeeRate = parseFloat(document.getElementById('loanOrigFeeRate').value)||0;
+  const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
 
   if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
   if (!incStart){ errEl.textContent='Enter income start age.'; errEl.style.display='block'; return; }
@@ -1180,8 +1195,7 @@ async function calculate(){
   const carrierRows = carrierResult.rows;
 
   sub.textContent='Solving PDA funding schedule…'; fill.style.width='4%'; await tick();
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct);
-
+  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, loanOrigFeeRate, mailAwayFee);
   const p = {issueAge, contribYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
              refiYear, incStart, incEnd, cola, carrierKey, carrierRows,
              pdaSchedule:funding.rows, levelPremium:funding.levelPremium};
