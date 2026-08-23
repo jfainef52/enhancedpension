@@ -2,32 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
-<title>EP Modeler — RetainMoreValue.com</title>
-<!-- ── AUTH GATE ── -->
-<script>
-(function() {
-  var found = false;
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.match(/^sb-.*-auth-token$/)) {
-        var p = JSON.parse(localStorage.getItem(k));
-        var tok = (p && p.access_token) || (p && p.session && p.session.access_token);
-        if (tok) { found = true; break; }
-      }
-    }
-  } catch(e) {}
-  if (!found) {
-    window.location.replace('/advisor-login.html');
-  }
-})();
-</script>
-<!-- ── END AUTH GATE ── -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<title>EFS Life — Enhanced Pension Ledger</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -38,1495 +13,615 @@
   --red:#8b2020; --red-lt:#fdf0f0; --text:#1a1a2a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--off);color:var(--text);min-height:100vh}
-.hdr{background:var(--navy);padding:16px 48px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(201,168,76,.2)}
-.logo-text .t{font-family:'Playfair Display',serif;color:var(--white);font-size:18px;font-weight:600;letter-spacing:3px}
-.logo-text .b{font-size:9px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-top:1px}
-.hdr-right{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-left:auto}
-.page{max-width:1100px;margin:0 auto;padding:40px 32px}
-.two-col{display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:start}
-.card{background:var(--white);border:1px solid var(--border);border-radius:6px;overflow:hidden}
-.card-hdr{background:var(--navy-2);padding:13px 22px;display:flex;align-items:center;gap:10px}
-.card-hdr h2{font-family:'Playfair Display',serif;font-size:15px;color:var(--white);font-weight:500}
-.card-hdr .step{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);padding:2px 8px;border-radius:2px}
-.card-body{padding:24px 0}
-.fl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
-.field input,.field select{width:100%;background:var(--off);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 12px;outline:none;transition:border-color .15s}
-.field input:focus,.field select:focus{border-color:var(--gold);background:rgba(201,168,76,.04)}
-.field input.computed{background:#f0ede6;color:var(--navy);font-weight:500}
-.fg{margin-bottom:18px}
-.fg:last-child{margin-bottom:0}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.sep{height:1px;background:var(--border);margin:22px 0}
-.stag{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid rgba(201,168,76,.2)}
-.hint{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;line-height:1.5}
-.chk-row{display:flex;align-items:center;gap:10px;padding:8px 0}
-.chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer}
-.chk-row label{font-size:12px;color:var(--text);cursor:pointer}
-.src-toggle{display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:4px;overflow:hidden}
-.src-btn{flex:1;padding:9px 10px;border:none;background:var(--off);font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--muted);text-align:center;line-height:1.3;letter-spacing:.3px}
-.src-btn.active{background:var(--navy);color:var(--gold);font-weight:600}
-.src-btn:first-child{border-right:1px solid var(--border)}
-.rate-display{background:var(--navy);border-radius:4px;padding:12px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
-.rate-display .rl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4)}
-.rate-display .rv{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--gold);font-weight:500}
-.rate-env-btns{display:flex;gap:8px;margin-top:10px}
-.rate-btn{flex:1;padding:8px 6px;border:1px solid var(--border);border-radius:3px;background:var(--off);font-family:'IBM Plex Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);text-align:center;line-height:1.3}
-.rate-btn.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
-.stateNoteHint{font-size:11px;margin-top:6px;font-style:italic;line-height:1.5;display:none}
-.carrier-instr{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:14px 16px;margin-bottom:14px}
-.carrier-instr h4{font-family:'Playfair Display',serif;font-size:13px;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.carrier-instr h4 .tag{font-size:9px;background:var(--navy);color:var(--gold);padding:2px 7px;border-radius:2px;letter-spacing:1px;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
-.upload-zone{border:1.5px dashed rgba(13,27,46,.2);border-radius:6px;padding:22px 18px;text-align:center;cursor:pointer;position:relative;background:var(--off);transition:all .2s}
-.upload-zone:hover,.upload-zone.has-file{border-color:var(--gold);background:rgba(201,168,76,.05)}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.uz-icon{font-size:24px;margin-bottom:6px}
-.uz-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);font-weight:600;margin-bottom:4px}
-.uz-hint{font-size:10.5px;color:var(--muted)}
-.uz-file{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);margin-top:8px}
-.premium-callout{background:var(--navy);border-radius:6px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.premium-callout .pc-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-.premium-callout .pc-value{font-family:'Playfair Display',serif;font-size:32px;color:var(--white);font-weight:600}
-.premium-callout .pc-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
-.premium-callout .pc-stats{display:flex;gap:24px}
-.premium-callout .pc-stat{text-align:right}
-.premium-callout .pc-stat .psl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:3px}
-.premium-callout .pc-stat .psv{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--gold)}
-.pda-summary{background:var(--gold-pale);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:12px 16px;margin-top:12px}
-.pda-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(201,168,76,.12);font-size:11.5px}
-.pda-row:last-child{border-bottom:none;font-weight:600;padding-top:6px}
-.pda-key{color:var(--muted)}
-.pda-val{font-family:'IBM Plex Mono',monospace;color:var(--navy)}
-.pda-val.g{color:var(--green);font-weight:600}
-.calc-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:13px;cursor:pointer;margin-top:12px;transition:all .2s}
-.calc-btn:hover{background:var(--gold-lt)}
-.opl{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;color:#8a8070;font-size:13px;gap:12px;border:1.5px dashed #ddd8ce;border-radius:6px;background:rgba(255,255,255,.6)}
-.opl .icon{font-size:36px;opacity:.2}
-.lerr{display:none;color:var(--red);font-size:12px;margin-top:10px;text-align:center}
-/* Progress */
-#prog-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,46,.92);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:18px}
-#prog-overlay h3{font-family:'Playfair Display',serif;color:var(--white);font-size:22px}
-.prog-bar-wrap{width:420px;height:4px;background:rgba(255,255,255,.1);border-radius:2px}
-#prog-fill{height:100%;width:0%;background:var(--gold);border-radius:2px;transition:width .3s}
-#prog-sub{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px}
-/* Output */
-#ledger-output{display:none;overflow-x:hidden;}
-.mc-banner{background:var(--navy);padding:24px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px}
-.mc-banner .name{font-family:'Playfair Display',serif;font-size:26px;color:var(--white)}
-.mc-banner .sub-name{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-top:3px}
-.mc-banner .meta{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px}
-.bs{display:flex;gap:22px;flex-wrap:wrap}
-.bst .bl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:3px;text-align:right}
-.bst .bv{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);text-align:right}
-.pct-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:20px 40px}
-.pct-card{border:1px solid var(--border);border-radius:5px;padding:16px 18px}
-.pct-card.hl{border-color:var(--gold);background:rgba(201,168,76,.03)}
-.pct-card .pc-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.pct-card.hl .pc-label{color:var(--gold)}
-.pct-card .pc-eta{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);margin-bottom:4px}
-.pct-card .pc-qp{font-size:11px;color:var(--muted)}
-.pct-card .pc-qp span{font-family:'IBM Plex Mono',monospace;color:var(--text)}
-.chart-wrap{padding:0 40px 4px;background:var(--white);border-top:1px solid var(--border)}
-.chart-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);padding:16px 0 4px}
-.chart-sub{font-size:10px;color:var(--muted);margin-bottom:10px}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;padding:16px 40px}
-.stat-crd{border:1px solid var(--border);border-radius:5px;padding:16px 18px}
-.stat-crd.hl{border-color:var(--gold);background:rgba(201,168,76,.03)}
-.sc-label{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.sc-label.g{color:var(--gold)}
-.sc-value{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:500;margin-bottom:10px}
-.sc-stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
-.sc-stat:last-child{border-bottom:none}
-.sk{color:var(--muted)}
-.sv{font-family:'IBM Plex Mono',monospace;font-weight:500}
-.sv.g{color:var(--green)}
-.pct-explain{display:flex;gap:12px;padding:12px 40px;flex-wrap:wrap}
-.pe-item{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:220px;background:var(--white);border:1px solid var(--border);border-radius:4px;padding:10px 12px}
-.pe-badge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap}
-.pe-text{font-size:11px;color:var(--muted);line-height:1.4}
-.phase-hdr{margin:20px 40px 8px;display:flex;align-items:center;gap:12px}
-.phase-hdr h3{font-family:'Playfair Display',serif;font-size:16px;color:var(--navy)}
-.phase-badge{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);padding:2px 9px;border-radius:2px}
-.ldg-wrap{padding:0 40px;overflow-x:auto}
-table.ldg{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:10.5px;min-width:1100px}
-table.ldg thead th{background:var(--navy);color:rgba(255,255,255,.6);font-size:8px;letter-spacing:.8px;text-transform:uppercase;padding:7px 8px;text-align:right;border-right:1px solid rgba(255,255,255,.07)}
-table.ldg thead th:first-child,table.ldg thead th:nth-child(2){text-align:center}
-table.ldg thead th.sec{border-left:2px solid rgba(201,168,76,.3)}
-table.ldg tbody td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--border);border-right:1px solid #eee;font-size:10px}
-table.ldg tbody td:first-child,table.ldg tbody td:nth-child(2){text-align:center;font-weight:500}
-table.ldg tbody td.sec{border-left:2px solid rgba(201,168,76,.2)}
-table.ldg tbody tr:nth-child(even){background:var(--off)}
-table.ldg tbody tr:hover{background:rgba(201,168,76,.05)}
-table.ldg tbody tr.contrib-yr td{background:rgba(13,27,46,.02)}
-table.ldg tbody tr.refi-yr td{background:rgba(201,168,76,.08)!important;font-weight:600}
-table.ldg tbody tr.income-yr td{background:rgba(42,110,69,.03)}
-table.ldg tbody tr.income-yr td.income-val{color:var(--green);font-weight:600}
-table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--navy);font-weight:600;font-size:11px;background:var(--off)}
-.actions-bar{background:var(--navy-2);padding:12px 40px;display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(201,168,76,.2)}
+body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text);font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:17in;min-height:11in;margin:0 auto 32px;overflow:hidden;position:relative;background:white;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column}
+@page{size:17in 11in landscape;margin:.35in}
+@media print{
+  body{background:white}
+  .page{margin:0;box-shadow:none;page-break-after:always;min-height:0!important}
+  .page:last-child{page-break-after:avoid!important}
+  .disc-3col{margin-top:16px!important}
+  table.dual tbody tr,table.sc-ldg tbody tr{page-break-inside:avoid}
+  .stat-strip,.scenario-strip,.sc-band{page-break-inside:avoid}
+}
+.actions-bar{background:var(--navy-2);padding:10px 24px;display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(201,168,76,.2)}
 .ab-btn{border:1px solid rgba(201,168,76,.3);color:var(--gold);background:transparent;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 16px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .2s}
 .ab-btn:hover{border-color:var(--gold);background:rgba(201,168,76,.1)}
-.ab-btn.primary{background:var(--gold);color:var(--navy);font-weight:600;border-color:var(--gold);margin-left:auto}
-.ldg-disc{padding:16px 40px;font-size:9px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)}
-.anim{animation:fu .35s ease both}
-@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media print{
-  .hdr,.calc-btn,.ab-btn,#intake-panel{display:none!important}
-  #ledger-output{display:block!important}
-  @page{size:17in 11in landscape;margin:.4in}
-  body{background:white}
-  .ldg-wrap{overflow:visible}
-}
+.ab-btn.primary{background:var(--gold);color:var(--navy);font-weight:600;border-color:var(--gold)}
+@media print{.actions-bar{display:none!important}}
+
+/* ── PAGE HEADER (greensheet dual-panel pages) ── */
+.eta-page-hdr{background:var(--navy);padding:16px 32px;display:flex;align-items:flex-start;justify-content:space-between;width:100%;box-sizing:border-box}
+.eta-page-hdr .eyebrow{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.eta-page-hdr .title{font-family:'Playfair Display',serif;font-size:26px;color:var(--white);font-weight:500}
+.eta-page-hdr .meta-line{font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.3px}
+.eta-page-hdr .ver-block{text-align:right}
+.eta-page-hdr .ver-block .vdate{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+
+/* Stat strip */
+.stat-strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:2px solid var(--border)}
+.stat-box{padding:10px 18px;border-right:1px solid var(--border)}
+.stat-box:last-child{border-right:none}
+.stat-box .sb-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;line-height:1.4}
+.stat-box .sb-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--navy);font-weight:600}
+.stat-box .sb-sub{font-size:9px;color:var(--muted);margin-top:3px}
+.stat-box.hl{background:rgba(201,168,76,.05)}
+.stat-box.hl .sb-val{color:var(--gold)}
+.stat-box .sb-adv{font-size:10px;color:var(--green);font-weight:600;margin-top:4px}
+
+/* Two-panel table */
+.dual-panel{width:100%;overflow:hidden;box-sizing:border-box}
+.dual-panel>div:first-child{float:left;width:42%;box-sizing:border-box}
+.right-panel-wrap{float:left!important;width:58%;box-sizing:border-box;border-left:none}
+table.dual{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
+table.dual thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:5px 6px;text-align:right;border-right:1px solid rgba(255,255,255,.06);white-space:normal;overflow:hidden}
+table.dual tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;white-space:normal;font-size:9px;overflow:hidden}
+table.dual tbody td:first-child,table.dual tbody td:nth-child(2){font-weight:500}
+table.dual tbody tr:nth-child(even){background:var(--off)}
+table.dual tbody tr:hover{background:rgba(201,168,76,.04)}
+table.dual tbody tr.sec-hdr td{background:var(--navy-2)!important;color:var(--gold);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif;padding:5px 6px;text-align:left!important;font-weight:600;border-bottom:none}
+table.dual tbody tr.fund-yr td{background:rgba(13,27,46,.02)}
+table.dual tbody tr.payoff-yr td{background:rgba(201,168,76,.1)!important;font-weight:700}
+table.dual tbody tr.income-yr td{background:rgba(42,110,69,.03)}
+table.dual tbody tr.income-yr td.inc-val{color:var(--green);font-weight:700}
+table.dual tbody tr.post-yr td{background:rgba(201,168,76,.02)}
+table.dual tfoot td{padding:5px 6px;text-align:center;font-weight:700;border-top:2px solid var(--navy);font-size:9.5px;background:var(--off)}
+.right-panel-wrap table.dual td:first-child,.right-panel-wrap table.dual th:first-child{border-left:3px solid var(--gold)}
+.disc-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:8px 32px;border-top:1px solid var(--border);font-size:8px;color:var(--muted);line-height:1.5}
+
+/* PAGE 2+: Scenario analysis / ledger header */
+.pg2-hdr{background:var(--navy);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.pg2-hdr .title{font-family:'Playfair Display',serif;font-size:20px;color:var(--white)}
+.pg2-hdr .sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px}
+
+/* Scenario cards */
+.scenario-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--border)}
+.sc-band{padding:16px 20px;border-right:1px solid var(--border)}
+.sc-band:last-child{border-right:none}
+.sc-band.median{background:rgba(201,168,76,.04);border-top:3px solid var(--gold)}
+.sc-band .sc-name{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.sc-band.median .sc-name{color:var(--gold)}
+.sc-band .sc-inc{font-family:'Playfair Display',serif;font-size:26px;color:var(--navy)}
+.sc-band .sc-sub{font-size:10px;color:var(--muted);margin-top:4px}
+.sc-band .sc-total{font-size:11px;color:var(--text);font-weight:600;margin-top:6px}
+
+/* Scenario ledger table */
+table.sc-ldg{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
+table.sc-ldg thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:4px 6px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
+table.sc-ldg thead th.gold-col{background:rgba(201,168,76,.15);color:var(--gold)}
+table.sc-ldg tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;font-size:9px}
+table.sc-ldg tbody td:first-child,table.sc-ldg tbody td:nth-child(2){font-weight:500}
+table.sc-ldg tbody tr:nth-child(even){background:var(--off)}
+table.sc-ldg tbody tr.income-yr td.gold-col{color:var(--gold);font-weight:700}
+table.sc-ldg tbody tr.income-yr td.green-col{color:var(--green);font-weight:600}
+table.sc-ldg tbody tr.sec-hdr td{background:var(--navy-2)!important;color:var(--gold);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif;padding:5px 6px;text-align:left!important;font-weight:600}
+table.sc-ldg tfoot td{padding:5px 7px;text-align:right;font-weight:700;border-top:2px solid var(--navy);font-size:9.5px;background:var(--off)}
+table.sc-ldg tfoot td:first-child,table.sc-ldg tfoot td:nth-child(2){text-align:center}
+table.sc-ldg tfoot td.gold-col{color:var(--gold)}
 </style>
 </head>
 <body>
-
-<div class="hdr">
-  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="26" viewBox="0 0 1417 368" xml:space="preserve" style="flex-shrink:0">
-    <g><path fill="#FFFFFF" d="M356.718,51.895H107.804v248.914h124.335c-3.1,6.239-8.797,14.516-10.488,18.127l-0.266,0.604H89.074V33.165h286.375l0,64.698c-4.035,3.044-8.566,5.883-13.666,8.604c-1.651,0.882-3.356,1.645-5.064,2.357V51.895z M257.101,300.809h22.341c-14.024,0.813-21.681,7.254-24.268,14.115c-0.104-5.474-0.37-10.386,1.112-12.794L257.101,300.809z M317.209,300.809h39.509v-83.955c5.178-5.954,8.698-10.725,9.054-10.648c3.285,0.712,6.488,1.438,9.676,1.961l0,111.373h-77.993c3.602-1.962,6.725-3.637,8.958-4.545C311.832,312.791,315.76,305.381,317.209,300.809z"/><path fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" d="M182.381,324.222c3.701,3.545,5.984,6.317,3.814,6.438c-5.52,0.307-14.096,1.673-17.469,0.753s-5.83-6.825-5.83-6.825L182.381,324.222z M84.392,314.414c-8.056,1.693-27.078,5.802-29.85,9.329c-3.373,4.292-11.495,2.978-12.265-0.307c-1.208-5.148,1.772-14.872,8.585-18.705c8.25-4.64,24.374-3.006,26.827-4.232c0.853-0.427,3.52-3.112,6.703-6.603V314.414z M84.392,219.194c-11.831,0.147-23.829-0.765-23.829-0.765s-3.585,12.397-11.801,12.696c-8.216,0.299-24.349-6.871-24.349-6.871s11.502,4.631,16.581,0.747s4.78-8.066,8.963-9.561s11.353-0.447,11.353-0.447s12.141,0.222,23.082-0.533V219.194z M135.644,289.767c-9.205,1.975-17.08,2.889-23.157,6.242v-41.895c4.325-4.195,9.52-8.924,13.038-16.168c5.092-10.482,9.013-23.305,11.765-29.039c-8.35-4.014-18.359-8.063-24.803-8.082v-6.397c9.81,0.647,21.874,4.464,30.787,7.787c5.496-4.642,12.802-9.236,13.835-9.649c1.533-0.613,12.879-1.227,16.559-3.066s13.416-13.568,20.392-16.788s11.882-4.829,16.559-4.829c2.637,0,14.29,0.39,25.08,1.472c12.319-4.688,23.968-8.972,27.574-11.312c8.327-5.401,19.784-10.374,26.615-14.495c6.832-4.122,10.037-9.455,23.271-13.359c7.114-2.099,16.859-2.407,24.35-2.244c1.706,3.941,3.741,7.61,5.902,9.33c5.849,4.655,20.19,7.965,20.19,7.965s-11.25-5.115-17.225-10.585c-2.104-1.926-3.051-4.638-3.395-7.344c-0.296-3.643,0.782-7.225,3.403-8.533c4.839-2.416,27.776-10.292,42.981-27.307c16.168-18.094,16.642-34.156,17.637-34.502c2-0.696-1.752,23.748-12.379,40.381c-6.003,9.395-12.737,15.903-19.214,20.238c-2.707,1.812-4.567,3.201-5.818,4.206c2.096-0.108,4.284-0.044,6.53,0.255c6.183,0.825,26.711,18.773,30.338,25.46c7.129-1.77,15.903-4.851,22.589-12.762c12.848-15.202,6.701-34.215,8.548-31.653c1.848,2.562,6.247,21.779-4.054,37.77c-6.195,9.616-14.924,16.221-22.168,19.335c1.997,4.657,4.282,9.53,6.259,13.166c3.908,7.188,11.305,8.971,10.731,16.368c-0.574,7.398-0.864,15.935-8.974,16.143s-20.294-4.923-27.035-2.871c-7.983,2.43-13.186,1.227-27.096-1.696l-2.346-1.046c-6.746-3.066-19.318-10.886-19.318-10.886s9.353,10.732,16.405,15.485l0.672,0.449c-2.866,4.201-7.382,10.415-11.791,14.818c-7.261,7.251-15.087,8.598-16.444,17.702c-1.357,9.105-0.365,14.299-4.137,17.355c-3.772,3.057-7.83,6.184-7.83,6.184s0.632,13.445-1.222,19.349s-5.344,13.726-6.2,17.566c-0.856,3.841-4.56,10.811-8.402,12.373s-14.944,7.958-20.566,10.87c-5.622,2.913-16.437,6.819-19.994,5.893c-3.556-0.928-8.675-6.906-2.196-14.869c6.479-7.964,18.572-6.746,20.848-7.314c2.277-0.567,11.102-5.186,14.162-7.46c3.061-2.274-1.202-12.094-1.202-12.094s-9.174-4.062-11.664-4.348c-0.703,0.523-1.248,0.998-1.819,1.38c-1.885,1.256-7.417-0.458-14.14-3.188c0.498-3.154,1.007-6.797,1.316-10.139c0.767-8.279,5.366-8.586,6.899-14.719s1.38-18.091,1.38-18.091s-1.84,11.192-3.22,14.104c-1.38,2.913-2.913,6.593-5.673,9.659s-4.14,12.879-5.06,15.792l-2.026,6.325c-1.593,3.911-3.964,9.482-5.339,11.521c-2.208,3.271-6.55,7.678-6.197,12.729c0.353,5.051,3.896,26.536-9.764,27.523c-13.659,0.987-17.068-7.836-14.504-13.312c2.564-5.477,12.533-18.844,12.964-25.602c0.318-4.988-2.537-19.399-4.767-28.979c-0.573-2.17-1.078-4.351-1.337-5.386c-0.613-2.453-1.993-6.286-2.453-10.732c-0.46-4.445-0.307-12.571,0.767-15.178s0.767-16.558,0.767-16.558s-0.916,9.896-3.148,15.256c-1.746,4.19-3.751,14.334-3.138,18.166c0.551,3.441,2.461,11.703,2.845,15.686c-7.629,1.561-21.082,3.953-30.928,5.668l-16.738,1.936l11.493,1.226c-5.783,5.634-17.139,16.572-21.321,19.702h-17.225c1.222-2.224,2.29-4.47,2.474-5.942c0.13-1.038-0.4-4.493-1.053-8.134c3.29-3.622,3.659-5.769,8.975-9.689c6.243-4.605,10.414-5.629,13.796-11.851c-3.22,3.373-13.798,6.578-18.858,11.178c-5.06,4.599-10.732,9.352-10.732,9.352C143.538,284.958,137.796,289.305,135.644,289.767z M369.055,143.649c0,0-1.073,7.206,4.063,11.422c5.137,4.216,12.956,3.066,12.956,3.066L369.055,143.649z"/><polygon fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" points="609.536,135.78 609.536,94.658 478.023,94.658 478.023,258.046 609.536,258.046 609.536,216.924 524.141,216.924 524.141,195.248 601.924,195.248 601.924,154.126 524.141,154.126 524.141,135.78"/><polygon fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" points="769.819,135.78 769.819,94.658 638.307,94.658 638.307,258.046 684.424,258.046 684.424,200.005 762.208,200.005 762.208,158.883 684.424,158.883 684.424,135.78"/><path fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" d="M858.892,260.9c20.705-0.124,37.036-4.928,48.994-14.412s18.061-22.909,18.308-40.273c-0.197-15.194-5.745-26.328-16.643-33.402c-10.897-7.074-25.959-12.438-45.184-16.091c-11.416-2.33-19.172-4.571-23.268-6.722c-4.097-2.151-6.021-5.225-5.772-9.22c-0.005-3.153,1.374-5.711,4.136-7.674c2.762-1.963,6.938-2.975,12.526-3.034c7.448,0,15.163,1.368,23.144,4.104s15.809,6.841,23.485,12.314l23.059-32.581c-8.987-7.264-19.122-12.761-30.402-16.49c-11.28-3.729-23.979-5.6-38.095-5.615c-19.648,0.203-35.235,5.086-46.763,14.649c-11.526,9.564-17.421,22.592-17.683,39.085c0.118,11.197,2.918,20.08,8.4,26.65c5.48,6.57,12.932,11.699,22.351,15.387s20.095,6.808,32.027,9.359c11.073,2.395,18.621,4.446,22.643,6.157c4.022,1.71,5.916,4.416,5.683,8.119c-0.015,3.6-1.65,6.395-4.908,8.388c-3.259,1.993-8.049,3.004-14.371,3.034c-9.646-0.015-18.975-1.711-27.988-5.086c-9.014-3.376-17.683-8.344-26.008-14.901l-25.678,30.683c10.456,9.156,22.354,16.039,35.695,20.649S844.024,260.896,858.892,260.9z"/><polygon fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" points="995.344,245.142 1087.753,245.142 1087.753,258.061 982.187,258.061 982.187,93.228 995.344,93.228"/><rect x="1109.227" y="93.228" fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" width="13.157" height="164.833"/><polygon fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" points="1263.484,106.15 1161.978,106.15 1161.978,167.666 1253.918,167.666 1253.918,180.589 1161.978,180.589 1161.978,258.061 1148.82,258.061 1148.82,93.228 1263.484,93.228"/><polygon fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" points="1391.019,106.15 1294.18,106.15 1294.18,167.666 1383.785,167.666 1383.785,180.589 1294.18,180.589 1294.18,245.142 1391.019,245.142 1391.019,258.061 1281.021,258.061 1281.021,93.228 1391.019,93.228"/></g>
-  </svg>
-  <div style="width:1px;height:28px;background:rgba(255,255,255,.12);margin:0 16px;flex-shrink:0"></div>
-  <div class="logo-text">
-    <div class="t">RetainMoreValue</div>
-    <div class="b">Enhanced Pension — Monte Carlo Modeler</div>
-  </div>
-  <div class="hdr-right">Advisor Tool · Internal Use Only</div>
-  <button onclick="handleSignOut()" style="margin-left:16px;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.4);font-family:'IBM Plex Sans',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:2px;cursor:pointer;flex-shrink:0;transition:all .15s" onmouseover="this.style.borderColor='rgba(201,168,76,.4)';this.style.color='#c9a84c'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='rgba(255,255,255,.4)'">Sign Out</button>
+<div class="actions-bar">
+  <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
+  <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">EFS Life LLC &middot; Internal Advisor Tool</span>
 </div>
-
-<div id="prog-overlay">
-  <h3>Running Monte Carlo Analysis</h3>
-  <div class="prog-bar-wrap"><div id="prog-fill"></div></div>
-  <div id="prog-sub">Initializing…</div>
-</div>
-<div class="page" id="intake-panel">
-  <div class="two-col">
-    <!-- LEFT: INPUTS -->
-    <div>
-      <div class="card">
-        <div class="card-hdr"><div class="step">Step 1</div><h2>Client & Structure Parameters</h2></div>
-        <div class="card-body">
-
-          <div class="stag">Client Profile</div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Client Name</label><input type="text" id="clientName" placeholder="ex. Suril Patel"/></div>
-            <div class="field"><label class="fl">Issue Age</label><input type="number" id="issueAge" value="50" min="25" max="70" oninput="rebuildRefiDropdown()"/></div>
-          </div>
-          <div class="fg">
-            <label class="fl">State of Residence</label>
-            <div class="field">
-              <select id="stateRes" onchange="onStateChange()">
-                <option value="AL">Alabama (5.00%)</option><option value="AK">Alaska (0%)</option><option value="AZ">Arizona (2.50%)</option><option value="AR">Arkansas (4.40%)</option><option value="CA">California (13.30%)</option><option value="CO">Colorado (4.40%)</option><option value="CT">Connecticut (6.99%)</option><option value="DE">Delaware (6.60%)</option><option value="FL">Florida (0%)</option><option value="GA">Georgia (5.39%)</option><option value="HI">Hawaii (11.00%)</option><option value="ID">Idaho (5.80%)</option><option value="IL">Illinois (4.95%)</option><option value="IN">Indiana (3.05%)</option><option value="IA">Iowa (5.70%)</option><option value="KS">Kansas (5.70%)</option><option value="KY">Kentucky (4.50%)</option><option value="LA">Louisiana (4.25%)</option><option value="ME">Maine (7.15%)</option><option value="MD" selected>Maryland (5.75%)</option><option value="MA">Massachusetts (5.00%)</option><option value="MI">Michigan (4.25%)</option><option value="MN">Minnesota (9.85%)</option><option value="MS">Mississippi (4.70%)</option><option value="MO">Missouri (4.80%)</option><option value="MT">Montana (6.75%)</option><option value="NE">Nebraska (6.84%)</option><option value="NV">Nevada (0%)</option><option value="NH">New Hampshire (0%)</option><option value="NJ">New Jersey (10.75%)</option><option value="NM">New Mexico (5.90%)</option><option value="NY">New York (10.90%)</option><option value="NC">North Carolina (4.50%)</option><option value="ND">North Dakota (2.50%)</option><option value="OH">Ohio (3.75%)</option><option value="OK">Oklahoma (4.75%)</option><option value="OR">Oregon (9.90%)</option><option value="PA">Pennsylvania (3.07%)</option><option value="RI">Rhode Island (5.99%)</option><option value="SC">South Carolina (6.40%)</option><option value="SD">South Dakota (0%)</option><option value="TN">Tennessee (0%)</option><option value="TX">Texas (0%)</option><option value="UT">Utah (4.65%)</option><option value="VT">Vermont (8.75%)</option><option value="VA">Virginia (5.75%)</option><option value="WA">Washington (0%)</option><option value="WV">West Virginia (5.12%)</option><option value="WI">Wisconsin (7.65%)</option><option value="WY">Wyoming (0%)</option>
-              </select>
-            </div>
-          </div>
-          <div class="fg">
-            <label class="fl">Advisor Name</label>
-            <div class="field"><input type="text" id="advisorName" placeholder="Jeffrey Faine, CLU·RICP"/></div>
-          </div>
-
-          <div class="sep"></div>
-          <div class="stag">Contribution / Structure</div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Annual Compensation ($)</label><input type="text" id="annualComp" placeholder="ex. $150,000" oninput="formatCurrency(this)"/></div>
-            <div class="field"><label class="fl">Contribution Years</label><input type="number" id="contribYears" value="10" min="1" max="20" oninput="rebuildRefiDropdown()"/></div>
-          </div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Income Start Age</label><input type="number" id="incStart" placeholder="ex. 65" min="45" max="85"/></div>
-            <div class="field"><label class="fl">Income End Age</label><input type="number" id="incEnd" value="100" min="70" max="105"/></div>
-          </div>
-          <div class="hint">Client diverts full compensation into the structure each contribution year. The bank finances the income tax owed on each year's contribution — the client never pays that tax out of pocket.</div>
-
-          <div class="sep"></div>
-          <div class="stag">Financing — Bank Phase → Insurance Phase</div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Lender Index Rate (%)</label><input type="number" id="lenderIndex" value="3.75" step="0.01" oninput="updateBankRateDisplay()"/></div>
-            <div class="field"><label class="fl">Lender Spread (%)</label><input type="number" id="lenderSpread" value="2.50" step="0.25" oninput="updateBankRateDisplay()"/></div>
-          </div>
-          <div class="rate-display">
-            <span class="rl">Bank Rate — Index + Spread</span>
-            <span class="rv" id="bankRateDisplay">6.25%</span>
-          </div>
-          <div class="fg" style="margin-top:14px">
-            <label class="fl">PLR — Distribution (%)</label>
-            <div class="field"><input type="number" id="plr" value="5.00" step="0.25"/></div>
-          </div>
-          <div class="rate-env-btns">
-            <button class="rate-btn active" id="rateEnvBtn-easing" onclick="setRateEnv('easing',this)">Easing<br><span style="font-size:9px;opacity:.7">Index declines toward a floor</span></button>
-            <button class="rate-btn" id="rateEnvBtn-level" onclick="setRateEnv('level',this)">Level<br><span style="font-size:9px;opacity:.7">Index stable</span></button>
-            <button class="rate-btn" id="rateEnvBtn-tightening" onclick="setRateEnv('tightening',this)">Tightening<br><span style="font-size:9px;opacity:.7">Stress test</span></button>
-          </div>
-          <div class="hint">Applies to the lender's index rate during the bank phase only (Policy Year 1 through refinance) — the spread stays fixed on top of it. Easing steps the index down toward a 1.5% floor over the first 11 years; Tightening steps it up 0.5%/yr, capped at Index + 2%. All-in rate floors at 4%. The PLR is unaffected — it is fixed once the carrier refinances the loan.</div>
-
-          <div class="sep"></div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Federal Tax Rate (%)</label><input type="number" id="fedRate" value="32" step="0.25"/></div>
-            <div class="field"><label class="fl">State Tax Rate (%)</label><input type="number" id="stateRate" value="5.75" step="0.25" oninput="updateCombinedRate()"/><div class="hint stateNoteHint" id="stateNote"></div></div>
-          </div>
-          <div class="rate-display">
-            <span class="rl">Combined Tax Rate — Financed Each Contribution Year</span>
-            <span class="rv" id="combinedRateDisplay">37.75%</span>
-          </div>
-          <div class="fg fr" style="margin-top:14px">
-            <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="2.50" step="0.25"/></div>
-            <div class="field"><label class="fl">PDA Retention Years</label><input type="number" id="pdaRetentionYears" value="2" min="0" max="5" step="1"/></div>
-          </div>
-          <div class="fg">
-            <label class="fl">PDA Retention % (Yrs 1–N Held Back)</label>
-            <div class="field"><input type="number" id="pdaRetentionPct" value="50" min="0" max="90" step="5"/></div>
-            <div class="hint">Client compensation deposits into a Premium Deposit Account earning the PDA rate (interest taxed annually at the combined rate above). In the first N years shown here, only the un-retained share of that year's deposit is paid into the policy as premium — the rest builds a PDA balance. From year N+1 through the end of the contribution period, a level premium is solved so the PDA depletes to ~$0.</div>
-          </div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Loan Origination Fee</label><input type="text" id="loanOrigFeeDisplay" class="computed" readonly value="$625"/></div>
-            <div class="field"><label class="fl">Mail Away Fee ($)</label><input type="number" id="mailAwayFee" value="150" step="10" min="0" oninput="updateLoanOrigFeeDisplay()"/></div>
-            <div class="hint" style="grid-column:1/-1">Both are one-time fees deducted from Year 1's premium (not the retained/PDA share) before it reaches the policy. The origination fee is tiered by the size of the annual contribution — ≤$500K: $625 · $500K–750K: $1,250 · $750K–1M: $1,875 · &gt;$1M: $2,500 — and updates automatically as you edit Annual Compensation.</div>
-          </div>
-          <div class="fg" id="refiManualRow">
-            <label class="fl">Refinance — Policy Year / Age</label>
-            <div class="field">
-              <select id="refiYearManual" style="width:100%;background:var(--off);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:9px 12px;outline:none"></select>
-            </div>
-            <div class="hint">The year the insurance company refinances the bank. The loan balance carries over intact — only the accrual rate changes, from the bank rate to the PLR.</div>
-          </div>
-
-          <button class="calc-btn" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold);margin-top:16px" onclick="calculateFundingSchedule()">Calculate Funding Schedule</button>
-          <div class="hint" style="text-align:center;margin-top:6px">Solves the PDA sinking-fund schedule and the level premium — the number to input into the carrier's illustration software. Do this first, generate the illustration externally, then upload it below.</div>
-
-          <div class="sep"></div>
-          <div class="stag">Policy — Carrier Illustration</div>
-          <div class="fg">
-            <label class="fl">IUL Carrier & Product</label>
-            <div class="field">
-              <select id="carrier" onchange="onCarrierChange()">
-                <option value="NLG">National Life Group — Summit Pref+</option>
-                <option value="PL">Pacific Life — ECV Pref+</option>
-              </select>
-            </div>
-          </div>
-          <div class="carrier-instr">
-            <h4>Carrier Illustration Required <span class="tag" id="carrierTag">NLG</span></h4>
-            <div class="hint" style="margin:0">Crediting uses the carrier's actual BCF / bonus-credit / persistency schedule against the illustration's charge columns — not a synthetic cap/floor formula. NLG: upload the .csv quickview export. Pacific Life: upload the .xlsx illustration file (Summary of Policy Charges sheet).</div>
-          </div>
-          <div class="upload-zone" id="upload-zone" ondragover="event.preventDefault()" ondrop="onDrop(event)">
-            <input type="file" id="carrier-file" accept=".csv,.xls,.xlsx" onchange="onFileSelect(this)"/>
-            <div class="uz-icon">📊</div>
-            <div class="uz-title" id="uz-title">Drop NLG Summit Illustration Here</div>
-            <div class="uz-hint">CSV or XLS/XLSX — must include Year, Age, Accumulated Value, and Policy/Surrender Charge columns</div>
-            <div class="uz-file" id="uz-file-name"></div>
-          </div>
-          <div class="fg fr" style="margin-top:14px">
-            <div class="field"><label class="fl">IUL Annual Cap Rate (%)</label><input type="number" id="capRate" value="9.25" step="0.25"/></div>
-            <div class="field"><label class="fl">IUL Floor (%)</label><input type="number" id="floorRate" value="0" step="0.25" readonly class="computed"/></div>
-          </div>
-          <div class="fg">
-            <label class="fl">Minimum CSV Floor ($)</label>
-            <div class="field"><input type="text" id="csvFloor" value="$100,000" oninput="formatCurrency(this)"/></div>
-            <div class="hint">Income solver keeps CSV net of loans above this floor at every age through income end, on each simulated path.</div>
-          </div>
-
-          <div class="sep"></div>
-          <div class="stag">Comparison</div>
-          <div class="fg">
-            <label class="fl">Compare EP Against</label>
-            <div class="src-toggle">
-              <button class="src-btn active" id="cmpBtnInvest" onclick="setCompareMode('invest')">Taxable Investment Account<br><span style="font-size:9px;opacity:.7;font-weight:400">Pay tax, invest the difference</span></button>
-              <button class="src-btn" id="cmpBtnBoth" onclick="setCompareMode('both')">Investment Account + QP/DB<br><span style="font-size:9px;opacity:.7;font-weight:400">Adds a cash balance / DB plan</span></button>
-            </div>
-          </div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">COLA (%)</label><input type="number" id="cola" value="3" step="0.25"/></div>
-            <div class="field"><label class="fl">Comparator LTCG Rate (%)</label><input type="number" id="ltcgRate" value="20" step="0.5"/></div>
-          </div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Investment Acct Management Fee (%/yr)</label><input type="number" id="investFee" value="0.75" step="0.25"/></div>
-            <div class="field"><label class="fl">Investment Acct Equity Allocation (%)</label><input type="number" id="investEqWt" value="60" step="5" min="0" max="100"/></div>
-          </div>
-          <div class="hint">Taxable investment account: client pays income tax on compensation annually (no financing), invests the after-tax difference in a blended equity/bond account (net of the management fee above), drawn from the same paired historical sequence as EP's crediting, then draws income to $0 by income end age. Gains taxed at the LTCG rate shown; basis returns tax-free.</div>
-
-          <div class="fg fr" id="qpCompareRow" style="display:none;margin-top:14px">
-            <div class="field"><label class="fl">QP/DB Withdrawal Tax Rate (%)</label><input type="number" id="qpTaxRate" value="32" step="0.5"/></div>
-            <div class="field"><label class="fl">QP/DB Management Fee (%/yr)</label><input type="number" id="qpFee" value="2.00" step="0.25"/></div>
-          </div>
-          <div class="fg fr" id="qpBlendRow" style="display:none">
-            <div class="field"><label class="fl">QP/DB Equity Allocation (%)</label><input type="number" id="qpEqWt" value="50" step="5" min="0" max="100"/></div>
-            <div class="field"><label class="fl">QP/DB Bond Allocation</label><input type="text" class="computed" readonly id="qpBdWtDisplay" value="50%"/></div>
-          </div>
-          <div class="hint" id="qpCompareHint" style="display:none">Qualified plan (DB / cash balance) comparator: contributes the same gross compensation each year — pre-tax, matching EP's full contribution, dollar for dollar. Grows in a blended equity/bond portfolio (drawn from the same paired historical sequence as EP's crediting, net of the management fee), then draws income to $0 by income end age, fully taxable as ordinary income at the withdrawal rate above.</div>
-
-          <div class="sep"></div>
-          <div class="stag">Simulation</div>
-          <div class="fg fr">
-            <div class="field"><label class="fl">Simulations</label><input type="number" id="nSims" value="10000" step="1000" min="1000" max="20000"/></div>
-            <div class="field"><label class="fl">Data Pool (years, ending 2024)</label><input type="number" id="dataYears" value="50" min="20" max="55"/></div>
-          </div>
-
-          <button class="calc-btn" onclick="calculate()">Run Monte Carlo Analysis</button>
-          <div class="lerr" id="lerr"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div id="right-panel">
-      <div class="opl">
-        <div class="icon">◈</div>
-        <div>Enter client and structure parameters, then run the analysis.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="ledger-output"></div>
+<div id="pages"></div>
 <script>
-// ══════════════════════════════════════════════════════════
-// S&P 500 TOTAL RETURN DATA (1975–2024), source: same historical
-// pool used across RetainMoreValue.com modelers
-// ══════════════════════════════════════════════════════════
-const SP_TOTAL = {
-  1975:0.3720,1976:0.2384,1977:-0.0718,1978:0.0656,1979:0.1844,1980:0.3242,
-  1981:-0.0490,1982:0.2141,1983:0.2251,1984:0.0627,1985:0.3173,1986:0.1867,
-  1987:0.0525,1988:0.1661,1989:0.3169,1990:-0.0310,1991:0.3047,1992:0.0762,
-  1993:0.1008,1994:0.0132,1995:0.3758,1996:0.2296,1997:0.3336,1998:0.2858,
-  1999:0.2104,2000:-0.0910,2001:-0.1189,2002:-0.2210,2003:0.2869,2004:0.1088,
-  2005:0.0491,2006:0.1579,2007:0.0549,2008:-0.3700,2009:0.2646,2010:0.1506,
-  2011:0.0211,2012:0.1600,2013:0.3239,2014:0.1369,2015:0.0138,2016:0.1196,
-  2017:0.2183,2018:-0.0438,2019:0.3149,2020:0.1840,2021:0.2889,2022:-0.1811,
-  2023:0.2626,2024:0.2502
-};
-const SP_YEARS = Object.keys(SP_TOTAL).map(Number).sort((a,b)=>a-b);
-const SP_PRICE = {
-  1975:0.3187,1976:0.1906,1977:-0.1151,1978:0.0102,1979:0.1230,1980:0.2574,
-  1981:-0.0973,1982:0.1466,1983:0.2302,1984:0.1532,1985:0.0312,1986:0.2133,
-  1987:0.2704,1988:-0.0529,1989:0.1393,1990:0.1912,1991:-0.0426,1992:0.2783,
-  1993:0.0460,1994:0.0868,1995:-0.0164,1996:0.3206,1997:0.2471,1998:0.2573,
-  1999:0.2963,2000:0.1416,2001:-0.0631,2002:-0.1463,2003:-0.2143,2004:0.2642,
-  2005:0.0432,2006:0.0824,2007:0.1137,2008:-0.0319,2009:-0.3722,2010:0.2981,
-  2011:0.1415,2012:0.0140,2013:0.1383,2014:0.2310,2015:0.1129,2016:-0.0540,
-  2017:0.1858,2018:0.2262,2019:-0.0654,2020:0.2573,2021:0.1573,2022:-0.1605,
-  2023:0.2429,2024:0.2325
-};
-// US 10-year Treasury Bond annual total returns — source: Damodaran, NYU Stern.
-// Same historical-year pairing as SP_PRICE, used to blend the QP/DB comparator.
-const TB10 = {
-  1975:0.0519,1976:0.1675,1977:-0.0067,1978:0.0121,1979:-0.0099,
-  1980:-0.0251,1981:-0.0196,1982:0.4035,1983:0.0065,1984:0.1543,
-  1985:0.3097,1986:0.2447,1987:-0.0494,1988:0.0867,1989:0.2112,
-  1990:0.0617,1991:0.1926,1992:0.0651,1993:0.1824,1994:-0.0841,
-  1995:0.3167,1996:-0.0093,1997:0.1501,1998:0.1327,1999:-0.0866,
-  2000:0.2148,2001:0.0351,2002:0.1737,2003:0.0131,2004:0.0749,
-  2005:0.0252,2006:0.0119,2007:0.1004,2008:0.2587,2009:-0.1183,
-  2010:0.0821,2011:0.2910,2012:0.0432,2013:-0.0921,2014:0.1075,
-  2015:0.0149,2016:0.0069,2017:0.0280,2018:-0.0002,2019:0.0963,
-  2020:0.1133,2021:-0.0445,2022:-0.1769,2023:0.0401,2024:0.0131
-};
+function $f(n){ return '$'+Math.round(n||0).toLocaleString('en-US'); }
+function fmtPct(n){ return (n||0).toFixed(2)+'%'; }
 
-// ══════════════════════════════════════════════════════════
-// CARRIER PARAMS — [BCF, BonusCreditFactor, PersistencyBonus] per policy year
-// Ported verbatim from the ETA modeler (shared product configs)
-// ══════════════════════════════════════════════════════════
-const CARRIER_PARAMS = {
-  PL: [
-    [0.0160,1.000,0.000000],[0.0310,1.300,0.000000],[0.0386,1.450,0.000000],
-    [0.0460,1.600,0.000000],[0.0536,1.750,0.000000],[0.0610,1.890,0.000000],
-    [0.0686,2.040,0.000000],[0.0760,2.190,0.000000],[0.0836,2.330,0.000000],
-    [0.0910,2.470,0.000000],[0.0910,2.470,0.002736],[0.0910,2.470,0.005436],
-    [0.0910,2.470,0.007918],[0.0910,2.470,0.010264],[0.0910,2.470,0.012437],
-    [0.0910,2.470,0.014420],[0.0910,2.470,0.016214],[0.0910,2.470,0.017804],
-    [0.0910,2.470,0.019208],[0.0910,2.470,0.020425],[0.0820,2.300,0.021457],
-    [0.0730,2.130,0.020513],[0.0640,1.950,0.019612],[0.0550,1.780,0.018755],
-    [0.0460,1.600,0.017925],[0.0460,1.600,0.017140],[0.0460,1.600,0.016372],
-    [0.0460,1.600,0.015660],[0.0460,1.600,0.014955],[0.0460,1.600,0.014278],
-    [0.0460,1.600,0.013618],[0.0460,1.600,0.010854],[0.0460,1.600,0.008292],
-    [0.0460,1.600,0.005949],[0.0460,1.600,0.003772],[0.0460,1.600,0.001829],
-    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
-    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
-    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
-    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000],[0.0460,1.600,0.000000],
-    [0.0460,1.600,0.000000],[0.0460,1.600,0.000000]
-  ],
-  NLG: [
-    [0.0300,1.000,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
-    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
-    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
-    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],
-    [0.0300,2.050,0],[0.0300,2.050,0],[0.0300,2.050,0],[0.0200,1.800,0],
-    [0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],
-    [0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],[0.0200,1.800,0],
-    [0.0200,1.800,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
-    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
-    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
-    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
-    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],
-    [0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0],[0.0100,1.500,0]
-  ]
-};
-
-function getPool(dataYears){
-  const yrs = SP_YEARS.slice(Math.max(0, SP_YEARS.length-dataYears));
-  return yrs.map(y=>SP_TOTAL[y]);
-}
-// Paired pool — ONE historical year drawn per sim-year, shared across EP
-// crediting, the QP/DB comparator, and the taxable investment comparator,
-// so all three see the same market environment (same technique as the
-// ETA modeler's pairedPool). [priceReturn, investBlendedReturn, qpBlendedReturn]
-function getPairedPool(dataYears, qpEqWt, qpFeeAdj, investEqWt, investFeeAdj){
-  const yrs = SP_YEARS.slice(Math.max(0, SP_YEARS.length-dataYears)).filter(y=>SP_PRICE[y]!==undefined);
-  const qpBdWt = 1-qpEqWt, investBdWt = 1-investEqWt;
-  return yrs.map(y=>{
-    const priceRet = SP_PRICE[y];
-    const totalRet = SP_TOTAL[y];
-    const bondRet = TB10[y]!==undefined ? TB10[y] : 0;
-    const investBlended = investEqWt*totalRet + investBdWt*bondRet - investFeeAdj;
-    const qpBlended = qpEqWt*totalRet + qpBdWt*bondRet - qpFeeAdj;
-    return [priceRet, investBlended, qpBlended];
-  });
-}
-function bootstrap(n,arr){ const o=new Array(n); for(let i=0;i<n;i++) o[i]=arr[Math.floor(Math.random()*arr.length)]; return o; }
-function bootstrapTriples(n, arr){
-  const price=new Array(n), invest=new Array(n), qp=new Array(n);
-  for (let i=0;i<n;i++){
-    const t=arr[Math.floor(Math.random()*arr.length)];
-    price[i]=t[0]; invest[i]=t[1]; qp[i]=t[2];
-  }
-  return {price, invest, qp};
-}
-
-// ══════════════════════════════════════════════════════════
-// CARRIER FILE PARSING — ported verbatim from the ETA modeler
-// ══════════════════════════════════════════════════════════
-let _carrierFile = null, _carrierResult = null;
-async function readFile(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(file); }); }
-
-async function parseCarrierFile(file) {
-  const ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='xls'||ext==='xlsx') return parseXLS(file);
-  return parseCSV(await readFile(file));
-}
-
-function extractNLGMeta(lines) {
-  // NLG CSV: line 0 = metadata headers, line 1 = metadata values
-  try {
-    const hdrs = lines[0].split(',').map(v=>v.replace(/["'\r]/g,'').toLowerCase().trim());
-    const vals = lines[1].split(',').map(v=>v.replace(/["'\r]/g,'').trim());
-    const fh = (...terms) => { for(const t of terms){const i=hdrs.findIndex(h=>h.includes(t));if(i>=0)return i;} return -1; };
-    const cFace   = fh('initial face','face amount');
-    const cModal  = fh('modal premium','annual premium','modal');
-    const cTarget = fh('target premium','target');
-    return {
-      faceAmount:    cFace>=0   ? parseFloat(vals[cFace])||0   : 0,
-      modalPremium:  cModal>=0  ? parseFloat(vals[cModal])||0  : 0,
-      targetPremium: cTarget>=0 ? parseFloat(vals[cTarget])||0 : 0,
-    };
-  } catch(e) { return {faceAmount:0, modalPremium:0, targetPremium:0}; }
-}
-
-async function parseXLS(file) {
-  if(typeof XLSX==='undefined') {
-    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
-  }
-  const buf=await file.arrayBuffer();
-  const wb=XLSX.read(buf,{type:'array'});
-  const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('charge'))
-                ||wb.SheetNames.find(n=>n.toLowerCase().includes('ledger'))
-                ||wb.SheetNames[0];
-  const ws=wb.Sheets[sheetName];
-  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
-
-  let headerRow=-1, dataStart=-1;
-  for(let i=0;i<raw.length;i++){
-    const r=raw[i];
-    if(!r||!r[0]) continue;
-    const v0=String(r[0]).toLowerCase().trim();
-    if(v0==='year'||v0==='yr'||(r[1]&&String(r[1]).toLowerCase().includes('age'))) {
-      headerRow=i;
-    }
-    if(r[0]!==null&&!isNaN(parseInt(r[0]))&&parseInt(r[0])>=1&&parseInt(r[0])<=99){
-      dataStart=i; break;
-    }
-  }
-  if(dataStart<0) return null;
-
-  let cPolicyChg=-1, cSurrChg=-1, cCSV=-1, cAV=-1;
-  if(headerRow>=0){
-    const hdrs=raw[headerRow].map(v=>v?String(v).toLowerCase().replace(/[\s\r\n]+/g,' ').trim():'');
-    const fh=(...terms)=>{for(const t of terms){const i=hdrs.findIndex(h=>h.includes(t));if(i>=0)return i;}return -1;};
-    cPolicyChg=fh('policy charge','policy charges','total charge');
-    cSurrChg  =fh('surrender charge');
-    cCSV      =fh('cash surrender','cash surr','surr value');
-    cAV = hdrs.findIndex(h=>h==='accumulated value'||h==='account value'||h==='policy value');
-    if(cAV<0) cAV = hdrs.findIndex(h=>h.includes('accumulated value')&&!h.includes('charge'));
-  }
-
-  const rows=[];
-  for(let i=dataStart;i<raw.length;i++){
-    const r=raw[i];
-    const yr=parseInt(r[0]);if(isNaN(yr)||yr<1||yr>99) continue;
-    const age=parseInt(r[1])||0;
-    let stdCharges, illustratedAV, illustratedCSV, surrenderCharge;
-
-    if(cPolicyChg>=0){
-      stdCharges     = Math.abs(parseFloat(r[cPolicyChg])||0);
-      illustratedAV  = cAV>=0  ? Math.abs(parseFloat(r[cAV])||0)  : 0;
-      illustratedCSV = cCSV>=0 ? Math.abs(parseFloat(r[cCSV])||0) : 0;
-      surrenderCharge= cSurrChg>=0 ? Math.abs(parseFloat(r[cSurrChg])||0) : Math.max(0,illustratedAV-illustratedCSV);
-    } else {
-      // PL XLS: confirmed column layout — charges in cols 3-6 are NEGATIVE
-      // 0=Year,1=Age,2=PremOutlay,3=PremLoads,4=AdminRider,5=CoverageChg,6=COI,
-      // 7=TotalChg,8=IntCredit,9=AccumValue,10=SurrChg,11=CSV
-      const adminRider =parseFloat(r[4])||0;
-      const coverageChg=parseFloat(r[5])||0;
-      const coi        =parseFloat(r[6])||0;
-      stdCharges     = Math.abs(adminRider+coverageChg+coi);
-      illustratedAV  = Math.abs(parseFloat(r[9])||0);
-      illustratedCSV = Math.abs(parseFloat(r[11])||0);
-      if(illustratedAV===0){
-        for(let c=7;c<(r.length||16);c++){const v=Math.abs(parseFloat(r[c])||0);if(v>illustratedAV&&v>1000) illustratedAV=v;}
-        for(let c=9;c<(r.length||17);c++){const v=Math.abs(parseFloat(r[c])||0);if(v>illustratedCSV&&v>100&&v<illustratedAV) illustratedCSV=v;}
-      }
-      surrenderCharge= Math.max(0,illustratedAV-illustratedCSV);
-    }
-    rows.push({year:yr,age,premCharges:Math.abs(parseFloat(r[3])||0),stdCharges,illustratedAV,illustratedCSV,surrenderCharge});
-  }
-  const metaLines = raw.slice(0, Math.min(3, dataStart)).map(r=>(r||[]).map(v=>'"'+(v||'')+'"').join(','));
-  const meta = extractNLGMeta(metaLines);
-  return rows.length ? {rows, meta} : null;
-}
-
-function parseCSV(text) {
-  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
-  const meta = extractNLGMeta(lines);
-  const hIdx=lines.findIndex(l=>{
-    const parts=l.split(',').map(v=>v.replace(/["'\s]/g,'').toLowerCase());
-    return (parts[0]==='year'||parts[0]==='yr') && parts[1]==='age';
-  });
-  if(hIdx<0) return null;
-  const headers=lines[hIdx].split(',').map(v=>v.replace(/["']/g,'').replace(/\s+/g,' ').trim().toLowerCase());
-  const fc=(...terms)=>{for(const t of terms){const i=headers.findIndex(h=>h.includes(t));if(i>=0)return i;}return -1;};
-
-  const cYr =fc('year','yr')>=0?fc('year','yr'):0;
-  const cAge=fc('age')>=0?fc('age'):1;
-  const cPolicyChg =fc('policy charge','policy charges','total charge');
-  const cPremExpChg=fc('premium expense charge','prem expense charge');
-  const cSurrChg   =fc('surrender charge');
-  const cCSV       =fc('cash surrender','cash surr','surr value','csv');
-  const cAV = (()=>{
-    let best=-1;
-    headers.forEach((h,i)=>{
-      if(h==='accumulated value'||h==='account value'||h==='policy value') best=i;
-    });
-    if(best>=0) return best;
-    return headers.findIndex(h=>h.includes('accumulated value')&&!h.includes('charge'));
-  })();
-  const cPC=fc('prem charge','contribution charge','premium expense','prem load','load');
-  const cSC=fc('standard charge','admin','coi','cost of insurance','expense charge','coverage');
-
-  const n=v=>parseFloat((v||'').replace(/[$,\s"]/g,''))||0;
-  const rows=[];
-
-  for(let i=hIdx+1;i<lines.length;i++){
-    const p=lines[i].split(',').map(v=>v.replace(/["'\s]/g,''));
-    const yr=parseInt(p[cYr]);if(isNaN(yr)||yr<1||yr>100) continue;
-    const age=parseInt(p[cAge])||0;
-
-    let stdCharges, illustratedAV, illustratedCSV, surrenderCharge;
-
-    if(cPolicyChg>=0) {
-      stdCharges = Math.abs(n(p[cPolicyChg]));
-      illustratedAV = cAV>=0 ? Math.abs(n(p[cAV])) : 0;
-      illustratedCSV = cCSV>=0 ? Math.abs(n(p[cCSV])) : 0;
-      surrenderCharge = cSurrChg>=0 ? Math.abs(n(p[cSurrChg])) : Math.max(0,illustratedAV-illustratedCSV);
-    } else {
-      const rawPC = cPC>=0 ? n(p[cPC]) : 0;
-      const rawSC = cSC>=0 ? n(p[cSC]) : 0;
-      stdCharges = Math.abs(rawPC) + Math.abs(rawSC);
-      illustratedAV = cAV>=0 ? Math.abs(n(p[cAV])) : 0;
-      illustratedCSV = cCSV>=0 ? Math.abs(n(p[cCSV])) : 0;
-      if(illustratedAV===0){
-        const nums=p.map(v=>Math.abs(n(v))).filter(v=>v>1000).sort((a,b)=>b-a);
-        illustratedAV=nums[0]||0; illustratedCSV=nums[1]||0;
-      }
-      surrenderCharge = Math.max(0,illustratedAV-illustratedCSV);
-    }
-
-    const premExpChg = (cPolicyChg>=0 && cPremExpChg>=0) ? Math.abs(n(p[cPremExpChg])) : 0;
-    rows.push({year:yr, age, premCharges:0, premExpChg, stdCharges, illustratedAV, illustratedCSV, surrenderCharge});
-  }
-  return rows.length ? {rows, meta} : null;
-}
-
-function onDrop(e){e.preventDefault();const f=e.dataTransfer?.files?.[0];if(f){_carrierFile=f;document.getElementById('uz-file-name').textContent='✓ '+f.name;document.getElementById('upload-zone').classList.add('has-file');}}
-function onFileSelect(i){const f=i.files?.[0];if(f){_carrierFile=f;document.getElementById('uz-file-name').textContent='✓ '+f.name;document.getElementById('upload-zone').classList.add('has-file');}}
-
-function pctile(arr,p){ const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(p/100*(s.length-1))]; }
-function tick(){ return new Promise(r=>setTimeout(r,0)); }
-
-function formatCurrency(el){
-  let v = el.value.replace(/[^0-9.]/g,'');
-  if (!v) { el.value=''; return; }
-  const n = parseFloat(v);
-  el.value = '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
-}
-function parseNum(id){ return parseFloat((document.getElementById(id).value||'').replace(/[$,]/g,''))||0; }
-function fmt$(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
-function fmt$1(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
-
-let _compareMode='invest';
-function setCompareMode(mode){
-  _compareMode = mode;
-  document.getElementById('cmpBtnInvest').classList.toggle('active', mode==='invest');
-  document.getElementById('cmpBtnBoth').classList.toggle('active', mode==='both');
-  document.getElementById('qpCompareRow').style.display = mode==='both' ? 'grid' : 'none';
-  document.getElementById('qpBlendRow').style.display = mode==='both' ? 'grid' : 'none';
-  document.getElementById('qpCompareHint').style.display = mode==='both' ? 'block' : 'none';
-}
-function onCarrierChange(){
-  const key = document.getElementById('carrier').value;
-  const name = key==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
-  const short = key==='NLG' ? 'NLG Summit' : 'Pacific Life ECV';
-  document.getElementById('carrierTag').textContent = key;
-  document.getElementById('uz-title').textContent = 'Drop '+short+' Illustration Here';
-  _carrierFile = null; _carrierResult = null;
-  document.getElementById('uz-file-name').textContent = '';
-  document.getElementById('upload-zone').classList.remove('has-file');
-}
-document.getElementById('qpEqWt')?.addEventListener('input', ()=>{
-  const eq = parseFloat(document.getElementById('qpEqWt').value)||0;
-  document.getElementById('qpBdWtDisplay').value = (100-eq)+'%';
-});
-
-// ══════════════════════════════════════════════════════════
-// STATE TAX RATES (top marginal, for reference — editable)
-// ══════════════════════════════════════════════════════════
-const STATE_RATES = {
-  AL:5.00,AK:0,AZ:2.50,AR:4.40,CA:13.30,CO:4.40,CT:6.99,DE:6.60,FL:0,GA:5.39,
-  HI:11.00,ID:5.80,IL:4.95,IN:3.05,IA:5.70,KS:5.70,KY:4.50,LA:4.25,ME:7.15,MD:5.75,
-  MA:5.00,MI:4.25,MN:9.85,MS:4.70,MO:4.80,MT:6.75,NE:6.84,NV:0,NH:0,NJ:10.75,
-  NM:5.90,NY:10.90,NC:4.50,ND:2.50,OH:3.75,OK:4.75,OR:9.90,PA:3.07,RI:5.99,SC:6.40,
-  SD:0,TN:0,TX:0,UT:4.65,VT:8.75,VA:5.75,WA:0,WV:5.12,WI:7.65,WY:0
-};
-const NO_TAX_STATES = new Set(['AK','FL','NV','NH','SD','TN','TX','WA','WY']);
-function onStateChange(){
-  const st = document.getElementById('stateRes').value;
-  const rate = STATE_RATES[st] ?? 0;
-  document.getElementById('stateRate').value = rate.toFixed(2);
-  const note = document.getElementById('stateNote');
-  if (NO_TAX_STATES.has(st)){
-    note.textContent = 'No state income tax.';
-    note.style.color = 'var(--green)';
-    note.style.display = 'block';
-  } else {
-    note.style.display = 'none';
-  }
-  updateCombinedRate();
-}
-function updateCombinedRate(){
-  const fed = parseFloat(document.getElementById('fedRate').value)||0;
-  const st = parseFloat(document.getElementById('stateRate').value)||0;
-  document.getElementById('combinedRateDisplay').textContent = (fed+st).toFixed(2)+'%';
-}
-document.getElementById('fedRate').addEventListener('input', updateCombinedRate);
-function updateBankRateDisplay(){
-  const idx = parseFloat(document.getElementById('lenderIndex').value)||0;
-  const spr = parseFloat(document.getElementById('lenderSpread').value)||0;
-  document.getElementById('bankRateDisplay').textContent = (idx+spr).toFixed(2)+'%';
-}
-document.addEventListener('DOMContentLoaded', updateBankRateDisplay);
-updateBankRateDisplay();
-function updateLoanOrigFeeDisplay(){
-  const comp = parseNum('annualComp');
-  const fee = loanOriginationFeeTier(comp);
-  document.getElementById('loanOrigFeeDisplay').value = '$'+fee.toLocaleString('en-US');
-}
-document.getElementById('annualComp')?.addEventListener('input', updateLoanOrigFeeDisplay);
-document.addEventListener('DOMContentLoaded', updateLoanOrigFeeDisplay);
-
-// ══════════════════════════════════════════════════════════
-// BANK RATE ENVIRONMENT — easing / level / tightening
-// Rate = Lender Index + Lender Spread. The schedule below (ported from the
-// ETA modeler's getBankRateForYear) steps the INDEX portion over time;
-// the spread stays fixed. Floor 4% all-in. Applied only during the bank
-// (accumulation) phase — policy years < refiYear. The PLR is untouched;
-// it's a fixed carrier rate from refinance onward.
-// ══════════════════════════════════════════════════════════
-let _rateEnv='easing';
-function setRateEnv(env, btn){
-  _rateEnv = env;
-  ['easing','level','tightening'].forEach(e=>document.getElementById('rateEnvBtn-'+e).classList.toggle('active', e===env));
-}
-function getBankRateForYear(policyYr, indexBase, spread){
+// Ported from ep-modeler.html — needed to recompute the lender rate per year
+function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
   const FLOOR = 4.0;
   let idx = indexBase;
-  if (_rateEnv==='level') { idx = indexBase; }
-  else if (_rateEnv==='easing'){
+  if (rateEnv==='level') { idx = indexBase; }
+  else if (rateEnv==='easing'){
     if (policyYr<=1) idx=indexBase;
     else if (policyYr<=5) idx=Math.max(indexBase-(policyYr-1)*0.5, 1.5);
     else if (policyYr<=11) idx=Math.max(indexBase-4*0.5, 1.5);
     else idx=Math.min(indexBase-4*0.5+(policyYr-11)*0.12, indexBase);
-  } else if (_rateEnv==='tightening'){
+  } else if (rateEnv==='tightening'){
     idx=Math.min(indexBase+(policyYr-1)*0.5, indexBase+2);
   }
   return Math.max(idx+spread, FLOOR);
 }
 
-// ══════════════════════════════════════════════════════════
-// REFINANCE YEAR DROPDOWN — Policy Year / Age pairs
-// ══════════════════════════════════════════════════════════
-function rebuildRefiDropdown(){
-  const issueAge = parseInt(document.getElementById('issueAge').value)||50;
-  const cy = parseInt(document.getElementById('contribYears').value)||10;
-  const sel = document.getElementById('refiYearManual');
-  const prev = sel.value;
-  sel.innerHTML='';
-  for (let py=cy+1; py<=cy+20; py++){
-    const age = issueAge+py-1;
-    const opt = document.createElement('option');
-    opt.value = py;
-    opt.textContent = 'Policy Year '+py+' — Age '+age;
-    sel.appendChild(opt);
-  }
-  if (prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
-}
-document.addEventListener('DOMContentLoaded', ()=>{ rebuildRefiDropdown(); onStateChange(); });
-rebuildRefiDropdown();
-onStateChange();
-
-function handleSignOut(){
-  const keys=[];
-  for (let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if (k && k.match(/^sb-.*-auth-token$/)) keys.push(k); }
-  keys.forEach(k=>localStorage.removeItem(k));
-  window.location.replace('advisor-login.html');
-}
-
-// ══════════════════════════════════════════════════════════
-// EP ENGINE
-// ══════════════════════════════════════════════════════════
-// One continuous loan-balance loop. Rate is the lender's index+spread
-// through the accumulation (bank) phase, switches to PLR at the refinance
-// year. The balance itself never resets at refinance. AV crediting uses
-// the carrier's real BCF / bonus-credit / persistency schedule against the
-// uploaded illustration's charge columns — ported verbatim from the ETA
-// modeler's simETAPath, not a synthetic cap/floor formula.
-function creditOneYear(av, prem, carrierRow, cp, capRate, floorRate, ret, carrierKey){
-  const [bcf, bcr, pb] = cp;
-  const CAP = capRate/100, FLOOR = floorRate/100;
-  const stdChg = carrierRow.stdCharges||0;
-  const idx = Math.min(Math.max(ret, FLOOR), CAP);
-  const creditRate = idx*bcr + pb;
-  if (carrierKey === 'NLG'){
-    const premExpChg = carrierRow.premExpChg||0;
-    const avgMonthlyAV = (av + prem + premExpChg/2 - stdChg/2) / (1 + bcf/2);
-    const bonusChg = avgMonthlyAV*bcf;
-    const credits = avgMonthlyAV*creditRate;
-    return Math.max(0, av + prem - stdChg - bonusChg + credits);
-  } else {
-    const premLoad = carrierRow.premCharges||0;
-    const netPrem = Math.max(0, prem - premLoad);
-    const O = Math.max(0, (av + netPrem - 0.5*stdChg) / (1 + 0.5*bcf));
-    const bonusChg = O*bcf;
-    const credits = O*creditRate;
-    return Math.max(0, av + netPrem - stdChg - bonusChg + credits);
-  }
-}
-
-function feasibleIncome(returns, income, floor, p){
-  const params = CARRIER_PARAMS[p.carrierKey];
-  let av=0, loan=0;
-  for (let i=0;i<returns.length;i++){
-    const age=p.issueAge+i, polYr=i+1, ret=returns[i];
-    const cp = params[Math.min(i, params.length-1)];
-    const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
-    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
-    av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
-    const compI = polYr<=p.contribYears ? p.comp : 0;
-    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
-    loan = loan*(1+rate);
-    if (polYr<=p.contribYears) loan += compI*(p.taxRate/100);
-    if (income>0 && age>=p.incStart && age<=p.incEnd){
-      loan += income*Math.pow(1+p.cola/100, age-p.incStart);
+(function(){
+  try {
+    const raw = localStorage.getItem('ep_ledger_data');
+    if (!raw) {
+      document.getElementById('pages').innerHTML = '<div style="padding:60px;text-align:center;font-family:IBM Plex Sans,sans-serif;color:#8a8070">No modeler run found. Run the Monte Carlo analysis in the EP Modeler first, then click "Produce EP Ledger."</div>';
+      return;
     }
-    if (age>=p.incStart && age<=p.incEnd){
-      const csvGross = Math.max(0, av - (carrierRow.surrenderCharge||0));
-      if ((csvGross-loan) < floor) return false;
+    const d = JSON.parse(raw);
+    const dateStr = d.date || new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const showQP = d.compareMode === 'both';
+
+    // Pre-compute EP row derived fields (interest, lender rate, PDA balance, payoff flag)
+    // for a given percentile's row array.
+    function enrichEPRows(rows){
+      let prevLoan = 0;
+      return rows.map((r,i)=>{
+        const interest = Math.max(0, r.loan - prevLoan - (r.financedTax||0) - (r.income||0));
+        const isPayoff = r.polYr === d.refiYear;
+        const lenderRate = r.polYr < d.refiYear ? getBankRateForYear(r.polYr, d.lenderIndex, d.lenderSpread, d.rateEnv) : null;
+        const pdaRow = d.pdaSchedule && r.polYr<=d.contribYears ? null : null; // placeholder, replaced below via closure
+        prevLoan = r.loan;
+        return {...r, interest, isPayoff, lenderRate};
+      });
     }
-  }
-  return true;
-}
+    const epRows50 = enrichEPRows(d.epRows50);
+    const epRows25 = enrichEPRows(d.epRows25);
+    const epRows75 = enrichEPRows(d.epRows75);
+    const epByAge50 = {}; epRows50.forEach(r=>epByAge50[r.age]=r);
+    const epByAge25 = {}; epRows25.forEach(r=>epByAge25[r.age]=r);
+    const epByAge75 = {}; epRows75.forEach(r=>epByAge75[r.age]=r);
 
-function solveIncome(returns, floor, p){
-  if (!feasibleIncome(returns,0,floor,p)) return 0;
-  let lo=0, hi=(p.levelPremium>0?p.levelPremium:10000), guard=0;
-  while (feasibleIncome(returns,hi,floor,p) && guard<50){ hi*=2; guard++; }
-  for (let it=0; it<50; it++){
-    const mid=(lo+hi)/2;
-    if (feasibleIncome(returns,mid,floor,p)) lo=mid; else hi=mid;
-  }
-  return lo;
-}
+    const pdaByYr = {};
+    (d.pdaSchedule||[]).forEach(r=>pdaByYr[r.yr]=r);
 
-function simEPPathFull(returns, income, p){
-  const params = CARRIER_PARAMS[p.carrierKey];
-  let av=0, loan=0;
-  const rows=[];
-  for (let i=0;i<returns.length;i++){
-    const age=p.issueAge+i, polYr=i+1, ret=returns[i];
-    const cp = params[Math.min(i, params.length-1)];
-    const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
-    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
-    av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
-    const compI = polYr<=p.contribYears ? p.comp : 0;
-    const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
-    const financedTax = polYr<=p.contribYears ? compI*(p.taxRate/100) : 0;
-    loan = loan*(1+rate) + financedTax;
-    let inc=0;
-    if (income>0 && age>=p.incStart && age<=p.incEnd){
-      inc = income*Math.pow(1+p.cola/100, age-p.incStart);
-      loan += inc;
-    }
-    const surrChg = carrierRow.surrenderCharge||0;
-    const csvGross = Math.max(0, av-surrChg);
-    rows.push({age,polYr,ret,comp:compI,premium:prem,financedTax,phase:polYr<p.refiYear?'bank':'plr',av,csvGross,loan,csvNet:csvGross-loan,income:inc});
-  }
-  return rows;
-}
+    const ageRange = epRows50.map(r=>r.age);
+    const totalPremium = (d.pdaSchedule||[]).reduce((s,r)=>s+r.premium,0);
 
-// ══════════════════════════════════════════════════════════
-// PDA (PREMIUM DEPOSIT ACCOUNT) — sinking-fund intermediary
-// Annual gross comp deposits into a PDA side account earning the PDA
-// rate; the INTEREST is taxed annually at the combined rate (ordinary
-// cash, not tax-deferred — same mechanic as the ETA modeler's calcPDA).
-// A LEVEL premium is drawn from the PDA into the policy each contribution
-// year, solved by bisection so the PDA depletes to ~$0 by the end of the
-// contribution period.
-// ══════════════════════════════════════════════════════════
-// Loan origination fee — TIERED lookup keyed to the deposit size (matches
-// the workbook's bucketed table exactly: 250k/500k/750k/1M reference
-// amounts × 0.25%). NOT a smooth percentage of the deposit.
-function loanOriginationFeeTier(depositAmt){
-  if (depositAmt <= 500000) return 625;
-  if (depositAmt <= 750000) return 1250;
-  if (depositAmt <= 1000000) return 1875;
-  return 2500;
-}
+    // ══════════════════════════════════════════════════════════
+    // DUAL-PANEL GREENSHEET PAGE — Comparator (left) vs EP (right), median
+    // ══════════════════════════════════════════════════════════
+    function buildGreensheetPage(comparatorLabel, comparatorRows, epRows, pageEyebrow, comparatorType){
+      const netInvested = comparatorType==='qp' ? d.comp : d.comp*(1-d.taxRate/100);
+      const compByAge = {}; comparatorRows.forEach(r=>compByAge[r.age]=r);
+      const incomeAges = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
 
-// Premium Deposit Account — sinking-fund intermediary.
-// Years 1..retentionYears: compensation SPLITS at deposit. The retained
-// share (retentionPct) goes straight into the PDA and compounds there —
-// it is never touched by that year's premium. The remaining share is what
-// funds the policy premium that year; in Year 1 only, the loan
-// origination + mail away fees are deducted from THAT remaining share
-// before it reaches the policy (not from the PDA side).
-// From retentionYears+1 on: the full annual deposit goes into the PDA,
-// and a level premium is drawn from the PDA balance — solved by
-// bisection so the PDA depletes to ~$0 by the end of the funding period.
-function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct, mailAwayFee){
-  const loanOrigFee = loanOriginationFeeTier(comp);
-  const yr1Fees = loanOrigFee + (mailAwayFee||0);
-  function simulate(L){
-    let bal=0;
-    const rows=[];
-    for (let yr=1; yr<=contribYears; yr++){
-      const boy = bal;
-      let premium, retainedAmt, fees=0;
-      if (yr<=retentionYears){
-        retainedAmt = comp*(retentionPct/100);
-        const premiumBound = comp*(1-retentionPct/100);
-        fees = yr===1 ? yr1Fees : 0;
-        premium = Math.max(0, premiumBound-fees);
-        bal += retainedAmt;
-        const interest = bal*(pdaRate/100);
-        const taxOnInt = interest*(combinedTaxRate/100);
-        const netInt = interest-taxOnInt;
-        bal += netInt;
-        rows.push({yr, boy, retainedAmt, fees, interest, taxOnInt, netInt, premium, eoy:bal});
-      } else {
-        retainedAmt = comp;
-        bal += comp;
-        const interest = bal*(pdaRate/100);
-        const taxOnInt = interest*(combinedTaxRate/100);
-        const netInt = interest-taxOnInt;
-        bal += netInt;
-        premium = L;
-        bal -= premium;
-        rows.push({yr, boy, retainedAmt, fees, interest, taxOnInt, netInt, premium, eoy:bal});
-      }
-    }
-    return {finalBal: bal, rows};
-  }
-  let lo=0, hi=comp>0?comp*3:10000, guard=0;
-  while (simulate(hi).finalBal > 0 && guard<60){ hi*=1.5; guard++; }
-  for (let it=0; it<60; it++){
-    const mid=(lo+hi)/2;
-    if (simulate(mid).finalBal > 0) lo=mid; else hi=mid;
-  }
-  const levelPremium=(lo+hi)/2;
-  const rows = simulate(levelPremium).rows.map(r=>({...r, eoy:Math.max(0,r.eoy)}));
-  return {levelPremium, retentionYears, loanOrigFee, mailAwayFee:(mailAwayFee||0), rows};
-}
+      const totalCompGross = incomeAges.reduce((s,a)=>s+((compByAge[a]||{}).gross||0),0);
+      const totalCompNet = incomeAges.reduce((s,a)=>s+((compByAge[a]||{}).net||0),0);
+      const totalCompTax = totalCompGross - totalCompNet;
+      const totalEPIncome = incomeAges.reduce((s,a)=>s+((epByAge50[a]||{}).income||0),0);
+      const incomeAdv = totalEPIncome - totalCompNet;
+      const endEP = epByAge50[d.incEnd] || {};
 
-// ══════════════════════════════════════════════════════════
-// PRE-ILLUSTRATION — solves the PDA funding schedule and level premium
-// on demand, before any carrier file exists, so the advisor has the
-// number to key into the carrier's illustration software.
-// ══════════════════════════════════════════════════════════
-function calculateFundingSchedule(){
-  const errEl=document.getElementById('lerr');
-  errEl.style.display='none';
+      const statStrip = `
+        <div class="stat-strip">
+          <div class="stat-box">
+            <div class="sb-label">Total ${comparatorLabel}<br>Contribution (Gross)</div>
+            <div class="sb-val">${$f(d.contribTotal)}</div>
+            <div class="sb-sub">${d.contribYears} years of ${$f(d.comp)}/yr</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Total EP Premium<br>Into Tax-Free Asset</div>
+            <div class="sb-val">${$f(totalPremium)}</div>
+            <div class="sb-sub">${d.contribYears} annual premiums, PDA-funded</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Total Net Distributions<br>${comparatorLabel} (After Tax)</div>
+            <div class="sb-val">${$f(totalCompNet)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Taxes Paid — ${comparatorLabel}</div>
+            <div class="sb-val">${$f(totalCompTax)}</div>
+            <div class="sb-sub">Ages ${d.incStart}\u2013${d.incEnd}</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Total EP Income<br>Tax-Free Drawdowns</div>
+            <div class="sb-val">${$f(totalEPIncome)}</div>
+            <div class="sb-sub">Median (50th percentile)</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Net Asset Value at Age ${d.incEnd}<br>Net of All Loans</div>
+            <div class="sb-val">${$f(endEP.csvNet)}</div>
+            <div class="sb-adv">EP Income Advantage: +${$f(incomeAdv)}</div>
+          </div>
+        </div>`;
 
-  const name = document.getElementById('clientName').value.trim() || 'Client';
-  const issueAge = parseInt(document.getElementById('issueAge').value)||50;
-  const comp = parseNum('annualComp');
-  const contribYears = parseInt(document.getElementById('contribYears').value)||10;
-  const fedRate = parseFloat(document.getElementById('fedRate').value)||0;
-  const stateRate = parseFloat(document.getElementById('stateRate').value)||0;
-  const taxRate = fedRate+stateRate;
-  const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
-  const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
-  const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
-  const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
-  const carrierKey = document.getElementById('carrier').value;
-  const carrierName = carrierKey==='NLG' ? 'National Life Group — Summit Pref+' : 'Pacific Life — ECV Pref+';
+      let leftRows='', rightRows='', prevSection='';
+      ageRange.forEach(a=>{
+        const yr = a - d.issueAge + 1;
+        const isIncome = a>=d.incStart && a<=d.incEnd;
+        const isFund = yr<=d.contribYears;
+        const ep = epByAge50[a] || {};
+        const isPayoff = ep.isPayoff;
 
-  if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
-  if (!contribYears){ errEl.textContent='Enter contribution years.'; errEl.style.display='block'; return; }
+        let secHdr='';
+        if (yr===1 && prevSection!=='fund'){ secHdr = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSection='fund'; }
+        if (isIncome && prevSection!=='income'){ secHdr = `DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME DISTRIBUTIONS BEGIN)`; prevSection='income'; }
 
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
-  const totalPremium = funding.rows.reduce((s,r)=>s+r.premium,0);
-  const totalDeposits = comp*contribYears;
-  const totalFinancedTax = comp*contribYears*(taxRate/100);
+        const rowCls = isPayoff ? 'payoff-yr' : isIncome ? 'income-yr' : isFund ? 'fund-yr' : 'post-yr';
+        if (secHdr){ leftRows += `<tr class="sec-hdr"><td colspan="9">${secHdr}</td></tr>`; rightRows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`; }
 
-  let tableRows = '';
-  funding.rows.forEach(r=>{
-    const age = issueAge+r.yr-1;
-    const cls = r.yr<=pdaRetentionYears ? '' : (r.yr===pdaRetentionYears+1 ? 'refi-yr' : '');
-    tableRows += `<tr class="${cls}">
-      <td>${r.yr}</td><td>${age}</td>
-      <td>${fmt$(r.boy)}</td>
-      <td>${r.fees>0?fmt$(r.fees):'—'}</td>
-      <td>${fmt$(r.interest)}</td>
-      <td>${fmt$(r.taxOnInt)}</td>
-      <td>${fmt$(r.netInt)}</td>
-      <td>${fmt$(r.premium)}</td>
-      <td>${fmt$(r.eoy)}</td>
-    </tr>`;
-  });
+        // LEFT — comparator (QP or Investment Account), identical row shape
+        const comp = compByAge[a] || {};
+        const prevComp = compByAge[a-1];
+        const prevEOY = prevComp ? prevComp.bal : 0;
+        const compEOY = comp.bal || 0;
+        const compGross = comp.gross || 0;
+        const compNet = comp.net || 0;
+        const compTax = compGross - compNet;
+        const compInvested = isFund ? netInvested : 0;
+        // BOY = prior EOY + this year's deposit (funded balance BEFORE return is applied).
+        // Growth = the actual return dollar amount applied to that funded balance —
+        // NOT (EOY − prior EOY), which would silently fold the deposit itself into "growth."
+        const compBOY = prevEOY + compInvested;
+        const compGrowth = compEOY - compBOY;
 
-  const html = `
-    <div class="card anim">
-      <div class="card-hdr"><div class="step">Pre-Illustration</div><h2>PDA Funding Schedule</h2></div>
-      <div class="card-body">
-        <div class="premium-callout">
+        leftRows += `<tr class="${rowCls}">
+          <td>${yr}</td><td>${a}</td>
+          <td>${compInvested>0 ? $f(compInvested) : '\u2014'}</td>
+          <td>${$f(compBOY)}</td>
+          <td>${compGrowth!==0 ? $f(compGrowth) : '\u2014'}</td>
+          <td>${isIncome && compTax>0 ? $f(compTax) : '\u2014'}</td>
+          <td class="${isIncome?'inc-val':''}">${isIncome?$f(compGross):'\u2014'}</td>
+          <td class="${isIncome?'inc-val':''}">${isIncome?$f(compNet):'\u2014'}</td>
+          <td>${$f(compEOY)}</td>
+        </tr>`;
+
+        // RIGHT — EP
+        const contrib = isFund ? $f(d.comp) : '\u2014';
+        const pdaRow = pdaByYr[yr];
+        const pdaToAsset = (pdaRow && yr<=d.contribYears) ? $f(pdaRow.premium) : '\u2014';
+        const pdaBal = (pdaRow && yr<=d.contribYears) ? $f(Math.max(0,pdaRow.eoy)) : '\u2014';
+        const lenderRate = ep.lenderRate!=null ? fmtPct(ep.lenderRate) : '\u2014';
+        const loanForTax = ep.financedTax>0 ? $f(ep.financedTax) : '\u2014';
+        const interest = ep.interest>0 ? $f(ep.interest) : '\u2014';
+        const loanBal = ep.loan!=null ? $f(ep.loan) : '\u2014';
+        const loanPayoff = isPayoff ? $f(ep.loan) : '\u2014';
+        const taxFreeInc = isIncome ? $f(ep.income) : '\u2014';
+
+        rightRows += `<tr class="${rowCls}">
+          <td>${yr}</td><td>${a}</td>
+          <td>${contrib}</td>
+          <td>${pdaToAsset}</td>
+          <td>${pdaBal}</td>
+          <td>${lenderRate}</td>
+          <td>${loanForTax}</td>
+          <td>${interest}</td>
+          <td>${loanBal}</td>
+          <td>${isPayoff ? `<strong style="color:#c9a84c">${loanPayoff}</strong>` : loanPayoff}</td>
+          <td class="${isIncome?'inc-val':''}">${taxFreeInc}</td>
+          <td>${$f(ep.av)}</td>
+          <td>${$f(ep.csvNet)}</td>
+        </tr>`;
+      });
+
+      const totalCompInvested = d.contribYears * netInvested;
+      const leftFoot = `<tr><td colspan="2">Totals</td><td>${$f(totalCompInvested)}</td><td>\u2014</td><td>\u2014</td><td>${$f(totalCompTax)}</td><td>${$f(totalCompGross)}</td><td>${$f(totalCompNet)}</td><td>\u2014</td></tr>`;
+      const rightFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
+
+      const summaryCards = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:2px solid var(--gold);border-bottom:1px solid var(--border)">
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total EP Tax-Free Income<br>Median (50th Percentile)</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:600">${$f(totalEPIncome)}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Ages ${d.incStart}\u2013${d.incEnd} \u00b7 ${d.cola}% COLA \u00b7 Tax-free asset loans</div>
+          </div>
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total ${comparatorLabel} Net Distributions<br>Median (50th Percentile)</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--red)">${$f(totalCompNet)}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Ages ${d.incStart}\u2013${d.incEnd}</div>
+          </div>
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Net Asset Value at Age ${d.incEnd}<br>Net of All Asset Loans</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">${$f(endEP.csvNet)}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Asset loan retires from death benefit</div>
+          </div>
+          <div style="padding:11px 20px">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">EP Income Advantage<br>vs. ${comparatorLabel} (Median)</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--green)">+${$f(incomeAdv)}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">${(totalEPIncome/Math.max(totalCompNet,1)).toFixed(2)}\u00d7 more income \u00b7 Tax-free vs. taxable</div>
+          </div>
+        </div>`;
+
+      const disc = `<div class="disc-3col">
+        <div>The hypothetical models in this summary assume certain crediting methods and index account charges that are purely hypothetical and do not represent any particular investment or product. Hypothetical crediting methods, charges, values and returns are not guaranteed. Hypothetical returns used in this summary are bootstrapped historical S&amp;P 500 returns (${d.dataYears}-yr pool) used purely as a hypothetical example of index volatility over a period of time.</div>
+        <div>EFS Life LLC and its related entities' programs, strategies, solutions, and platforms are not intended to be investment advice or a recommendation of any stock or index. The Enhanced Pension structure and related benefits shown are hypothetical. The finance arrangement is offered by EFS Life LLC. All platforms, programs, solutions, media mediums, and collateral pieces are not valid unless accompanied by a complete illustration.</div>
+        <div>The benefits and values shown are not guaranteed. The assumptions on which they are based are subject to change. Actual results may be more or less favorable. THIS IS A HYPOTHETICAL MODEL. REFER TO THE FULL ILLUSTRATION FOR DETAILS, CHARGES, GUARANTEES AND GUIDELINES. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}</div>
+      </div>`;
+
+      return `
+        <div class="eta-page-hdr">
           <div>
-            <div class="pc-label">Level Premium — Input This Into ${carrierKey==='NLG'?'NLG':'Pacific Life'}'s Illustration Software</div>
-            <div class="pc-value">${fmt$(funding.levelPremium)}<span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">/yr, Yrs ${pdaRetentionYears+1}\u2013${contribYears}</span></div>
-            <div class="pc-sub">${carrierName} · Issue Age ${issueAge} · ${name}</div>
+            <div class="eyebrow">${pageEyebrow}</div>
+            <div class="title">${d.clientName}</div>
+            <div class="meta-line">Client: ${d.clientName} &nbsp;|&nbsp; Advisor: ${d.advisor||'\u2014'} &nbsp;|&nbsp; Annual Compensation: ${$f(d.comp)} &nbsp;|&nbsp; Combined Tax Rate: ${fmtPct(d.taxRate)} &nbsp;|&nbsp; PDA Rate: ${fmtPct(d.pdaRate)} &nbsp;|&nbsp; PLR: ${fmtPct(d.plr)}</div>
           </div>
-          <div class="pc-stats">
-            <div class="pc-stat"><div class="psl">Yr 1 Premium (net of fees)</div><div class="psv">${fmt$(funding.rows[0]?.premium||0)}</div></div>
-            <div class="pc-stat"><div class="psl">Yr 2 Premium</div><div class="psv">${fmt$(funding.rows[1]?.premium||0)}</div></div>
-            <div class="pc-stat"><div class="psl">Total Into Policy</div><div class="psv">${fmt$(totalPremium)}</div></div>
-            <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${contribYears} yrs</div></div>
-            <div class="pc-stat"><div class="psl">Yr 1 Fees</div><div class="psv">${fmt$(funding.loanOrigFee+funding.mailAwayFee)}</div></div>
+          <div class="ver-block">
+            <div class="vdate">${dateStr}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">${d.nSims.toLocaleString()} simulations \u00b7 ${d.dataYears}-yr pool</div>
           </div>
         </div>
-
-        <div class="carrier-instr">
-          <h4>Next Step <span class="tag">Illustration Software</span></h4>
-          <div class="hint" style="margin:0">Enter the premium amounts above into ${carrierName}'s illustration software (Yrs 1\u2013${pdaRetentionYears} at the lower amount, Yrs ${pdaRetentionYears+1}\u2013${contribYears} at the level amount) at issue age ${issueAge}, running the illustration to age 100. Export the resulting CSV (NLG) or XLSX (Pacific Life) and upload it below to run the Monte Carlo analysis.</div>
+        ${statStrip}
+        <div class="dual-panel">
+          <div>
+            <table class="dual">
+              <colgroup><col style="width:4.5%"><col style="width:5.5%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.4%"><col style="width:13.4%"><col style="width:10%"></colgroup>
+              <thead>
+                <tr><th colspan="9" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px">${comparatorLabel} \u00b7 50th Percentile</th></tr>
+                <tr><th>Yr</th><th>Age</th><th>Net Invested</th><th>BOY Balance</th><th>Growth</th><th>Tax Paid</th><th>Gross Distribution</th><th>Net Distribution</th><th>EOY Balance</th></tr>
+              </thead>
+              <tbody>${leftRows}</tbody>
+              <tfoot>${leftFoot}</tfoot>
+            </table>
+          </div>
+          <div class="right-panel-wrap">
+            <table class="dual">
+              <colgroup><col style="width:3.5%"><col style="width:4.5%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:11%"><col style="width:9.5%"><col style="width:9.8%"></colgroup>
+              <thead>
+                <tr><th colspan="13" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px;border-left:3px solid var(--gold)">Enhanced Pension</th></tr>
+                <tr>
+                  <th style="border-left:3px solid var(--gold)">Yr</th><th>Age</th>
+                  <th>Contrib \u2192 PDA</th><th>PDA \u2192 Asset</th><th>PDA Balance</th>
+                  <th>Lender Rate</th><th>Loan for Tax</th><th>Interest</th><th>Loan Balance</th>
+                  <th>Loan Payoff</th><th>Tax-Free Income</th><th>Asset Value</th><th>Net Asset Value</th>
+                </tr>
+              </thead>
+              <tbody>${rightRows}</tbody>
+              <tfoot>${rightFoot}</tfoot>
+            </table>
+          </div>
         </div>
+        ${summaryCards}
+        ${disc}`;
+    }
 
-        <div class="stag" style="margin-bottom:10px">Premium Deposit Account — Year by Year</div>
-        <div style="overflow-x:auto">
-          <table class="ldg" style="min-width:780px">
-            <thead><tr>
-              <th>Yr</th><th>Age</th><th>BOY PDA</th><th>Fees</th><th>Gross Int</th><th>Tax on Int</th><th>Net Int</th><th>Premium Paid</th><th>EOY PDA</th>
-            </tr></thead>
-            <tbody>${tableRows}</tbody>
-            <tfoot><tr>
-              <td colspan="7" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${contribYears}</td>
-              <td colspan="2">${fmt$(totalPremium)}</td>
-            </tr></tfoot>
+    // ══════════════════════════════════════════════════════════
+    // CHART — EP 25th/50th/75th cumulative income vs comparator(s) 50th
+    // ══════════════════════════════════════════════════════════
+    function buildChart(){
+      const W=1060,H=280,PL=88,PR=24,PT=34,PB=34,cW=W-PL-PR,cH=H-PT-PB;
+      const ages = ageRange.filter(a=>a>=d.incStart&&a<=d.incEnd);
+      if (ages.length<2) return '';
+      function cumEP(byAgeMap){ let c=0; return ages.map(a=>{ c+=((byAgeMap[a]||{}).income||0); return c; }); }
+      function cumComp(rows){ const byAge={}; rows.forEach(r=>byAge[r.age]=r); let c=0; return ages.map(a=>{ c+=((byAge[a]||{}).net||0); return c; }); }
+      const ci25=cumEP(epByAge25), ci50=cumEP(epByAge50), ci75=cumEP(epByAge75);
+      const series = [
+        {label:'75th (Favorable)', color:'#2a6e45', dash:'6,3', width:2, data:ci75},
+        {label:'50th Median \u2014 EP', color:'#c9a84c', dash:'', width:3, data:ci50},
+        {label:'25th (Conservative)', color:'#8a8070', dash:'4,4', width:1.5, data:ci25},
+      ];
+      if (d.investRows50) series.push({label:'Investment Acct Net \u2014 Median', color:'rgba(100,140,200,.9)', dash:'6,3', width:1.5, data:cumComp(d.investRows50)});
+      if (showQP && d.qpRows50) series.push({label:'QP Taxable Net \u2014 Median', color:'rgba(139,32,32,.7)', dash:'2,3', width:1.5, data:cumComp(d.qpRows50)});
+
+      const maxVal = Math.max(...series.flatMap(s=>s.data))*1.08||1;
+      const xS = i=>PL+(i/(ages.length-1))*cW;
+      const yS = v=>PT+cH-(v/maxVal)*cH;
+      const pth = arr=>arr.map((v,i)=>`${i===0?'M':'L'}${xS(i).toFixed(1)},${yS(v).toFixed(1)}`).join(' ');
+      const $m = n=>n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1000?'$'+(n/1000).toFixed(0)+'k':'$'+Math.round(n);
+      const yTicks=[]; for(let v=0;v<=maxVal;v+=maxVal/5) yTicks.push(v);
+      const xLabels = ages.filter((a,i)=>i===0||i===ages.length-1||(a%5===0));
+
+      let legendX = PL+10;
+      const legend = series.map(s=>{
+        const html = `<line x1="${legendX}" y1="18" x2="${legendX+16}" y2="18" stroke="${s.color}" stroke-width="${s.width}" ${s.dash?`stroke-dasharray="${s.dash}"`:''}/><text x="${legendX+21}" y="22" fill="rgba(13,27,46,.65)" font-size="10" font-family="IBM Plex Sans,sans-serif">${s.label}</text>`;
+        legendX += 26+s.label.length*5.6;
+        return html;
+      }).join('');
+
+      const lX = xS(ages.length-1)-8;
+      const endLabels = series.map(s=>`<text x="${lX}" y="${(yS(s.data[s.data.length-1])-5).toFixed(1)}" fill="${s.color}" font-size="9" text-anchor="end">${s.label.split(' ')[0]}</text>`).join('');
+
+      return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+        ${legend}
+        ${series.map(s=>`<path d="${pth(s.data)}" fill="none" stroke="${s.color}" stroke-width="${s.width}" ${s.dash?`stroke-dasharray="${s.dash}"`:''} stroke-linejoin="round"/>`).join('')}
+        ${endLabels}
+        <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+cH}" stroke="rgba(13,27,46,.12)" stroke-width="1"/>
+        ${yTicks.map(v=>`<line x1="${PL-4}" y1="${yS(v).toFixed(1)}" x2="${PL+cW}" y2="${yS(v).toFixed(1)}" stroke="rgba(13,27,46,.05)" stroke-width="1"/><text x="${PL-8}" y="${(yS(v)+4).toFixed(1)}" fill="rgba(13,27,46,.45)" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="end">${$m(v)}</text>`).join('')}
+        <line x1="${PL}" y1="${PT+cH}" x2="${PL+cW}" y2="${PT+cH}" stroke="rgba(13,27,46,.15)" stroke-width="1"/>
+        ${xLabels.map(a=>{const xi=ages.indexOf(a);return`<text x="${xS(xi).toFixed(1)}" y="${PT+cH+15}" fill="rgba(13,27,46,.5)" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="middle">${a}</text>`;}).join('')}
+      </svg>`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // SCENARIO ANALYSIS PAGE — 25/50/75 cards + chart
+    // ══════════════════════════════════════════════════════════
+    function buildScenarioAnalysisPage(){
+      const incomeAges = ageRange.filter(a=>a>=d.incStart&&a<=d.incEnd);
+      const totalByBand = d.totalByBand;
+      const primaryCompLabel = d.investRows50 ? 'Taxable Investment Account' : 'Qualified Plan';
+      const primaryCompTotal = d.investTotalMed;
+      const incomeAdv = totalByBand[50] - primaryCompTotal;
+      const endEP = epByAge50[d.incEnd] || {};
+
+      const scenarioStrip = `
+        <div class="scenario-strip">
+          <div class="sc-band">
+            <div class="sc-name">25th Percentile \u2014 Conservative Sequence</div>
+            <div class="sc-inc">${$f(d.bandIncome[25])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
+            <div class="sc-total">Total: ${$f(totalByBand[25])}</div>
+          </div>
+          <div class="sc-band median">
+            <div class="sc-name">50th Percentile \u2014 Median Base Case</div>
+            <div class="sc-inc">${$f(d.bandIncome[50])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
+            <div class="sc-total">Total: ${$f(totalByBand[50])}</div>
+          </div>
+          <div class="sc-band">
+            <div class="sc-name">75th Percentile \u2014 Favorable Sequence</div>
+            <div class="sc-inc">${$f(d.bandIncome[75])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
+            <div class="sc-total">Total: ${$f(totalByBand[75])}</div>
+          </div>
+        </div>`;
+
+      const summaryCols = [
+        {label:'Investment Acct Net Income (Median)', val:$f(d.investTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`},
+      ];
+      if (showQP) summaryCols.push({label:'QP Net Distributions (Median)', val:$f(d.qpTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
+      summaryCols.push({label:'EP Tax-Free Income Advantage (Median)', val:'+'+$f(incomeAdv), color:'var(--green)', sub:`${(totalByBand[50]/Math.max(primaryCompTotal,1)).toFixed(2)}\u00d7 more income vs. ${primaryCompLabel}`});
+      summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNet), color:'var(--navy)', sub:'Net of all asset loans'});
+
+      const summaryRow = `<div style="display:grid;grid-template-columns:repeat(${summaryCols.length},1fr);border-bottom:1px solid var(--border)">
+        ${summaryCols.map((c,i)=>`<div style="padding:14px 20px;${i<summaryCols.length-1?'border-right:1px solid var(--border)':''}">
+          <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${c.label}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:22px;color:${c.color}">${c.val}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px">${c.sub}</div>
+        </div>`).join('')}
+      </div>`;
+
+      const pctExplain = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px 28px;border-bottom:1px solid var(--border)">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:6px;font-weight:600">50th \u2014 Median</div>
+            <div style="font-size:11px;color:var(--text);line-height:1.5">Half of all ${d.nSims.toLocaleString()} simulated market sequences produced more income than this; half produced less. This is the base case.</div>
+          </div>
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#2a6e45;margin-bottom:6px;font-weight:600">75th \u2014 Favorable</div>
+            <div style="font-size:11px;color:var(--text);line-height:1.5">In 25% of simulated sequences \u2014 above-average market performance \u2014 the EP asset produced income above this level.</div>
+          </div>
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#8b2020;margin-bottom:6px;font-weight:600">25th \u2014 Conservative</div>
+            <div style="font-size:11px;color:var(--text);line-height:1.5">In 75% of sequences the outcome exceeded this level \u2014 a below-average but realistic planning floor.</div>
+          </div>
+        </div>`;
+
+      const chartSVG = buildChart();
+      const compTitle = showQP ? 'Qualified Plan & Taxable Investment Account' : 'Taxable Investment Account';
+
+      return `
+        <div class="pg2-hdr">
+          <div>
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">Enhanced Pension \u00b7 Monte Carlo Scenario Analysis</div>
+            <div class="title">${d.clientName} \u2014 ${d.nSims.toLocaleString()} Market Sequences \u00b7 ${d.dataYears}-yr pool</div>
+            <div class="sub">Ages ${d.incStart}\u2013${d.incEnd} \u00b7 ${d.cola}% COLA \u00b7 vs. ${compTitle} \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
+          </div>
+        </div>
+        ${scenarioStrip}
+        ${summaryRow}
+        ${pctExplain}
+        <div style="padding:12px 28px 0">
+          <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:3px">Cumulative Income \u2014 EP Tax-Free vs. ${compTitle} (Median)</div>
+          <div style="font-size:9px;color:var(--muted);margin-bottom:8px">${d.nSims.toLocaleString()} bootstrapped S&amp;P 500 sequences (${d.dataYears}-yr pool) \u00b7 ${d.capRate}% cap / 0% floor</div>
+          ${chartSVG}
+        </div>
+        <div class="disc-3col" style="margin-top:auto">
+          <div>The hypothetical models in this summary assume certain crediting methods and charges that are purely hypothetical and do not represent any particular investment or product. Returns shown are bootstrapped historical S&amp;P 500 sequences (${d.dataYears}-yr pool).</div>
+          <div>EFS Life LLC and its related entities are not providing investment advice. The EP structure shown is hypothetical. Income figures reflect the median (50th percentile) and scenario bands across ${d.nSims.toLocaleString()} simulations.</div>
+          <div>Benefits and values shown are not guaranteed. THIS IS A HYPOTHETICAL MODEL. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}</div>
+        </div>`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // SCENARIO LEDGER PAGE — year by year, EP 25/50/75 + comparator(s)
+    // ══════════════════════════════════════════════════════════
+    function buildScenarioLedgerPage(){
+      const investByAge = {}; (d.investRows50||[]).forEach(r=>investByAge[r.age]=r);
+      const qpByAge = {}; (d.qpRows50||[]).forEach(r=>qpByAge[r.age]=r);
+
+      const displayAges = [];
+      ageRange.forEach(a=>{
+        const isIncome = a>=d.incStart && a<=d.incEnd;
+        if (isIncome){ displayAges.push({a, tranche:false}); return; }
+        if (a===ageRange[0] || a%5===0 || a===d.incStart-1 || a===d.incEnd+5 || a===ageRange[ageRange.length-1]){
+          displayAges.push({a, tranche:true});
+        }
+      });
+
+      let rows='', prevSection='';
+      displayAges.forEach(({a,tranche})=>{
+        const yr = a - d.issueAge + 1;
+        const isIncome = a>=d.incStart && a<=d.incEnd;
+        const isPost = a>d.incEnd;
+        const ep50 = epByAge50[a]||{};
+        const isPayoff = ep50.isPayoff;
+
+        let secHdr='';
+        if (yr===1 && prevSection!=='acc'){ secHdr=`ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSection='acc'; }
+        if (isIncome && prevSection!=='inc'){ secHdr=`DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME BEGINS \u2014 AGES ${d.incStart}\u2013${d.incEnd})`; prevSection='inc'; }
+        if (isPost && prevSection!=='post'){ secHdr='POST-INCOME \u2014 ASSET CONTINUES TO GROW'; prevSection='post'; }
+
+        const e25=epByAge25[a]||{}, e50=epByAge50[a]||{}, e75=epByAge75[a]||{};
+        const inv=investByAge[a]||{}, qp=qpByAge[a]||{};
+        const rowCls = isPayoff?'payoff-yr':isIncome?'income-yr':'';
+        const yrCell = tranche?`<td style="font-weight:700;background:rgba(201,168,76,.08)">${yr}</td>`:`<td>${yr}</td>`;
+        const ageCell = tranche?`<td style="font-weight:700;color:var(--gold);background:rgba(201,168,76,.08)">${a}</td>`:`<td>${a}</td>`;
+
+        if (secHdr) rows += `<tr class="sec-hdr"><td colspan="${showQP?10:10}">${secHdr}</td></tr>`;
+
+        rows += `<tr class="${rowCls}">
+          ${yrCell}${ageCell}
+          <td class="${isIncome?'green-col':''}">${isIncome?$f(showQP?qp.net:inv.net):'\u2014'}</td>
+          ${showQP?`<td class="${isIncome?'green-col':''}">${isIncome?$f(inv.net):'\u2014'}</td>`:`<td>${$f(inv.bal)}</td>`}
+          <td style="border-left:2px solid rgba(201,168,76,.25)">${isIncome?$f(e25.income):'\u2014'}</td>
+          <td class="${isIncome?'gold-col':''}">${isIncome?$f(e50.income):'\u2014'}</td>
+          <td>${isIncome?$f(e75.income):'\u2014'}</td>
+          <td style="border-left:2px solid rgba(13,27,46,.12)">${$f(e50.av)}</td>
+          <td>${$f(e50.loan)}</td>
+          <td>${$f(e50.csvNet)}</td>
+        </tr>`;
+      });
+
+      const totalByBand = d.totalByBand;
+      const foot = `<tr>
+        <td colspan="2">Totals (Income Period)</td>
+        <td class="green-col">${$f(showQP?d.qpTotalMed:d.investTotalMed)}</td>
+        <td class="green-col">${showQP?$f(d.investTotalMed):'\u2014'}</td>
+        <td style="border-left:2px solid rgba(201,168,76,.25)">${$f(totalByBand[25])}</td>
+        <td class="gold-col">${$f(totalByBand[50])}</td>
+        <td>${$f(totalByBand[75])}</td>
+        <td style="border-left:2px solid rgba(13,27,46,.12)">\u2014</td><td>\u2014</td><td>\u2014</td>
+      </tr>`;
+
+      const col3Label = showQP ? 'QP Net' : 'Investment Net';
+      const col4Label = showQP ? 'Invest Net' : 'Investment Balance';
+
+      return `
+        <div class="pg2-hdr">
+          <div>
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">Enhanced Pension \u00b7 Year-by-Year Scenario Ledger</div>
+            <div class="title">${d.clientName} \u2014 ${d.nSims.toLocaleString()} Simulations \u00b7 ${d.dataYears}-yr pool</div>
+            <div class="sub">Column order: Yr / Age / ${col3Label} / ${col4Label} / EP 25th / EP 50th / EP 75th / Asset Value / Loan Balance / Net Asset Value \u00b7 Median (50th) path for balance columns \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
+          </div>
+        </div>
+        <div style="padding:12px 28px;overflow-x:auto">
+          <table class="sc-ldg" style="font-size:10.5px;min-width:1100px">
+            <colgroup><col style="width:4%"><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:13%"></colgroup>
+            <thead>
+              <tr>
+                <th colspan="2" style="text-align:center;background:var(--navy);color:rgba(255,255,255,.7)">Year</th>
+                <th colspan="2" style="text-align:center;background:rgba(100,20,20,.85);color:#fff">Comparator(s) \u2014 Net Distributions</th>
+                <th colspan="3" style="text-align:center;background:rgba(140,100,20,.9);color:#fff;border-left:2px solid rgba(201,168,76,.6)">EP Tax-Free Income</th>
+                <th colspan="3" style="text-align:center;background:var(--navy);color:rgba(255,255,255,.7);border-left:2px solid rgba(255,255,255,.15)">EP Balance Summary (Median)</th>
+              </tr>
+              <tr>
+                <th>Yr</th><th>Age</th>
+                <th style="background:rgba(100,20,20,.7);color:#fff">${col3Label}</th>
+                <th style="background:rgba(100,20,20,.5);color:#fff">${col4Label}</th>
+                <th class="gold-col" style="border-left:2px solid rgba(201,168,76,.4)">25th</th>
+                <th style="background:rgba(140,100,20,.7);color:#fff">50th \u2605</th>
+                <th class="gold-col">75th</th>
+                <th style="border-left:2px solid rgba(255,255,255,.15)">Asset Value</th>
+                <th>Loan Balance</th>
+                <th>Net Asset Value</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+            <tfoot>${foot}</tfoot>
           </table>
         </div>
-        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Loan origination fee (${fmt$(funding.loanOrigFee)}, tiered by contribution size) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from Year 1's premium — not the retained PDA share — before it reaches the policy. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
-      </div>
-    </div>`;
-
-  document.getElementById('right-panel').innerHTML = html;
-}
-
-function simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, colaRate, ltcgRate, returns){
-  const cola=colaRate/100, ltcg=ltcgRate/100;
-  const startIdx = incStart-issueAge, incomeYrs = incEnd-incStart+1;
-  const netContrib = comp*(1-taxRate/100);
-  let bal=0, basisDollar=0;
-  for (let i=0;i<Math.min(startIdx,returns.length);i++){
-    const polYr=i+1, contribI = polYr<=contribYears? netContrib:0;
-    bal=(bal+contribI)*(1+returns[i]);
-    basisDollar+=contribI;
-  }
-  const balAtStart=bal, basisAtStart=basisDollar;
-  let wLo=0, wHi=(balAtStart>0?balAtStart*3:netContrib*5||10000), bestW=0;
-  for (let iter=0; iter<60; iter++){
-    const wMid=(wLo+wHi)/2;
-    let b=balAtStart, basisD=basisAtStart;
-    for (let j=0;j<incomeYrs;j++){
-      const ret=returns[startIdx+j]||0;
-      b=b*(1+ret);
-      if (b<=0){ b=0; break; }
-      const w=Math.min(wMid*Math.pow(1+cola,j), b);
-      const curBasisPct = b>0?Math.max(0,Math.min(1,basisD/b)):0;
-      basisD=Math.max(0, basisD-w*curBasisPct);
-      b-=w;
-      if (b<0){ b=0; break; }
+        <div class="disc-3col">
+          <div>Hypothetical models assume crediting methods and charges that do not represent any particular investment or product. Returns shown are bootstrapped historical S&amp;P 500 sequences (${d.dataYears}-yr pool). Values are not guaranteed.</div>
+          <div>EFS Life LLC is not providing investment advice. The EP structure shown is hypothetical. Income reflects median (50th percentile) and scenario bands across ${d.nSims.toLocaleString()} simulations.</div>
+          <div>THIS IS A HYPOTHETICAL MODEL. Refer to the full illustration for details, charges, and guarantees. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}</div>
+        </div>`;
     }
-    if (b>0) wLo=wMid; else wHi=wMid;
-    bestW=wMid;
-  }
-  let b2=0, basisD2=0, netW1=0;
-  const rows=[];
-  for (let i=0;i<returns.length;i++){
-    const polYr=i+1, age=issueAge+i, ret=returns[i];
-    const contribI = polYr<=contribYears? netContrib:0;
-    if (age<incStart){
-      b2=(b2+contribI)*(1+ret); basisD2+=contribI;
-      rows.push({yr:polYr,age,gross:0,net:0,bal:b2});
-    } else if (age<=incEnd){
-      const j=age-incStart;
-      b2=b2*(1+ret);
-      const g=Math.min(bestW*Math.pow(1+cola,j), Math.max(0,b2));
-      const curBasisPct = b2>0?Math.max(0,Math.min(1,basisD2/b2)):0;
-      const gain=g*(1-curBasisPct);
-      const n=g-gain*ltcg;
-      basisD2=Math.max(0, basisD2-g*curBasisPct);
-      b2=Math.max(0, b2-g);
-      if (j===0) netW1=n;
-      rows.push({yr:polYr,age,gross:g,net:n,bal:b2});
+
+    // ══════════════════════════════════════════════════════════
+    // ASSEMBLE PAGES
+    // ══════════════════════════════════════════════════════════
+    let pagesHTML = '';
+    if (showQP) {
+      pagesHTML += `<div class="page">${buildGreensheetPage('Qualified Plan', d.qpRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Qualified Plan', 'qp')}</div>`;
+      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     } else {
-      rows.push({yr:polYr,age,gross:0,net:0,bal:0});
+      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     }
+    pagesHTML += `<div class="page">${buildScenarioAnalysisPage()}</div>`;
+    pagesHTML += `<div class="page">${buildScenarioLedgerPage()}</div>`;
+
+    document.getElementById('pages').innerHTML = pagesHTML;
+
+  } catch(e) {
+    document.getElementById('pages').innerHTML = '<div style="padding:60px;font-family:monospace;color:red">Error building ledger: '+e.message+'<br><pre>'+e.stack+'</pre></div>';
+    console.error(e);
   }
-  return {rows, grossW:bestW, netW:netW1};
-}
-
-// Qualified plan (DB / cash balance) comparator — contributes the SAME
-// gross compensation as EP each contribution year (pre-tax, dollar for
-// dollar), grows tax-deferred, and is fully taxable as ordinary income
-// on withdrawal. Solves a level (COLA-escalated) withdrawal that
-// depletes the plan to $0 by income end age — same methodology as the
-// direct-investment comparator, without cost-basis tracking since the
-// entire balance is pre-tax.
-function simQualifiedPlan(comp, contribYears, withdrawalTaxRate, issueAge, incStart, incEnd, colaRate, returns){
-  const cola=colaRate/100, taxR=withdrawalTaxRate/100;
-  const startIdx = incStart-issueAge, incomeYrs = incEnd-incStart+1;
-  let bal=0;
-  for (let i=0;i<Math.min(startIdx,returns.length);i++){
-    const polYr=i+1, contribI = polYr<=contribYears? comp:0;
-    bal=(bal+contribI)*(1+returns[i]);
-  }
-  const balAtStart=bal;
-  let wLo=0, wHi=(balAtStart>0?balAtStart*3:comp*5||10000), bestW=0;
-  for (let iter=0; iter<60; iter++){
-    const wMid=(wLo+wHi)/2;
-    let b=balAtStart;
-    for (let j=0;j<incomeYrs;j++){
-      const ret=returns[startIdx+j]||0;
-      b=b*(1+ret);
-      const w=Math.min(wMid*Math.pow(1+cola,j), Math.max(0,b));
-      b-=w;
-      if (b<0){ b=0; break; }
-    }
-    if (b>0) wLo=wMid; else wHi=wMid;
-    bestW=wMid;
-  }
-  let b2=0, netW1=0;
-  const rows=[];
-  for (let i=0;i<returns.length;i++){
-    const polYr=i+1, age=issueAge+i, ret=returns[i];
-    const contribI = polYr<=contribYears? comp:0;
-    if (age<incStart){
-      b2=(b2+contribI)*(1+ret);
-      rows.push({yr:polYr,age,gross:0,net:0,bal:b2});
-    } else if (age<=incEnd){
-      const j=age-incStart;
-      b2=b2*(1+ret);
-      const g=Math.min(bestW*Math.pow(1+cola,j), Math.max(0,b2));
-      const n=g*(1-taxR);
-      b2=Math.max(0, b2-g);
-      if (j===0) netW1=n;
-      rows.push({yr:polYr,age,gross:g,net:n,bal:b2});
-    } else {
-      rows.push({yr:polYr,age,gross:0,net:0,bal:0});
-    }
-  }
-  return {rows, grossW:bestW, netW:netW1};
-}
-
-// ══════════════════════════════════════════════════════════
-// ORCHESTRATION
-// ══════════════════════════════════════════════════════════
-let _epChart=null;
-let _bandData=null; // stores rows for 25/50/75 for ledger toggle
-
-async function calculate(){
-  const errEl=document.getElementById('lerr');
-  errEl.style.display='none';
-
-  const name = document.getElementById('clientName').value.trim() || 'Client';
-  const advisor = document.getElementById('advisorName').value.trim() || 'Jeffrey Faine, CLU·RICP';
-  const issueAge = parseInt(document.getElementById('issueAge').value)||50;
-  const comp = parseNum('annualComp');
-  const contribYears = parseInt(document.getElementById('contribYears').value)||10;
-  const incStart = parseInt(document.getElementById('incStart').value);
-  const incEnd = parseInt(document.getElementById('incEnd').value)||100;
-  const lenderIndex = parseFloat(document.getElementById('lenderIndex').value)||0;
-  const lenderSpread = parseFloat(document.getElementById('lenderSpread').value)||0;
-  const plr = parseFloat(document.getElementById('plr').value)||0;
-  const fedRate = parseFloat(document.getElementById('fedRate').value)||0;
-  const stateRate = parseFloat(document.getElementById('stateRate').value)||0;
-  const taxRate = fedRate+stateRate;
-  const rateEnv = _rateEnv;
-  const capRate = parseFloat(document.getElementById('capRate').value)||0;
-  const floorRate = 0;
-  const csvFloor = parseNum('csvFloor');
-  const cola = parseFloat(document.getElementById('cola').value)||0;
-  const ltcgRate = parseFloat(document.getElementById('ltcgRate').value)||20;
-  const qpTaxRate = parseFloat(document.getElementById('qpTaxRate').value)||32;
-  const qpFee = parseFloat(document.getElementById('qpFee').value)||0;
-  const qpEqWt = (parseFloat(document.getElementById('qpEqWt').value)||50)/100;
-  const investFee = parseFloat(document.getElementById('investFee').value)||0;
-  const investEqWt = (parseFloat(document.getElementById('investEqWt').value)||70)/100;
-  const compareMode = _compareMode;
-  const nSims = parseInt(document.getElementById('nSims').value)||10000;
-  const dataYears = parseInt(document.getElementById('dataYears').value)||50;
-  const refiYear = parseInt(document.getElementById('refiYearManual').value)||contribYears+1;
-  const carrierKey = document.getElementById('carrier').value;
-  const pdaRate = parseFloat(document.getElementById('pdaRate').value)||0;
-  const pdaRetentionYears = parseInt(document.getElementById('pdaRetentionYears').value)||0;
-  const pdaRetentionPct = parseFloat(document.getElementById('pdaRetentionPct').value)||0;
-  const mailAwayFee = parseFloat(document.getElementById('mailAwayFee').value)||0;
-
-  if (!comp){ errEl.textContent='Enter annual compensation.'; errEl.style.display='block'; return; }
-  if (!incStart){ errEl.textContent='Enter income start age.'; errEl.style.display='block'; return; }
-  if (incStart<=issueAge){ errEl.textContent='Income start age must be after issue age.'; errEl.style.display='block'; return; }
-  if (incEnd<=incStart){ errEl.textContent='Income end age must be after income start age.'; errEl.style.display='block'; return; }
-  if (!_carrierFile){ errEl.textContent='Upload a carrier illustration file (CSV or XLS/XLSX) before running.'; errEl.style.display='block'; return; }
-
-  const ov=document.getElementById('prog-overlay'), fill=document.getElementById('prog-fill'), sub=document.getElementById('prog-sub');
-  ov.style.display='flex'; fill.style.width='2%'; sub.textContent='Reading carrier illustration…';
-  await tick();
-
-  let carrierResult;
-  try {
-    carrierResult = _carrierResult || await parseCarrierFile(_carrierFile);
-    _carrierResult = carrierResult;
-  } catch(e){
-    ov.style.display='none';
-    errEl.textContent='Could not read carrier file: '+e.message;
-    errEl.style.display='block';
-    return;
-  }
-  if (!carrierResult || !carrierResult.rows || carrierResult.rows.length===0){
-    ov.style.display='none';
-    errEl.textContent='Could not parse carrier file. Check format — needs Year, Age, Accumulated Value, and Policy/Surrender Charge columns.';
-    errEl.style.display='block';
-    return;
-  }
-  const carrierRows = carrierResult.rows;
-
-  sub.textContent='Solving PDA funding schedule…'; fill.style.width='4%'; await tick();
-  const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
-  const p = {issueAge, contribYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
-             refiYear, incStart, incEnd, cola, carrierKey, carrierRows,
-             pdaSchedule:funding.rows, levelPremium:funding.levelPremium};
-  const pathLen = incEnd - issueAge + 1;
-  const qpFeeAdj = qpFee/100;
-  const investFeeAdj = investFee/100;
-  const pairedPool = getPairedPool(dataYears, qpEqWt, qpFeeAdj, investEqWt, investFeeAdj);
-
-  sub.textContent='Bootstrapping return sequences…'; fill.style.width='6%'; await tick();
-
-  const allPriceRets = new Array(nSims);
-  const allInvestRets = new Array(nSims);
-  const allQPRets = new Array(nSims);
-  const allIncome = new Array(nSims);
-  for (let j=0;j<nSims;j++){
-    const {price, invest, qp} = bootstrapTriples(pathLen, pairedPool);
-    allPriceRets[j]=price; allInvestRets[j]=invest; allQPRets[j]=qp;
-    allIncome[j]=solveIncome(price, csvFloor, p);
-    if (j%500===0){
-      sub.textContent = `Solving income: ${j.toLocaleString()} / ${nSims.toLocaleString()}…`;
-      fill.style.width = (6+Math.round(j/nSims*81))+'%';
-      await tick();
-    }
-  }
-
-  sub.textContent='Ranking simulations…'; fill.style.width='90%'; await tick();
-
-  const sortedIdx = Array.from({length:nSims},(_,i)=>i).sort((a,b)=>allIncome[a]-allIncome[b]);
-  const PCTS=[25,50,75];
-  const bandIdx={}, bandIncome={}, bandRows={}, bandInvest={}, bandQP={};
-  PCTS.forEach(pct=>{
-    const idx = sortedIdx[Math.floor(pct/100*(nSims-1))];
-    bandIdx[pct]=idx;
-    bandIncome[pct]=allIncome[idx];
-    bandRows[pct]=simEPPathFull(allPriceRets[idx], allIncome[idx], p);
-    bandInvest[pct]=simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd, cola, ltcgRate, allInvestRets[idx]);
-    if (compareMode==='both'){
-      bandQP[pct]=simQualifiedPlan(comp, contribYears, qpTaxRate, issueAge, incStart, incEnd, cola, allQPRets[idx]);
-    }
-  });
-
-  sub.textContent='Building output…'; fill.style.width='96%'; await tick();
-
-  _bandData = {bandRows, bandInvest, bandQP, bandIncome, p, name, advisor, nSims, dataYears, compareMode, funding, carrierKey};
-  renderOutput(_bandData);
-
-  fill.style.width='100%'; await tick();
-  ov.style.display='none';
-  document.getElementById('intake-panel').style.display='none';
-  window.scrollTo(0,0);
-}
-
-function totalIncome(rows){ return rows.reduce((s,r)=>s+(r.income||0),0); }
-function totalInvestNet(rows,incStart,incEnd){ return rows.filter(r=>r.age>=incStart&&r.age<=incEnd).reduce((s,r)=>s+(r.net||0),0); }
-
-function renderOutput(d){
-  const {bandRows, bandInvest, bandQP, bandIncome, p, name, advisor, nSims, dataYears, compareMode} = d;
-  const dateStr = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  const showQP = compareMode==='both';
-
-  const contribTotal = p.comp * p.contribYears;
-  const totalByBand = {}; [25,50,75].forEach(pc=>totalByBand[pc]=totalIncome(bandRows[pc]));
-  const investTotalMed = totalInvestNet(bandInvest[50].rows, p.incStart, p.incEnd);
-  const qpTotalMed = showQP ? totalInvestNet(bandQP[50].rows, p.incStart, p.incEnd) : 0;
-
-  const html = `
-  <div class="actions-bar">
-    <button class="ab-btn" onclick="document.getElementById('intake-panel').style.display='block';document.getElementById('ledger-output').style.display='none'">← Edit Inputs</button>
-    <button class="ab-btn" onclick="openDiscussionDoc()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📄 Produce Discussion Document</button>
-    <button class="ab-btn" onclick="openOnePageSummary()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📋 Produce One-Page Summary</button>
-    <button class="ab-btn" onclick="openEPLedger()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📑 Produce EP Ledger</button>
-    <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
-  </div>
-
-  <div class="mc-banner">
-    <div>
-      <div class="name">${name}</div>
-      <div class="sub-name">Enhanced Pension — Monte Carlo Analysis</div>
-      <div class="meta">Prepared by ${advisor} · ${dateStr} · ${nSims.toLocaleString()} simulations · ${dataYears}-yr S&amp;P 500 pool</div>
-    </div>
-    <div class="bs">
-      <div class="bst"><div class="bl">Issue Age</div><div class="bv">${p.issueAge}</div></div>
-      <div class="bst"><div class="bl">Refinance Yr</div><div class="bv">${p.refiYear}</div></div>
-      <div class="bst"><div class="bl">Income Age</div><div class="bv">${p.incStart}–${p.incEnd}</div></div>
-    </div>
-  </div>
-
-  <div class="phase-hdr"><h3>Income at 25th / 50th / 75th Percentile</h3><span class="phase-badge">Ranked by Solved Income</span></div>
-  <div class="pct-cards">
-    ${[25,50,75].map(pc=>`
-      <div class="pct-card ${pc===50?'hl':''}">
-        <div class="pc-label">${pc}th Percentile</div>
-        <div class="pc-eta">${fmt$(bandIncome[pc])}<span style="font-size:11px;color:var(--muted);font-weight:400"> / yr, Year 1</span></div>
-        <div class="pc-qp">Lifetime income: <span>${fmt$(totalByBand[pc])}</span></div>
-      </div>`).join('')}
-  </div>
-
-  <div class="stat-grid" style="${showQP?'grid-template-columns:1fr 1fr 1fr 1fr 1fr':''}">
-    <div class="stat-crd"><div class="sc-label">Total Contribution</div><div class="sc-value">${fmt$(contribTotal)}</div>
-      <div class="sc-stat"><span class="sk">Annual comp.</span><span class="sv">${fmt$(p.comp)}</span></div>
-      <div class="sc-stat"><span class="sk">Level premium to policy (Yr ${p.pdaSchedule.filter(r=>r.premium===p.levelPremium).length?p.pdaSchedule.findIndex(r=>r.premium===p.levelPremium)+1:'—'}+)</span><span class="sv">${fmt$(p.levelPremium)}</span></div>
-    </div>
-      <div class="sc-stat"><span class="sk">Contribution years</span><span class="sv">${p.contribYears}</span></div>
-    </div>
-    <div class="stat-crd hl"><div class="sc-label g">Median Lifetime Income — EP</div><div class="sc-value">${fmt$(totalByBand[50])}</div>
-      <div class="sc-stat"><span class="sk">Year 1 income</span><span class="sv g">${fmt$(bandIncome[50])}</span></div>
-      <div class="sc-stat"><span class="sk">COLA</span><span class="sv">${p.cola}%</span></div>
-    </div>
-    <div class="stat-crd"><div class="sc-label">Taxable Investment Acct</div><div class="sc-value">${fmt$(investTotalMed)}</div>
-      <div class="sc-stat"><span class="sk">Net lifetime income</span><span class="sv">${fmt$(investTotalMed)}</span></div>
-      <div class="sc-stat"><span class="sk">Contributes after-tax comp</span><span class="sv">—</span></div>
-    </div>
-    ${showQP ? `
-    <div class="stat-crd"><div class="sc-label">Qualified Plan (DB/CB)</div><div class="sc-value">${fmt$(qpTotalMed)}</div>
-      <div class="sc-stat"><span class="sk">Net lifetime income</span><span class="sv">${fmt$(qpTotalMed)}</span></div>
-      <div class="sc-stat"><span class="sk">Contributes gross comp, taxed on exit</span><span class="sv">—</span></div>
-    </div>` : ''}
-    <div class="stat-crd"><div class="sc-label">EP Advantage (Median)</div><div class="sc-value">${fmt$(totalByBand[50]-Math.max(investTotalMed, qpTotalMed))}</div>
-      <div class="sc-stat"><span class="sk">vs. taxable investment</span><span class="sv g">${investTotalMed>0?Math.round((totalByBand[50]/investTotalMed-1)*100):0}%</span></div>
-      ${showQP?`<div class="sc-stat"><span class="sk">vs. qualified plan</span><span class="sv g">${qpTotalMed>0?Math.round((totalByBand[50]/qpTotalMed-1)*100):0}%</span></div>`:''}
-    </div>
-  </div>
-
-  <div class="pct-explain">
-    <div class="pe-item"><span class="pe-badge" style="background:var(--red-lt);color:var(--red)">25th</span><span class="pe-text">Conservative sequence — weaker early-year returns during accumulation and distribution.</span></div>
-    <div class="pe-item"><span class="pe-badge" style="background:rgba(201,168,76,.15);color:var(--gold)">50th</span><span class="pe-text">Median simulated path — the primary planning basis for this illustration.</span></div>
-    <div class="pe-item"><span class="pe-badge" style="background:var(--green-lt);color:var(--green)">75th</span><span class="pe-text">Favorable sequence — stronger historical return draws throughout.</span></div>
-  </div>
-
-  <div class="chart-wrap">
-    <div class="chart-title">Gross Accumulated Value — 25th / 50th / 75th Percentile Bands</div>
-    <div class="chart-sub">Issue age ${p.issueAge} through age ${p.incEnd}</div>
-    <canvas id="epChart" height="90"></canvas>
-  </div>
-
-  <div class="phase-hdr" style="margin-top:26px">
-    <h3>Year-by-Year Ledger</h3>
-    <div class="src-toggle" style="margin:0;width:260px">
-      <button class="src-btn active" id="ldgBtn25" onclick="showLedger(25)">25th</button>
-      <button class="src-btn active" id="ldgBtn50" onclick="showLedger(50)" style="border-right:1px solid var(--border)">50th</button>
-      <button class="src-btn" id="ldgBtn75" onclick="showLedger(75)">75th</button>
-    </div>
-  </div>
-  <div class="ldg-wrap" id="ldgWrap"></div>
-  <div class="ldg-disc">Hypothetical illustration based on bootstrapped historical S&amp;P 500 total-return sequences (${dataYears} years, 1975–2024) and is not a guarantee of future results. IUL crediting reflects a ${p.capRate}% cap and 0% floor. Loan balance accrues at the bank rate through Policy Year ${p.refiYear-1}, then at the participating loan rate thereafter — the balance itself does not reset at refinance. Not a policy illustration; consult the carrier ledger for guaranteed and non-guaranteed values.</div>
-  `;
-
-  document.getElementById('ledger-output').innerHTML = html;
-  document.getElementById('ledger-output').style.display='block';
-
-  try { buildChart(bandRows, p); } catch(e) { console.warn('Chart render failed (Produce buttons still work):', e); }
-  showLedger(50);
-  // fix toggle active state styling for 3-way group
-  document.getElementById('ldgBtn25').classList.remove('active');
-  document.getElementById('ldgBtn75').classList.remove('active');
-  document.getElementById('ldgBtn50').classList.add('active');
-
-  // ── Write data for EP Discussion Document / One-Page Summary ──────────
-  try {
-    const navAtEnd = bandRows[50].length ? bandRows[50][bandRows[50].length-1].csvNet : 0;
-    const ratioInvest = investTotalMed>0 ? (totalByBand[50]/investTotalMed) : 0;
-    const ratioQP = d.compareMode==='both' && qpTotalMed>0 ? (totalByBand[50]/qpTotalMed) : 0;
-
-    // cumulative income series for chart, EP 25/50/75 vs comparator(s) 50th
-    const incAges=[]; for(let a=p.incStart;a<=p.incEnd;a++) incAges.push(a);
-    const cumEP25=[],cumEP50=[],cumEP75=[],cumInvest50=[],cumQP50=[];
-    let c25=0,c50=0,c75=0,ci=0,cq=0;
-    const investByAge50={}; bandInvest[50].rows.forEach(r=>investByAge50[r.age]=r.net);
-    const qpByAge50={}; if (d.compareMode==='both') bandQP[50].rows.forEach(r=>qpByAge50[r.age]=r.net);
-    incAges.forEach(a=>{
-      const r25=bandRows[25].find(r=>r.age===a), r50=bandRows[50].find(r=>r.age===a), r75=bandRows[75].find(r=>r.age===a);
-      c25+=(r25?r25.income:0); c50+=(r50?r50.income:0); c75+=(r75?r75.income:0);
-      ci+=(investByAge50[a]||0);
-      if (d.compareMode==='both') cq+=(qpByAge50[a]||0);
-      cumEP25.push(c25); cumEP50.push(c50); cumEP75.push(c75); cumInvest50.push(ci); if(d.compareMode==='both') cumQP50.push(cq);
-    });
-
-    localStorage.setItem('ep_mc_data', JSON.stringify({
-      clientName: name, advisor, date: dateStr,
-      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
-      incStart: p.incStart, incEnd: p.incEnd, cola: p.cola,
-      bankRate: (p.lenderIndex+p.lenderSpread), lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
-      capRate: p.capRate, csvFloor: parseNum('csvFloor'),
-      carrierKey: p.carrierKey, levelPremium: p.levelPremium,
-      pdaRate: parseFloat(document.getElementById('pdaRate').value)||0,
-      pdaRetentionYears: parseInt(document.getElementById('pdaRetentionYears').value)||0,
-      pdaRetentionPct: parseFloat(document.getElementById('pdaRetentionPct').value)||0,
-      pdaSchedule: p.pdaSchedule,
-      ltcgRate: parseFloat(document.getElementById('ltcgRate').value)||20,
-      investFee: parseFloat(document.getElementById('investFee').value)||0,
-      investEqWt: parseFloat(document.getElementById('investEqWt').value)||70,
-      compareMode: d.compareMode,
-      qpTaxRate: parseFloat(document.getElementById('qpTaxRate').value)||32,
-      qpFee: parseFloat(document.getElementById('qpFee').value)||0,
-      qpEqWt: parseFloat(document.getElementById('qpEqWt').value)||50,
-      nSims, dataYears,
-      epYr1_25: bandIncome[25], epYr1_50: bandIncome[50], epYr1_75: bandIncome[75],
-      epTotal25: totalByBand[25], epTotal50: totalByBand[50], epTotal75: totalByBand[75],
-      investTotalMed, qpTotalMed, ratioInvest, ratioQP,
-      navAtEnd,
-      incomeAges: incAges, cumEP25, cumEP50, cumEP75, cumInvest50, cumQP50
-    }));
-
-    // ── Full year-by-year data for the standalone EP Ledger (ep-ledger.html) ──
-    localStorage.setItem('ep_ledger_data', JSON.stringify({
-      clientName: name, advisor, date: dateStr, nSims, dataYears,
-      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
-      incStart: p.incStart, incEnd: p.incEnd, cola: p.cola, refiYear: p.refiYear,
-      lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate,
-      carrierKey: p.carrierKey, levelPremium: p.levelPremium, capRate: p.capRate,
-      pdaSchedule: p.pdaSchedule,
-      pdaRate: parseFloat(document.getElementById('pdaRate').value)||0,
-      ltcgRate: parseFloat(document.getElementById('ltcgRate').value)||20,
-      investFee: parseFloat(document.getElementById('investFee').value)||0,
-      investEqWt: parseFloat(document.getElementById('investEqWt').value)||70,
-      qpTaxRate: parseFloat(document.getElementById('qpTaxRate').value)||32,
-      qpFee: parseFloat(document.getElementById('qpFee').value)||0,
-      qpEqWt: parseFloat(document.getElementById('qpEqWt').value)||50,
-      compareMode: d.compareMode,
-      bandIncome, totalByBand,
-      epRows25: bandRows[25], epRows50: bandRows[50], epRows75: bandRows[75],
-      investRows50: bandInvest[50].rows,
-      qpRows50: d.compareMode==='both' ? bandQP[50].rows : null,
-      investTotalMed, qpTotalMed
-    }));
-  } catch(e) { console.warn('EP discussion doc data write failed:', e); }
-}
-
-function openDiscussionDoc(){ window.open('ep-discussion-doc.html','_blank'); }
-function openOnePageSummary(){ window.open('ep-onepage-summary.html','_blank'); }
-function openEPLedger(){ window.open('ep-ledger.html','_blank'); }
-
-
-function showLedger(pct){
-  ['25','50','75'].forEach(p=>document.getElementById('ldgBtn'+p).classList.remove('active'));
-  document.getElementById('ldgBtn'+pct).classList.add('active');
-
-  const {bandRows, bandInvest, bandQP, p:params, compareMode} = _bandData;
-  const showQP = compareMode==='both';
-  const rows = bandRows[pct];
-  const invRows = bandInvest[pct].rows;
-  const invByAge = {}; invRows.forEach(r=>invByAge[r.age]=r);
-  const qpByAge = {};
-  if (showQP) bandQP[pct].rows.forEach(r=>qpByAge[r.age]=r);
-
-  let body='';
-  rows.forEach(r=>{
-    const cls = [];
-    if (r.polYr<=params.contribYears) cls.push('contrib-yr');
-    if (r.polYr===params.refiYear) cls.push('refi-yr');
-    if (r.income>0) cls.push('income-yr');
-    const iv = invByAge[r.age]||{bal:0};
-    const qv = qpByAge[r.age]||{bal:0};
-    body += `<tr class="${cls.join(' ')}">
-      <td>${r.polYr}</td><td>${r.age}</td>
-      <td>${fmt$(r.av)}</td>
-      <td>${fmt$(r.loan)}</td>
-      <td>${fmt$(r.csvNet)}</td>
-      <td class="income-val">${r.income>0?fmt$(r.income):'—'}</td>
-      <td>${fmt$(iv.bal)}</td>
-      ${showQP?`<td>${fmt$(qv.bal)}</td>`:''}
-    </tr>`;
-  });
-
-  document.getElementById('ldgWrap').innerHTML = `
-  <table class="ldg">
-    <thead><tr>
-      <th>Yr</th><th>Age</th><th>Gross AV</th><th>Loan Bal</th><th>CSV Net</th><th>Income Drawn</th><th>Taxable Acct Bal</th>${showQP?'<th>QP/DB Bal</th>':''}
-    </tr></thead>
-    <tbody>${body}</tbody>
-  </table>`;
-}
-
-function buildChart(bandRows, p){
-  const ages = bandRows[50].map(r=>r.age);
-  const ds = (pct,color)=>({label:pct+'th', data:bandRows[pct].map(r=>r.av), borderColor:color, backgroundColor:color+'22', borderWidth:2, pointRadius:0, tension:.15});
-  if (_epChart) _epChart.destroy();
-  const ctx = document.getElementById('epChart').getContext('2d');
-  _epChart = new Chart(ctx, {
-    type:'line',
-    data:{ labels:ages, datasets:[ ds(75,'#2a6e45'), ds(50,'#c9a84c'), ds(25,'#8b2020') ] },
-    options:{
-      responsive:true,
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans',size:11}}}},
-      scales:{
-        x:{title:{display:true,text:'Age',font:{family:'IBM Plex Sans',size:11}},grid:{color:'#eee'}},
-        y:{title:{display:true,text:'Gross AV ($)',font:{family:'IBM Plex Sans',size:11}},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'},grid:{color:'#eee'}}
-      }
-    }
-  });
-}
+})();
 </script>
 </body>
 </html>
