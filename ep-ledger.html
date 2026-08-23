@@ -15,11 +15,14 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text);font-size:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .page{width:17in;min-height:11in;margin:0 auto 32px;overflow:hidden;position:relative;background:white;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column}
+@page{size:17in 11in landscape;margin:.35in}
 @media print{
   body{background:white}
-  .page{margin:0;box-shadow:none;page-break-after:always;page-break-inside:avoid}
+  .page{margin:0;box-shadow:none;page-break-after:always;min-height:0!important}
   .page:last-child{page-break-after:avoid!important}
-  @page{size:17in 11in landscape;margin:.35in}
+  .disc-3col{margin-top:16px!important}
+  table.dual tbody tr,table.sc-ldg tbody tr{page-break-inside:avoid}
+  .stat-strip,.scenario-strip,.sc-band{page-break-inside:avoid}
 }
 .actions-bar{background:var(--navy-2);padding:10px 24px;display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(201,168,76,.2)}
 .ab-btn{border:1px solid rgba(201,168,76,.3);color:var(--gold);background:transparent;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 16px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .2s}
@@ -37,7 +40,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 
 /* Stat strip */
 .stat-strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:2px solid var(--border)}
-.stat-box{padding:14px 18px;border-right:1px solid var(--border)}
+.stat-box{padding:10px 18px;border-right:1px solid var(--border)}
 .stat-box:last-child{border-right:none}
 .stat-box .sb-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;line-height:1.4}
 .stat-box .sb-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--navy);font-weight:600}
@@ -52,7 +55,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 .right-panel-wrap{float:left!important;width:58%;box-sizing:border-box;border-left:none}
 table.dual{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
 table.dual thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:5px 6px;text-align:right;border-right:1px solid rgba(255,255,255,.06);white-space:normal;overflow:hidden}
-table.dual tbody td{padding:4px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;white-space:normal;font-size:9px;overflow:hidden}
+table.dual tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;white-space:normal;font-size:9px;overflow:hidden}
 table.dual tbody td:first-child,table.dual tbody td:nth-child(2){font-weight:500}
 table.dual tbody tr:nth-child(even){background:var(--off)}
 table.dual tbody tr:hover{background:rgba(201,168,76,.04)}
@@ -64,7 +67,7 @@ table.dual tbody tr.income-yr td.inc-val{color:var(--green);font-weight:700}
 table.dual tbody tr.post-yr td{background:rgba(201,168,76,.02)}
 table.dual tfoot td{padding:5px 6px;text-align:center;font-weight:700;border-top:2px solid var(--navy);font-size:9.5px;background:var(--off)}
 .right-panel-wrap table.dual td:first-child,.right-panel-wrap table.dual th:first-child{border-left:3px solid var(--gold)}
-.disc-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:14px 32px;border-top:1px solid var(--border);font-size:8px;color:var(--muted);line-height:1.5}
+.disc-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:8px 32px;border-top:1px solid var(--border);font-size:8px;color:var(--muted);line-height:1.5}
 
 /* PAGE 2+: Scenario analysis / ledger header */
 .pg2-hdr{background:var(--navy);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
@@ -279,22 +282,22 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
 
       const summaryCards = `
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:2px solid var(--gold);border-bottom:1px solid var(--border)">
-          <div style="padding:16px 20px;border-right:1px solid var(--border)">
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total EP Tax-Free Income<br>Median (50th Percentile)</div>
             <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:600">${$f(totalEPIncome)}</div>
             <div style="font-size:9px;color:var(--muted);margin-top:3px">Ages ${d.incStart}\u2013${d.incEnd} \u00b7 ${d.cola}% COLA \u00b7 Tax-free asset loans</div>
           </div>
-          <div style="padding:16px 20px;border-right:1px solid var(--border)">
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Total ${comparatorLabel} Net Distributions<br>Median (50th Percentile)</div>
             <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--red)">${$f(totalCompNet)}</div>
             <div style="font-size:9px;color:var(--muted);margin-top:3px">Ages ${d.incStart}\u2013${d.incEnd}</div>
           </div>
-          <div style="padding:16px 20px;border-right:1px solid var(--border)">
+          <div style="padding:11px 20px;border-right:1px solid var(--border)">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Net Asset Value at Age ${d.incEnd}<br>Net of All Asset Loans</div>
             <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">${$f(endEP.csvNet)}</div>
             <div style="font-size:9px;color:var(--muted);margin-top:3px">Asset loan retires from death benefit</div>
           </div>
-          <div style="padding:16px 20px">
+          <div style="padding:11px 20px">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">EP Income Advantage<br>vs. ${comparatorLabel} (Median)</div>
             <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--green)">+${$f(incomeAdv)}</div>
             <div style="font-size:9px;color:var(--muted);margin-top:3px">${(totalEPIncome/Math.max(totalCompNet,1)).toFixed(2)}\u00d7 more income \u00b7 Tax-free vs. taxable</div>
