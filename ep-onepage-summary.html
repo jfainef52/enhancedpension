@@ -216,13 +216,15 @@ h1{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:var
     if (investTotal>0 || qpTotal>0) {
       cmpRow.style.display = 'grid';
       var ratioInv = investTotal>0 ? (epTotal/investTotal) : 0;
-      set('doc-cmp1-val', ratioInv.toFixed(2) + '×');
-      set('doc-cmp1-lbl', ratioInv>0 ? ('more lifetime income vs. a taxable investment account (' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee)') : 'vs. taxable investment account');
+      var advInv = epTotal - investTotal;
+      set('doc-cmp1-val', ratioInv.toFixed(2) + '× = +' + $f(advInv));
+      set('doc-cmp1-lbl', ratioInv>0 ? 'more lifetime income vs. a taxable investment account' : 'vs. taxable investment account');
       if (showQP && qpTotal>0) {
         document.getElementById('doc-cmp2-box').style.display='block';
         var ratioQP = (epTotal/qpTotal);
-        set('doc-cmp2-val', ratioQP.toFixed(2) + '×');
-        set('doc-cmp2-lbl', 'more lifetime income vs. a qualified plan (' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee, matching gross contributions)');
+        var advQP = epTotal - qpTotal;
+        set('doc-cmp2-val', ratioQP.toFixed(2) + '× = +' + $f(advQP));
+        set('doc-cmp2-lbl', 'more lifetime income vs. a qualified plan (matching gross contributions)');
       }
     }
 
