@@ -1305,6 +1305,7 @@ function renderOutput(d){
     <button class="ab-btn" onclick="document.getElementById('intake-panel').style.display='block';document.getElementById('ledger-output').style.display='none'">← Edit Inputs</button>
     <button class="ab-btn" onclick="openDiscussionDoc()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📄 Produce Discussion Document</button>
     <button class="ab-btn" onclick="openOnePageSummary()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📋 Produce One-Page Summary</button>
+    <button class="ab-btn" onclick="openEPLedger()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📑 Produce EP Ledger</button>
     <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
   </div>
 
@@ -1384,7 +1385,7 @@ function renderOutput(d){
   document.getElementById('ledger-output').innerHTML = html;
   document.getElementById('ledger-output').style.display='block';
 
-  buildChart(bandRows, p);
+  try { buildChart(bandRows, p); } catch(e) { console.warn('Chart render failed (Produce buttons still work):', e); }
   showLedger(50);
   // fix toggle active state styling for 3-way group
   document.getElementById('ldgBtn25').classList.remove('active');
@@ -1436,11 +1437,36 @@ function renderOutput(d){
       navAtEnd,
       incomeAges: incAges, cumEP25, cumEP50, cumEP75, cumInvest50, cumQP50
     }));
+
+    // ── Full year-by-year data for the standalone EP Ledger (ep-ledger.html) ──
+    localStorage.setItem('ep_ledger_data', JSON.stringify({
+      clientName: name, advisor, date: dateStr, nSims, dataYears,
+      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
+      incStart: p.incStart, incEnd: p.incEnd, cola: p.cola, refiYear: p.refiYear,
+      lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate,
+      carrierKey: p.carrierKey, levelPremium: p.levelPremium, capRate: p.capRate,
+      pdaSchedule: p.pdaSchedule,
+      pdaRate: parseFloat(document.getElementById('pdaRate').value)||0,
+      ltcgRate: parseFloat(document.getElementById('ltcgRate').value)||20,
+      investFee: parseFloat(document.getElementById('investFee').value)||0,
+      investEqWt: parseFloat(document.getElementById('investEqWt').value)||70,
+      qpTaxRate: parseFloat(document.getElementById('qpTaxRate').value)||32,
+      qpFee: parseFloat(document.getElementById('qpFee').value)||0,
+      qpEqWt: parseFloat(document.getElementById('qpEqWt').value)||50,
+      compareMode: d.compareMode,
+      bandIncome, totalByBand,
+      epRows25: bandRows[25], epRows50: bandRows[50], epRows75: bandRows[75],
+      investRows50: bandInvest[50].rows,
+      qpRows50: d.compareMode==='both' ? bandQP[50].rows : null,
+      investTotalMed, qpTotalMed
+    }));
   } catch(e) { console.warn('EP discussion doc data write failed:', e); }
 }
 
 function openDiscussionDoc(){ window.open('ep-discussion-doc.html','_blank'); }
 function openOnePageSummary(){ window.open('ep-onepage-summary.html','_blank'); }
+function openEPLedger(){ window.open('ep-ledger.html','_blank'); }
+
 
 function showLedger(pct){
   ['25','50','75'].forEach(p=>document.getElementById('ldgBtn'+p).classList.remove('active'));
