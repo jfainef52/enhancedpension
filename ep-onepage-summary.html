@@ -204,9 +204,8 @@ h1{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;color:var
     set('doc-box1-val', $f(comp));
     set('doc-box2-val', $f(contribTotal));
 
-    var carrierName = r.carrierKey==='PL' ? 'Pacific Life ECV' : 'NLG Summit';
     set('doc-rec1-sub', 'Lender rate ' + (r.lenderIndex||0) + '% + ' + (r.lenderSpread||0) + '% spread during Yrs 1–' + contribYears + ' · financed tax rate ' + (r.taxRate||0) + '%');
-    set('doc-rec2-sub', 'Refinances at Policy Year ' + (r.refiYear||contribYears+1) + ' · participating loan rate ' + (r.plr||0) + '% thereafter · illustrated on ' + carrierName);
+    set('doc-rec2-sub', 'Refinances at Policy Year ' + (r.refiYear||contribYears+1) + ' · participating loan rate ' + (r.plr||0) + '% thereafter');
     set('doc-rec3-sub', $f(epYr1) + '/yr median starting income · ' + cola + '% COLA · policy loans, not reported as income');
 
     set('doc-out2-val', $f(contribTotal));
