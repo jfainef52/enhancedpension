@@ -229,13 +229,17 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         // LEFT — comparator (QP or Investment Account), identical row shape
         const comp = compByAge[a] || {};
         const prevComp = compByAge[a-1];
-        const compBOY = prevComp ? prevComp.bal : 0;
+        const prevEOY = prevComp ? prevComp.bal : 0;
         const compEOY = comp.bal || 0;
         const compGross = comp.gross || 0;
         const compNet = comp.net || 0;
         const compTax = compGross - compNet;
-        const compGrowth = compEOY - compBOY;
         const compInvested = isFund ? netInvested : 0;
+        // BOY = prior EOY + this year's deposit (funded balance BEFORE return is applied).
+        // Growth = the actual return dollar amount applied to that funded balance —
+        // NOT (EOY − prior EOY), which would silently fold the deposit itself into "growth."
+        const compBOY = prevEOY + compInvested;
+        const compGrowth = compEOY - compBOY;
 
         leftRows += `<tr class="${rowCls}">
           <td>${yr}</td><td>${a}</td>
