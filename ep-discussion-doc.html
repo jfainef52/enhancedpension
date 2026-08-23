@@ -611,9 +611,8 @@
     // ── HOW EP WORKS PAGE ─────────────────────────────────────────────
     set('how-step-1-text', 'Each contribution year, ' + $f(comp) + ' in compensation is committed to the structure. A bank simultaneously finances the income tax owed on that contribution — at a ' + (r.taxRate||0) + '% rate. Nothing is paid out of pocket.');
     set('how-step-2-title', 'Funding Phase (' + contribYears + ' Annual Contributions)');
-    var carrierName = r.carrierKey==='PL' ? 'Pacific Life — ECV Pref+' : 'National Life Group — Summit Pref+';
     var pdaYrs = r.pdaRetentionYears || 2;
-    setHTML('how-step-2-text', 'Compensation deposits into a Premium Deposit Account earning ' + (r.pdaRate||0) + '%. In years 1&ndash;' + pdaYrs + ', a smaller premium is paid to the policy while the PDA builds a balance; from year ' + (pdaYrs+1) + ' forward, a level premium of <b>' + $f(r.levelPremium||0) + '</b>/yr is drawn so the PDA depletes to zero by the end of the funding period. Illustrated on ' + carrierName + '.');
+    setHTML('how-step-2-text', 'Compensation deposits into a Premium Deposit Account earning ' + (r.pdaRate||0) + '%. In years 1&ndash;' + pdaYrs + ', a smaller premium is paid to the policy while the PDA builds a balance; from year ' + (pdaYrs+1) + ' forward, a level premium of <b>' + $f(r.levelPremium||0) + '</b>/yr is drawn so the PDA depletes to zero by the end of the funding period.');
     set('how-step-3-text', 'At Policy Year ' + (r.refiYear||contribYears+1) + ', the bank loan is retired via a participating asset loan at the ' + (r.plr||0) + '% carrier rate. The balance carries over intact — it does not reset. The asset continues compounding on its full value.');
 
     // ── YOUR NUMBERS PAGE ─────────────────────────────────────────────
