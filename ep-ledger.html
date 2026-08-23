@@ -83,7 +83,7 @@ table.dual tfoot td{padding:5px 6px;text-align:center;font-weight:700;border-top
 .sc-band .sc-total{font-size:11px;color:var(--text);font-weight:600;margin-top:6px}
 
 /* Scenario ledger table */
-table.sc-ldg{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px}
+table.sc-ldg{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
 table.sc-ldg thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:4px 6px;text-align:center;border-right:1px solid rgba(255,255,255,.06)}
 table.sc-ldg thead th.gold-col{background:rgba(201,168,76,.15);color:var(--gold)}
 table.sc-ldg tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;font-size:9px}
@@ -131,7 +131,6 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
       return;
     }
     const d = JSON.parse(raw);
-    const carrierName = d.carrierKey==='PL' ? 'Pacific Life — ECV Pref+' : 'National Life Group — Summit Pref+';
     const dateStr = d.date || new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const showQP = d.compareMode === 'both';
 
@@ -164,7 +163,8 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
     // ══════════════════════════════════════════════════════════
     // DUAL-PANEL GREENSHEET PAGE — Comparator (left) vs EP (right), median
     // ══════════════════════════════════════════════════════════
-    function buildGreensheetPage(comparatorLabel, comparatorRows, epRows, pageEyebrow){
+    function buildGreensheetPage(comparatorLabel, comparatorRows, epRows, pageEyebrow, comparatorType){
+      const netInvested = comparatorType==='qp' ? d.comp : d.comp*(1-d.taxRate/100);
       const compByAge = {}; comparatorRows.forEach(r=>compByAge[r.age]=r);
       const incomeAges = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
 
@@ -221,7 +221,7 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         if (isIncome && prevSection!=='income'){ secHdr = `DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME DISTRIBUTIONS BEGIN)`; prevSection='income'; }
 
         const rowCls = isPayoff ? 'payoff-yr' : isIncome ? 'income-yr' : isFund ? 'fund-yr' : 'post-yr';
-        if (secHdr){ leftRows += `<tr class="sec-hdr"><td colspan="8">${secHdr}</td></tr>`; rightRows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`; }
+        if (secHdr){ leftRows += `<tr class="sec-hdr"><td colspan="9">${secHdr}</td></tr>`; rightRows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`; }
 
         // LEFT — comparator (QP or Investment Account), identical row shape
         const comp = compByAge[a] || {};
@@ -232,9 +232,11 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         const compNet = comp.net || 0;
         const compTax = compGross - compNet;
         const compGrowth = compEOY - compBOY;
+        const compInvested = isFund ? netInvested : 0;
 
         leftRows += `<tr class="${rowCls}">
           <td>${yr}</td><td>${a}</td>
+          <td>${compInvested>0 ? $f(compInvested) : '\u2014'}</td>
           <td>${$f(compBOY)}</td>
           <td>${compGrowth!==0 ? $f(compGrowth) : '\u2014'}</td>
           <td>${isIncome && compTax>0 ? $f(compTax) : '\u2014'}</td>
@@ -271,7 +273,8 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         </tr>`;
       });
 
-      const leftFoot = `<tr><td colspan="2">Totals</td><td>\u2014</td><td>\u2014</td><td>${$f(totalCompTax)}</td><td>${$f(totalCompGross)}</td><td>${$f(totalCompNet)}</td><td>\u2014</td></tr>`;
+      const totalCompInvested = d.contribYears * netInvested;
+      const leftFoot = `<tr><td colspan="2">Totals</td><td>${$f(totalCompInvested)}</td><td>\u2014</td><td>\u2014</td><td>${$f(totalCompTax)}</td><td>${$f(totalCompGross)}</td><td>${$f(totalCompNet)}</td><td>\u2014</td></tr>`;
       const rightFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
 
       const summaryCards = `
@@ -309,7 +312,7 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
           <div>
             <div class="eyebrow">${pageEyebrow}</div>
             <div class="title">${d.clientName}</div>
-            <div class="meta-line">Client: ${d.clientName} &nbsp;|&nbsp; Advisor: ${d.advisor||'\u2014'} &nbsp;|&nbsp; Annual Compensation: ${$f(d.comp)} &nbsp;|&nbsp; Combined Tax Rate: ${fmtPct(d.taxRate)} &nbsp;|&nbsp; PDA Rate: ${fmtPct(d.pdaRate)} &nbsp;|&nbsp; PLR: ${fmtPct(d.plr)} &nbsp;|&nbsp; Carrier: ${carrierName}</div>
+            <div class="meta-line">Client: ${d.clientName} &nbsp;|&nbsp; Advisor: ${d.advisor||'\u2014'} &nbsp;|&nbsp; Annual Compensation: ${$f(d.comp)} &nbsp;|&nbsp; Combined Tax Rate: ${fmtPct(d.taxRate)} &nbsp;|&nbsp; PDA Rate: ${fmtPct(d.pdaRate)} &nbsp;|&nbsp; PLR: ${fmtPct(d.plr)}</div>
           </div>
           <div class="ver-block">
             <div class="vdate">${dateStr}</div>
@@ -320,9 +323,10 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         <div class="dual-panel">
           <div>
             <table class="dual">
+              <colgroup><col style="width:4.5%"><col style="width:5.5%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.3%"><col style="width:13.4%"><col style="width:13.4%"><col style="width:10%"></colgroup>
               <thead>
-                <tr><th colspan="8" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px">${comparatorLabel} \u00b7 50th Percentile</th></tr>
-                <tr><th>Yr</th><th>Age</th><th>BOY Balance</th><th>Growth</th><th>Tax Paid</th><th>Gross Distribution</th><th>Net Distribution</th><th>EOY Balance</th></tr>
+                <tr><th colspan="9" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px">${comparatorLabel} \u00b7 50th Percentile</th></tr>
+                <tr><th>Yr</th><th>Age</th><th>Net Invested</th><th>BOY Balance</th><th>Growth</th><th>Tax Paid</th><th>Gross Distribution</th><th>Net Distribution</th><th>EOY Balance</th></tr>
               </thead>
               <tbody>${leftRows}</tbody>
               <tfoot>${leftFoot}</tfoot>
@@ -330,6 +334,7 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
           </div>
           <div class="right-panel-wrap">
             <table class="dual">
+              <colgroup><col style="width:3.5%"><col style="width:4.5%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:11%"><col style="width:9.5%"><col style="width:9.8%"></colgroup>
               <thead>
                 <tr><th colspan="13" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px;border-left:3px solid var(--gold)">Enhanced Pension</th></tr>
                 <tr>
@@ -559,6 +564,7 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         </div>
         <div style="padding:12px 28px;overflow-x:auto">
           <table class="sc-ldg" style="font-size:10.5px;min-width:1100px">
+            <colgroup><col style="width:4%"><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:13%"></colgroup>
             <thead>
               <tr>
                 <th colspan="2" style="text-align:center;background:var(--navy);color:rgba(255,255,255,.7)">Year</th>
@@ -594,10 +600,10 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
     // ══════════════════════════════════════════════════════════
     let pagesHTML = '';
     if (showQP) {
-      pagesHTML += `<div class="page">${buildGreensheetPage('Qualified Plan', d.qpRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Qualified Plan')}</div>`;
-      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account')}</div>`;
+      pagesHTML += `<div class="page">${buildGreensheetPage('Qualified Plan', d.qpRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Qualified Plan', 'qp')}</div>`;
+      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     } else {
-      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account')}</div>`;
+      pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     }
     pagesHTML += `<div class="page">${buildScenarioAnalysisPage()}</div>`;
     pagesHTML += `<div class="page">${buildScenarioLedgerPage()}</div>`;
