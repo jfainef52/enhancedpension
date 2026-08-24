@@ -216,7 +216,7 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <label class="fl">State of Residence</label>
             <div class="field">
               <select id="stateRes" onchange="onStateChange()">
-                <option value="AL">Alabama (5.00%)</option><option value="AK">Alaska (0%)</option><option value="AZ">Arizona (2.50%)</option><option value="AR">Arkansas (4.40%)</option><option value="CA">California (13.30%)</option><option value="CO">Colorado (4.40%)</option><option value="CT">Connecticut (6.99%)</option><option value="DE">Delaware (6.60%)</option><option value="FL">Florida (0%)</option><option value="GA">Georgia (5.39%)</option><option value="HI">Hawaii (11.00%)</option><option value="ID">Idaho (5.80%)</option><option value="IL">Illinois (4.95%)</option><option value="IN">Indiana (3.05%)</option><option value="IA">Iowa (5.70%)</option><option value="KS">Kansas (5.70%)</option><option value="KY">Kentucky (4.50%)</option><option value="LA">Louisiana (4.25%)</option><option value="ME">Maine (7.15%)</option><option value="MD" selected>Maryland (5.75%)</option><option value="MA">Massachusetts (5.00%)</option><option value="MI">Michigan (4.25%)</option><option value="MN">Minnesota (9.85%)</option><option value="MS">Mississippi (4.70%)</option><option value="MO">Missouri (4.80%)</option><option value="MT">Montana (6.75%)</option><option value="NE">Nebraska (6.84%)</option><option value="NV">Nevada (0%)</option><option value="NH">New Hampshire (0%)</option><option value="NJ">New Jersey (10.75%)</option><option value="NM">New Mexico (5.90%)</option><option value="NY">New York (10.90%)</option><option value="NC">North Carolina (4.50%)</option><option value="ND">North Dakota (2.50%)</option><option value="OH">Ohio (3.75%)</option><option value="OK">Oklahoma (4.75%)</option><option value="OR">Oregon (9.90%)</option><option value="PA">Pennsylvania (3.07%)</option><option value="RI">Rhode Island (5.99%)</option><option value="SC">South Carolina (6.40%)</option><option value="SD">South Dakota (0%)</option><option value="TN">Tennessee (0%)</option><option value="TX">Texas (0%)</option><option value="UT">Utah (4.65%)</option><option value="VT">Vermont (8.75%)</option><option value="VA">Virginia (5.75%)</option><option value="WA">Washington (0%)</option><option value="WV">West Virginia (5.12%)</option><option value="WI">Wisconsin (7.65%)</option><option value="WY">Wyoming (0%)</option>
+                <option value="AL">Alabama (5.00%)</option><option value="AK">Alaska (0%)</option><option value="AZ">Arizona (2.50%)</option><option value="AR">Arkansas (3.90%)</option><option value="CA">California (13.30%)</option><option value="CO">Colorado (4.40%)</option><option value="CT">Connecticut (6.99%)</option><option value="DE">Delaware (6.60%)</option><option value="FL">Florida (0%)</option><option value="GA">Georgia (5.19%)</option><option value="HI">Hawaii (11.00%)</option><option value="ID">Idaho (5.30%)</option><option value="IL">Illinois (4.95%)</option><option value="IN">Indiana (2.95%)</option><option value="IA">Iowa (3.80%)</option><option value="KS">Kansas (5.58%)</option><option value="KY">Kentucky (3.50%)</option><option value="LA">Louisiana (3.00%)</option><option value="ME">Maine (7.15%)</option><option value="MD" selected>Maryland (6.50%)</option><option value="MA">Massachusetts (5.00%)</option><option value="MI">Michigan (4.25%)</option><option value="MN">Minnesota (9.85%)</option><option value="MS">Mississippi (4.00%)</option><option value="MO">Missouri (4.70%)</option><option value="MT">Montana (5.65%)</option><option value="NE">Nebraska (4.55%)</option><option value="NV">Nevada (0%)</option><option value="NH">New Hampshire (0%)</option><option value="NJ">New Jersey (10.75%)</option><option value="NM">New Mexico (5.90%)</option><option value="NY">New York (10.90%)</option><option value="NC">North Carolina (3.99%)</option><option value="ND">North Dakota (2.50%)</option><option value="OH">Ohio (2.75%)</option><option value="OK">Oklahoma (4.50%)</option><option value="OR">Oregon (9.90%)</option><option value="PA">Pennsylvania (3.07%)</option><option value="RI">Rhode Island (5.99%)</option><option value="SC">South Carolina (6.00%)</option><option value="SD">South Dakota (0%)</option><option value="TN">Tennessee (0%)</option><option value="TX">Texas (0%)</option><option value="UT">Utah (4.50%)</option><option value="VT">Vermont (8.75%)</option><option value="VA">Virginia (5.75%)</option><option value="WA">Washington (0%)</option><option value="WV">West Virginia (4.82%)</option><option value="WI">Wisconsin (7.65%)</option><option value="WY">Wyoming (0%)</option>
               </select>
             </div>
           </div>
@@ -261,11 +261,11 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
           <div class="sep"></div>
           <div class="fg fr">
             <div class="field"><label class="fl">Federal Tax Rate (%)</label><input type="number" id="fedRate" value="32" step="0.25"/></div>
-            <div class="field"><label class="fl">State Tax Rate (%)</label><input type="number" id="stateRate" value="5.75" step="0.25" oninput="updateCombinedRate()"/><div class="hint stateNoteHint" id="stateNote"></div></div>
+            <div class="field"><label class="fl">State Tax Rate (%)</label><input type="number" id="stateRate" value="6.50" step="0.25" oninput="updateCombinedRate()"/><div class="hint stateNoteHint" id="stateNote"></div></div>
           </div>
           <div class="rate-display">
             <span class="rl">Combined Tax Rate — Financed Each Contribution Year</span>
-            <span class="rv" id="combinedRateDisplay">37.75%</span>
+            <span class="rv" id="combinedRateDisplay">38.50%</span>
           </div>
           <div class="fg fr" style="margin-top:14px">
             <div class="field"><label class="fl">PDA Yield Rate (%)</label><input type="number" id="pdaRate" value="2.50" step="0.25"/></div>
@@ -704,12 +704,21 @@ document.getElementById('qpEqWt')?.addEventListener('input', ()=>{
 // STATE TAX RATES (top marginal, for reference — editable)
 // ══════════════════════════════════════════════════════════
 const STATE_RATES = {
-  AL:5.00,AK:0,AZ:2.50,AR:4.40,CA:13.30,CO:4.40,CT:6.99,DE:6.60,FL:0,GA:5.39,
-  HI:11.00,ID:5.80,IL:4.95,IN:3.05,IA:5.70,KS:5.70,KY:4.50,LA:4.25,ME:7.15,MD:5.75,
-  MA:5.00,MI:4.25,MN:9.85,MS:4.70,MO:4.80,MT:6.75,NE:6.84,NV:0,NH:0,NJ:10.75,
-  NM:5.90,NY:10.90,NC:4.50,ND:2.50,OH:3.75,OK:4.75,OR:9.90,PA:3.07,RI:5.99,SC:6.40,
-  SD:0,TN:0,TX:0,UT:4.65,VT:8.75,VA:5.75,WA:0,WV:5.12,WI:7.65,WY:0
+  AL:5.00,AK:0,AZ:2.50,AR:3.90,CA:13.30,CO:4.40,CT:6.99,DE:6.60,FL:0,GA:5.19,
+  HI:11.00,ID:5.30,IL:4.95,IN:2.95,IA:3.80,KS:5.58,KY:3.50,LA:3.00,ME:7.15,MD:6.50,
+  MA:5.00,MI:4.25,MN:9.85,MS:4.00,MO:4.70,MT:5.65,NE:4.55,NV:0,NH:0,NJ:10.75,
+  NM:5.90,NY:10.90,NC:3.99,ND:2.50,OH:2.75,OK:4.50,OR:9.90,PA:3.07,RI:5.99,SC:6.00,
+  SD:0,TN:0,TX:0,UT:4.50,VT:8.75,VA:5.75,WA:0,WV:4.82,WI:7.65,WY:0
 };
+// Source: Tax Foundation, "State Individual Income Tax Rates and Brackets,
+// 2026" (taxfoundation.org, published Feb 2026) — top marginal single-filer
+// rate per state, re-verified after the SP_PRICE data-quality issue was
+// found. The earlier table had 19 of 50 states out of date (some
+// substantially — Iowa, Nebraska, and Ohio all had major rate cuts this
+// table hadn't caught). Maryland reflects the two new top brackets (6.25%/
+// 6.50%) added retroactive to 2025. Washington shows 0% since it taxes
+// capital gains only, not wage/ordinary income, which is what this field
+// is used for.
 const NO_TAX_STATES = new Set(['AK','FL','NV','NH','SD','TN','TX','WA','WY']);
 function onStateChange(){
   const st = document.getElementById('stateRes').value;
