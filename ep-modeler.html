@@ -395,31 +395,37 @@ const SP_TOTAL = {
 };
 const SP_YEARS = Object.keys(SP_TOTAL).map(Number).sort((a,b)=>a-b);
 const SP_PRICE = {
-  1975:0.3187,1976:0.1906,1977:-0.1151,1978:0.0102,1979:0.1230,1980:0.2574,
-  1981:-0.0973,1982:0.1466,1983:0.2302,1984:0.1532,1985:0.0312,1986:0.2133,
-  1987:0.2704,1988:-0.0529,1989:0.1393,1990:0.1912,1991:-0.0426,1992:0.2783,
-  1993:0.0460,1994:0.0868,1995:-0.0164,1996:0.3206,1997:0.2471,1998:0.2573,
-  1999:0.2963,2000:0.1416,2001:-0.0631,2002:-0.1463,2003:-0.2143,2004:0.2642,
-  2005:0.0432,2006:0.0824,2007:0.1137,2008:-0.0319,2009:-0.3722,2010:0.2981,
-  2011:0.1415,2012:0.0140,2013:0.1383,2014:0.2310,2015:0.1129,2016:-0.0540,
-  2017:0.1858,2018:0.2262,2019:-0.0654,2020:0.2573,2021:0.1573,2022:-0.1605,
-  2023:0.2429,2024:0.2325
+  1975:0.3155,1976:0.1915,1977:-0.1150,1978:0.0106,1979:0.1231,1980:0.2577,
+  1981:-0.0973,1982:0.1476,1983:0.1727,1984:0.0140,1985:0.2633,1986:0.1462,
+  1987:0.0203,1988:0.1240,1989:0.2725,1990:-0.0656,1991:0.2631,1992:0.0446,
+  1993:0.0706,1994:-0.0154,1995:0.3411,1996:0.2026,1997:0.3101,1998:0.2667,
+  1999:0.1953,2000:-0.1014,2001:-0.1304,2002:-0.2337,2003:0.2638,2004:0.0899,
+  2005:0.0300,2006:0.1362,2007:0.0353,2008:-0.3849,2009:0.2345,2010:0.1278,
+  2011:-0.0000,2012:0.1341,2013:0.2960,2014:0.1139,2015:-0.0073,2016:0.0954,
+  2017:0.1942,2018:-0.0624,2019:0.2888,2020:0.1626,2021:0.2689,2022:-0.1944,
+  2023:0.2423,2024:0.2331
 };
+// Source: slickcharts.com "S&P 500 Return Details" (Price Return + Dividend
+// Return = Total Return). Verified against real market history — the
+// earlier dataset had 37 of 50 years wrong, several with the sign flipped.
 // US 10-year Treasury Bond annual total returns — source: Damodaran, NYU Stern.
 // Same historical-year pairing as SP_PRICE, used to blend the QP/DB comparator.
 const TB10 = {
-  1975:0.0519,1976:0.1675,1977:-0.0067,1978:0.0121,1979:-0.0099,
-  1980:-0.0251,1981:-0.0196,1982:0.4035,1983:0.0065,1984:0.1543,
-  1985:0.3097,1986:0.2447,1987:-0.0494,1988:0.0867,1989:0.2112,
-  1990:0.0617,1991:0.1926,1992:0.0651,1993:0.1824,1994:-0.0841,
-  1995:0.3167,1996:-0.0093,1997:0.1501,1998:0.1327,1999:-0.0866,
-  2000:0.2148,2001:0.0351,2002:0.1737,2003:0.0131,2004:0.0749,
-  2005:0.0252,2006:0.0119,2007:0.1004,2008:0.2587,2009:-0.1183,
-  2010:0.0821,2011:0.2910,2012:0.0432,2013:-0.0921,2014:0.1075,
-  2015:0.0149,2016:0.0069,2017:0.0280,2018:-0.0002,2019:0.0963,
-  2020:0.1133,2021:-0.0445,2022:-0.1769,2023:0.0401,2024:0.0131
+  1975:0.0361,1976:0.1598,1977:0.0129,1978:-0.0078,1979:0.0067,
+  1980:-0.0299,1981:0.0820,1982:0.3281,1983:0.0320,1984:0.1373,
+  1985:0.2571,1986:0.2428,1987:-0.0496,1988:0.0822,1989:0.1769,
+  1990:0.0624,1991:0.1500,1992:0.0936,1993:0.1421,1994:-0.0804,
+  1995:0.2348,1996:0.0143,1997:0.0994,1998:0.1492,1999:-0.0825,
+  2000:0.1666,2001:0.0557,2002:0.1512,2003:0.0038,2004:0.0449,
+  2005:0.0287,2006:0.0196,2007:0.1021,2008:0.2010,2009:-0.1112,
+  2010:0.0846,2011:0.1604,2012:0.0297,2013:-0.0910,2014:0.1075,
+  2015:0.0128,2016:0.0069,2017:0.0280,2018:-0.0002,2019:0.0964,
+  2020:0.1133,2021:-0.0442,2022:-0.1783,2023:0.0388,2024:-0.0164
 };
-
+// Source: Damodaran (NYU Stern), "Historical Returns on Stocks, Bonds and
+// Bills: 1928-2024" — US T. Bond (10-year) column, re-verified directly
+// against the live page after the SP_PRICE data-quality issue was found;
+// the earlier version had real errors in the pre-2014 years.
 // ══════════════════════════════════════════════════════════
 // CARRIER PARAMS — [BCF, BonusCreditFactor, PersistencyBonus] per policy year
 // Ported verbatim from the ETA modeler (shared product configs)
@@ -839,11 +845,12 @@ function feasibleIncome(returns, income, floor, p){
     av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
     const compI = polYr<=p.contribYears ? p.comp : 0;
     const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
-    loan = loan*(1+rate);
-    if (polYr<=p.contribYears) loan += compI*(p.taxRate/100);
-    if (income>0 && age>=p.incStart && age<=p.incEnd){
-      loan += income*Math.pow(1+p.cola/100, age-p.incStart);
-    }
+    const financedTax = polYr<=p.contribYears ? compI*(p.taxRate/100) : 0;
+    const inc = (income>0 && age>=p.incStart && age<=p.incEnd) ? income*Math.pow(1+p.cola/100, age-p.incStart) : 0;
+    // New draws (financed tax, income) are taken at the START of the year —
+    // a client drawing income to live on takes it in January, not December —
+    // so they accrue that same year's interest immediately, not starting next year.
+    loan = (loan + financedTax + inc) * (1+rate);
     if (age>=p.incStart && age<=p.incEnd){
       const csvGross = Math.max(0, av - (carrierRow.surrenderCharge||0));
       if ((csvGross-loan) < floor) return false;
@@ -876,12 +883,9 @@ function simEPPathFull(returns, income, p){
     const compI = polYr<=p.contribYears ? p.comp : 0;
     const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
     const financedTax = polYr<=p.contribYears ? compI*(p.taxRate/100) : 0;
-    loan = loan*(1+rate) + financedTax;
-    let inc=0;
-    if (income>0 && age>=p.incStart && age<=p.incEnd){
-      inc = income*Math.pow(1+p.cola/100, age-p.incStart);
-      loan += inc;
-    }
+    const inc = (income>0 && age>=p.incStart && age<=p.incEnd) ? income*Math.pow(1+p.cola/100, age-p.incStart) : 0;
+    // Same BOY-draw convention as feasibleIncome — new draws accrue this year's interest immediately.
+    loan = (loan + financedTax + inc) * (1+rate);
     const surrChg = carrierRow.surrenderCharge||0;
     const csvGross = Math.max(0, av-surrChg);
     rows.push({age,polYr,ret,comp:compI,premium:prem,financedTax,phase:polYr<p.refiYear?'bank':'plr',av,csvGross,loan,csvNet:csvGross-loan,income:inc});
@@ -1071,13 +1075,15 @@ function simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd
     let b=balAtStart, basisD=basisAtStart;
     for (let j=0;j<incomeYrs;j++){
       const ret=returns[startIdx+j]||0;
-      b=b*(1+ret);
-      if (b<=0){ b=0; break; }
-      const w=Math.min(wMid*Math.pow(1+cola,j), b);
+      // Withdrawal happens at the START of the year — someone retiring at 60
+      // draws income to live on in January, not December — so growth applies
+      // only to what's left after the draw, not to the full pre-withdrawal balance.
+      const w=Math.min(wMid*Math.pow(1+cola,j), Math.max(0,b));
       const curBasisPct = b>0?Math.max(0,Math.min(1,basisD/b)):0;
       basisD=Math.max(0, basisD-w*curBasisPct);
       b-=w;
-      if (b<0){ b=0; break; }
+      if (b<=0){ b=0; break; }
+      b=b*(1+ret);
     }
     if (b>0) wLo=wMid; else wHi=wMid;
     bestW=wMid;
@@ -1092,13 +1098,13 @@ function simDirectInvest(comp, contribYears, taxRate, issueAge, incStart, incEnd
       rows.push({yr:polYr,age,gross:0,net:0,bal:b2});
     } else if (age<=incEnd){
       const j=age-incStart;
-      b2=b2*(1+ret);
       const g=Math.min(bestW*Math.pow(1+cola,j), Math.max(0,b2));
       const curBasisPct = b2>0?Math.max(0,Math.min(1,basisD2/b2)):0;
       const gain=g*(1-curBasisPct);
       const n=g-gain*ltcg;
       basisD2=Math.max(0, basisD2-g*curBasisPct);
       b2=Math.max(0, b2-g);
+      b2=b2*(1+ret);
       if (j===0) netW1=n;
       rows.push({yr:polYr,age,gross:g,net:n,bal:b2});
     } else {
@@ -1130,10 +1136,10 @@ function simQualifiedPlan(comp, contribYears, withdrawalTaxRate, issueAge, incSt
     let b=balAtStart;
     for (let j=0;j<incomeYrs;j++){
       const ret=returns[startIdx+j]||0;
-      b=b*(1+ret);
       const w=Math.min(wMid*Math.pow(1+cola,j), Math.max(0,b));
       b-=w;
-      if (b<0){ b=0; break; }
+      if (b<=0){ b=0; break; }
+      b=b*(1+ret);
     }
     if (b>0) wLo=wMid; else wHi=wMid;
     bestW=wMid;
@@ -1148,10 +1154,10 @@ function simQualifiedPlan(comp, contribYears, withdrawalTaxRate, issueAge, incSt
       rows.push({yr:polYr,age,gross:0,net:0,bal:b2});
     } else if (age<=incEnd){
       const j=age-incStart;
-      b2=b2*(1+ret);
       const g=Math.min(bestW*Math.pow(1+cola,j), Math.max(0,b2));
       const n=g*(1-taxR);
       b2=Math.max(0, b2-g);
+      b2=b2*(1+ret);
       if (j===0) netW1=n;
       rows.push({yr:polYr,age,gross:g,net:n,bal:b2});
     } else {
