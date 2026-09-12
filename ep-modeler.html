@@ -331,6 +331,7 @@ table.ldg tfoot td{padding:7px 8px;text-align:right;border-top:2px solid var(--n
             <div class="src-toggle">
               <button class="src-btn active" id="cmpBtnInvest" onclick="setCompareMode('invest')">Taxable Investment Account<br><span style="font-size:9px;opacity:.7;font-weight:400">Pay tax, invest the difference</span></button>
               <button class="src-btn" id="cmpBtnBoth" onclick="setCompareMode('both')">Investment Account + QP/DB<br><span style="font-size:9px;opacity:.7;font-weight:400">Adds a cash balance / DB plan</span></button>
+              <button class="src-btn" id="cmpBtnNone" onclick="setCompareMode('none')">Standalone \u2014 EP Only<br><span style="font-size:9px;opacity:.7;font-weight:400">No comparator shown</span></button>
             </div>
           </div>
           <div class="fg fr">
@@ -681,6 +682,7 @@ function setCompareMode(mode){
   _compareMode = mode;
   document.getElementById('cmpBtnInvest').classList.toggle('active', mode==='invest');
   document.getElementById('cmpBtnBoth').classList.toggle('active', mode==='both');
+  document.getElementById('cmpBtnNone').classList.toggle('active', mode==='none');
   document.getElementById('qpCompareRow').style.display = mode==='both' ? 'grid' : 'none';
   document.getElementById('qpBlendRow').style.display = mode==='both' ? 'grid' : 'none';
   document.getElementById('qpCompareHint').style.display = mode==='both' ? 'block' : 'none';
