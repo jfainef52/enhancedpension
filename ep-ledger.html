@@ -71,6 +71,11 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 .right-panel-wrap{float:left!important;width:58%;box-sizing:border-box;border-left:none}
 .dual-panel.db-mode>div:first-child{width:58%}
 .dual-panel.db-mode>.right-panel-wrap{width:42%}
+/* Force both panels' header rows to the same height regardless of how much
+   their (very differently-shaped) column sets wrap, so every data row below
+   lines up between the two tables. */
+.dual-panel.db-mode table.dual thead tr:first-child th{height:26px;box-sizing:border-box;vertical-align:middle}
+.dual-panel.db-mode table.dual thead tr:last-child th{height:30px;box-sizing:border-box;vertical-align:middle}
 table.dual{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
 table.dual thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:5px 6px;text-align:right;border-right:1px solid rgba(255,255,255,.06);white-space:normal;overflow:hidden}
 table.dual tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;white-space:normal;font-size:9px;overflow:hidden}
@@ -547,11 +552,15 @@ function renderLedger(){
       const totalEPIncome = incomeAges.reduce((s,a)=>s+((epByAge50[a]||{}).income||0),0);
       const endEP = epByAge50[d.incEnd] || {};
       const maxDBYear = Math.max(...Object.keys(dbByYear).map(Number));
-      const endDB = dbByYear[maxDBYear];
       const rateLabel = _dbAssumedRate ? _dbAssumedRate : 'not entered';
 
+      // No single "Death Benefit at Age X" headline figure — a death benefit
+      // is a one-time payout at whichever year death occurs, not a total to
+      // be headlined the way lifetime income is, and pulling out just the
+      // final row's number invites exactly that misreading. The full
+      // year-by-year progression lives in the right panel table itself.
       const statStrip = `
-        <div class="stat-strip">
+        <div class="stat-strip" style="grid-template-columns:repeat(3,1fr)">
           <div class="stat-box">
             <div class="sb-label">Annual Compensation<br>Contributed</div>
             <div class="sb-val">${$f(d.comp)}</div>
@@ -566,11 +575,6 @@ function renderLedger(){
             <div class="sb-label">Total EP Income<br>Tax-Free Drawdowns (Median)</div>
             <div class="sb-val">${$f(totalEPIncome)}</div>
             <div class="sb-sub">Left panel \u2014 bootstrapped Monte Carlo</div>
-          </div>
-          <div class="stat-box hl">
-            <div class="sb-label">Death Benefit at Age ${d.issueAge+maxDBYear-1}<br>Net of Loan, Incl. PDA</div>
-            <div class="sb-val">${endDB?$f(endDB.dbNet):'\u2014'}</div>
-            <div class="sb-sub">Right panel \u2014 illustrated at ${rateLabel}, no income drawn</div>
           </div>
         </div>`;
 
@@ -628,7 +632,6 @@ function renderLedger(){
           <td style="font-weight:600">${dbRow?$f(dbRow.dbNet):'\u2014'}</td>
         </tr>`;
       });
-      const rightFoot = `<tr><td colspan="4" style="text-align:left">Death Benefit at Age ${d.issueAge+maxDBYear-1} (Net of Loan, Incl. PDA)</td><td>${endDB?$f(endDB.dbNet):'\u2014'}</td></tr>`;
 
       const disc = `<div class="disc-3col">
         <div>The hypothetical models in this summary assume certain crediting methods and index account charges that are purely hypothetical and do not represent any particular investment or product. Hypothetical crediting methods, charges, values and returns are not guaranteed. Left-panel returns are bootstrapped historical S&amp;P 500 returns (${d.dataYears}-yr pool); the right panel uses the carrier's own stated illustrated rate${_dbAssumedRate?' ('+_dbAssumedRate+')':''}, not a Monte Carlo simulation.</div>
@@ -677,7 +680,6 @@ function renderLedger(){
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
-              <tfoot>${rightFoot}</tfoot>
             </table>
           </div>
         </div>
@@ -892,9 +894,9 @@ function renderLedger(){
       function cumComp(rows){ const byAge={}; rows.forEach(r=>byAge[r.age]=r); let c=0; return ages.map(a=>{ c+=((byAge[a]||{}).net||0); return c; }); }
       const ci25=cumEP(epByAge25), ci50=cumEP(epByAge50), ci75=cumEP(epByAge75);
       const series = [
-        {label:'75th (Favorable)', color:'#2a6e45', dash:'6,3', width:2, data:ci75},
-        {label:'50th Median \u2014 EP', color:'#c9a84c', dash:'', width:3, data:ci50},
         {label:'25th (Conservative)', color:'#8a8070', dash:'4,4', width:1.5, data:ci25},
+        {label:'50th Median \u2014 EP', color:'#c9a84c', dash:'', width:3, data:ci50},
+        {label:'75th (Favorable)', color:'#2a6e45', dash:'6,3', width:2, data:ci75},
       ];
       if (!isStandalone && d.investRows50) series.push({label:'Investment Acct Net \u2014 Median', color:'rgba(100,140,200,.9)', dash:'6,3', width:1.5, data:cumComp(d.investRows50)});
       if (!isStandalone && showQP && d.qpRows50) series.push({label:'QP Taxable Net \u2014 Median', color:'rgba(139,32,32,.7)', dash:'2,3', width:1.5, data:cumComp(d.qpRows50)});
@@ -943,19 +945,19 @@ function renderLedger(){
         <div class="scenario-strip">
           <div class="sc-band">
             <div class="sc-name">25th Percentile \u2014 Conservative Sequence</div>
-            <div class="sc-inc">${$f(d.bandIncome[25])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-inc">${$f(d.bandIncome[25])}</div>
             <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
             <div class="sc-total">Total: ${$f(totalByBand[25])}</div>
           </div>
           <div class="sc-band median">
             <div class="sc-name">50th Percentile \u2014 Median Base Case</div>
-            <div class="sc-inc">${$f(d.bandIncome[50])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-inc">${$f(d.bandIncome[50])}</div>
             <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
             <div class="sc-total">Total: ${$f(totalByBand[50])}</div>
           </div>
           <div class="sc-band">
             <div class="sc-name">75th Percentile \u2014 Favorable Sequence</div>
-            <div class="sc-inc">${$f(d.bandIncome[75])}<span style="font-size:13px;font-family:'IBM Plex Sans',sans-serif;color:#8a8070;font-weight:400"> / yr</span></div>
+            <div class="sc-inc">${$f(d.bandIncome[75])}</div>
             <div class="sc-sub">Tax-free \u00b7 Age ${d.incStart} Year 1</div>
             <div class="sc-total">Total: ${$f(totalByBand[75])}</div>
           </div>
@@ -966,19 +968,27 @@ function renderLedger(){
         summaryCols.push({label:'Investment Acct Net Income (Median)', val:$f(d.investTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
         if (showQP) summaryCols.push({label:'QP Net Distributions (Median)', val:$f(d.qpTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
         summaryCols.push({label:'EP Tax-Free Income Advantage (Median)', val:'+'+$f(incomeAdv), color:'var(--green)', sub:`${(totalByBand[50]/Math.max(primaryCompTotal,1)).toFixed(2)}\u00d7 more income vs. ${primaryCompLabel}`});
+        // Net Asset Value only appears here in comparator mode. In standalone
+        // mode this figure sits right alongside the illustrated-carrier
+        // death-benefit page, where a similarly-sized dollar figure risks
+        // being mistaken for a death benefit number — so it's dropped there.
+        summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNetTotal), color:'var(--navy)', sub:'Net of all asset loans'});
       }
-      summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNetTotal), color:'var(--navy)', sub:'Net of all asset loans'});
 
-      const summaryRow = `<div style="display:grid;grid-template-columns:repeat(${summaryCols.length},1fr);border-bottom:1px solid var(--border)">
+      const summaryRow = summaryCols.length ? `<div style="display:grid;grid-template-columns:repeat(${summaryCols.length},1fr);border-bottom:1px solid var(--border)">
         ${summaryCols.map((c,i)=>`<div style="padding:14px 20px;${i<summaryCols.length-1?'border-right:1px solid var(--border)':''}">
           <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${c.label}</div>
           <div style="font-family:'Playfair Display',serif;font-size:22px;color:${c.color}">${c.val}</div>
           <div style="font-size:9px;color:var(--muted);margin-top:3px">${c.sub}</div>
         </div>`).join('')}
-      </div>`;
+      </div>` : '';
 
       const pctExplain = `
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px 28px;border-bottom:1px solid var(--border)">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
+            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#8b2020;margin-bottom:6px;font-weight:600">25th \u2014 Conservative</div>
+            <div style="font-size:11px;color:var(--text);line-height:1.5">In 75% of sequences the outcome exceeded this level \u2014 a below-average but realistic planning floor.</div>
+          </div>
           <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:6px;font-weight:600">50th \u2014 Median</div>
             <div style="font-size:11px;color:var(--text);line-height:1.5">Half of all ${d.nSims.toLocaleString()} simulated market sequences produced more income than this; half produced less. This is the base case.</div>
@@ -986,10 +996,6 @@ function renderLedger(){
           <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#2a6e45;margin-bottom:6px;font-weight:600">75th \u2014 Favorable</div>
             <div style="font-size:11px;color:var(--text);line-height:1.5">In 25% of simulated sequences \u2014 above-average market performance \u2014 the EP asset produced income above this level.</div>
-          </div>
-          <div style="background:var(--off);border:1px solid var(--border);border-radius:4px;padding:14px 16px">
-            <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#8b2020;margin-bottom:6px;font-weight:600">25th \u2014 Conservative</div>
-            <div style="font-size:11px;color:var(--text);line-height:1.5">In 75% of sequences the outcome exceeded this level \u2014 a below-average but realistic planning floor.</div>
           </div>
         </div>`;
 
@@ -1176,7 +1182,14 @@ function renderLedger(){
       pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     }
     pagesHTML += `<div class="page">${buildScenarioAnalysisPage()}</div>`;
-    pagesHTML += `<div class="page">${buildScenarioLedgerPage()}</div>`;
+    if (!isStandalone) {
+      // In standalone mode, buildStandaloneIncomePage / buildEPvsDBPage already
+      // show every year at full granularity (not just 5-year tranches) — this
+      // page would just be a redundant, coarser summary of the same numbers.
+      // It stays for comparator mode, where it's the only place showing all
+      // three income percentiles alongside the comparator, year by year.
+      pagesHTML += `<div class="page">${buildScenarioLedgerPage()}</div>`;
+    }
 
     document.getElementById('pages').innerHTML = pagesHTML;
 
