@@ -136,6 +136,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--off);color:var(--te
 .sc-label{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .sc-label.g{color:var(--gold)}
 .sc-value{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);font-weight:500;margin-bottom:10px}
+.sc-value.g{color:var(--green)}
 .sc-stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
 .sc-stat:last-child{border-bottom:none}
 .sk{color:var(--muted)}
@@ -1358,35 +1359,26 @@ function renderOutput(d){
     ${[25,50,75].map(pc=>`
       <div class="pct-card ${pc===50?'hl':''}">
         <div class="pc-label">${pc}th Percentile</div>
-        <div class="pc-eta">${fmt$(bandIncome[pc])}<span style="font-size:11px;color:var(--muted);font-weight:400"> / yr, Year 1</span></div>
-        <div class="pc-qp">Lifetime income: <span>${fmt$(totalByBand[pc])}</span></div>
+        <div class="pc-eta">${fmt$(totalByBand[pc])}<span style="font-size:11px;color:var(--muted);font-weight:400"> lifetime income</span></div>
+        <div class="pc-qp">Year 1: <span>${fmt$(bandIncome[pc])}</span> &middot; grows ${p.cola}%/yr, ages ${p.incStart}\u2013${p.incEnd}</div>
       </div>`).join('')}
   </div>
 
-  <div class="stat-grid" style="${showQP?'grid-template-columns:1fr 1fr 1fr 1fr 1fr':''}">
-    <div class="stat-crd"><div class="sc-label">Total Contribution</div><div class="sc-value">${fmt$(contribTotal)}</div>
+  <div class="stat-grid" style="grid-template-columns:1fr 1.15fr">
+    <div class="stat-crd">
+      <div class="sc-label">Total Contribution</div><div class="sc-value">${fmt$(contribTotal)}</div>
       <div class="sc-stat"><span class="sk">Annual comp.</span><span class="sv">${fmt$(p.comp)}</span></div>
       <div class="sc-stat"><span class="sk">Level premium to policy (Yr ${p.pdaSchedule.filter(r=>r.premium===p.levelPremium).length?p.pdaSchedule.findIndex(r=>r.premium===p.levelPremium)+1:'—'}+)</span><span class="sv">${fmt$(p.levelPremium)}</span></div>
-    </div>
       <div class="sc-stat"><span class="sk">Contribution years</span><span class="sv">${p.contribYears}</span></div>
       ${p.premiumYears>p.contribYears?`<div class="sc-stat"><span class="sk">Premium funding years</span><span class="sv">${p.premiumYears} (7-yr floor)</span></div>`:''}
     </div>
-    <div class="stat-crd hl"><div class="sc-label g">Median Lifetime Income — EP</div><div class="sc-value">${fmt$(totalByBand[50])}</div>
-      <div class="sc-stat"><span class="sk">Year 1 income</span><span class="sv g">${fmt$(bandIncome[50])}</span></div>
-      <div class="sc-stat"><span class="sk">COLA</span><span class="sv">${p.cola}%</span></div>
-    </div>
-    <div class="stat-crd"><div class="sc-label">Taxable Investment Acct</div><div class="sc-value">${fmt$(investTotalMed)}</div>
-      <div class="sc-stat"><span class="sk">Net lifetime income</span><span class="sv">${fmt$(investTotalMed)}</span></div>
-      <div class="sc-stat"><span class="sk">Contributes after-tax comp</span><span class="sv">—</span></div>
-    </div>
-    ${showQP ? `
-    <div class="stat-crd"><div class="sc-label">Qualified Plan (DB/CB)</div><div class="sc-value">${fmt$(qpTotalMed)}</div>
-      <div class="sc-stat"><span class="sk">Net lifetime income</span><span class="sv">${fmt$(qpTotalMed)}</span></div>
-      <div class="sc-stat"><span class="sk">Contributes gross comp, taxed on exit</span><span class="sv">—</span></div>
-    </div>` : ''}
-    <div class="stat-crd"><div class="sc-label">EP Advantage (Median)</div><div class="sc-value">${fmt$(totalByBand[50]-Math.max(investTotalMed, qpTotalMed))}</div>
-      <div class="sc-stat"><span class="sk">vs. taxable investment</span><span class="sv g">${investTotalMed>0?Math.round((totalByBand[50]/investTotalMed-1)*100):0}%</span></div>
-      ${showQP?`<div class="sc-stat"><span class="sk">vs. qualified plan</span><span class="sv g">${qpTotalMed>0?Math.round((totalByBand[50]/qpTotalMed-1)*100):0}%</span></div>`:''}
+    <div class="stat-crd hl">
+      <div class="sc-label g">Lifetime Income Comparison — Median (50th Percentile)</div>
+      <div class="sc-value g">${fmt$(totalByBand[50])}<span style="font-size:11px;color:var(--muted);font-weight:400"> Enhanced Pension</span></div>
+      <div class="sc-stat"><span class="sk">Taxable Investment Acct</span><span class="sv">${fmt$(investTotalMed)}</span></div>
+      ${showQP?`<div class="sc-stat"><span class="sk">Qualified Plan (DB/CB)</span><span class="sv">${fmt$(qpTotalMed)}</span></div>`:''}
+      <div class="sc-stat"><span class="sk">EP Advantage vs. Investment</span><span class="sv g">+${fmt$(totalByBand[50]-investTotalMed)} \u00b7 ${investTotalMed>0?Math.round((totalByBand[50]/investTotalMed-1)*100):0}%</span></div>
+      ${showQP?`<div class="sc-stat"><span class="sk">EP Advantage vs. QP</span><span class="sv g">+${fmt$(totalByBand[50]-qpTotalMed)} \u00b7 ${qpTotalMed>0?Math.round((totalByBand[50]/qpTotalMed-1)*100):0}%</span></div>`:''}
     </div>
   </div>
 
@@ -1397,7 +1389,7 @@ function renderOutput(d){
   </div>
 
   <div class="chart-wrap">
-    <div class="chart-title">Gross Accumulated Value — 25th / 50th / 75th Percentile Bands</div>
+    <div class="chart-title">Cumulative Tax-Free Income — 25th / 50th / 75th Percentile Bands</div>
     <div class="chart-sub">Issue age ${p.issueAge} through age ${p.incEnd}</div>
     <canvas id="epChart" height="90"></canvas>
   </div>
@@ -1542,7 +1534,8 @@ function showLedger(pct){
 
 function buildChart(bandRows, p){
   const ages = bandRows[50].map(r=>r.age);
-  const ds = (pct,color)=>({label:pct+'th', data:bandRows[pct].map(r=>r.av), borderColor:color, backgroundColor:color+'22', borderWidth:2, pointRadius:0, tension:.15});
+  const cumIncome = (pct) => { let sum=0; return bandRows[pct].map(r=>{ sum += (r.income||0); return sum; }); };
+  const ds = (pct,color)=>({label:pct+'th', data:cumIncome(pct), borderColor:color, backgroundColor:color+'22', borderWidth:2, pointRadius:0, tension:.15});
   if (_epChart) _epChart.destroy();
   const ctx = document.getElementById('epChart').getContext('2d');
   _epChart = new Chart(ctx, {
@@ -1554,7 +1547,7 @@ function buildChart(bandRows, p){
       plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans',size:11}}}},
       scales:{
         x:{title:{display:true,text:'Age',font:{family:'IBM Plex Sans',size:11}},grid:{color:'#eee'}},
-        y:{title:{display:true,text:'Gross AV ($)',font:{family:'IBM Plex Sans',size:11}},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'},grid:{color:'#eee'}}
+        y:{title:{display:true,text:'Cumulative Tax-Free Income ($)',font:{family:'IBM Plex Sans',size:11}},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'},grid:{color:'#eee'}}
       }
     }
   });
