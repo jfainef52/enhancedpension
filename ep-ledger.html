@@ -39,6 +39,9 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 .db-file-label:hover{background:rgba(201,168,76,.1)}
 .db-file-label.disabled{opacity:.35;pointer-events:none}
 .db-file-label.has-file{border-style:solid;background:rgba(42,110,69,.12);color:#7fd9a3;border-color:rgba(127,217,163,.4)}
+.db-rate-input{border:1px solid rgba(201,168,76,.4);background:rgba(255,255,255,.04);color:var(--gold);font-size:10px;padding:6px 10px;border-radius:3px;font-family:'IBM Plex Mono',monospace;width:150px;outline:none}
+.db-rate-input::placeholder{color:rgba(201,168,76,.4)}
+.db-rate-input.disabled{opacity:.35;pointer-events:none}
 .db-status{font-size:9.5px;color:rgba(255,255,255,.4);font-family:'IBM Plex Sans',sans-serif;max-width:260px}
 .db-status.err{color:#e08080}
 @media print{.db-ctrl{display:none!important}}
@@ -66,6 +69,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 .dual-panel{width:100%;overflow:hidden;box-sizing:border-box}
 .dual-panel>div:first-child{float:left;width:42%;box-sizing:border-box}
 .right-panel-wrap{float:left!important;width:58%;box-sizing:border-box;border-left:none}
+.dual-panel.db-mode>div:first-child{width:58%}
+.dual-panel.db-mode>.right-panel-wrap{width:42%}
 table.dual{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:9.5px;table-layout:fixed}
 table.dual thead th{background:var(--navy);color:rgba(255,255,255,.55);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:5px 6px;text-align:right;border-right:1px solid rgba(255,255,255,.06);white-space:normal;overflow:hidden}
 table.dual tbody td{padding:3px 6px;text-align:center;border-bottom:1px solid #f0ede6;border-right:1px solid #f0ede6;white-space:normal;font-size:9px;overflow:hidden}
@@ -123,6 +128,7 @@ table.sc-ldg tfoot td.gold-col{color:var(--gold)}
     </label>
     <label class="db-file-label disabled" id="dbFileLabel" for="dbFileInput">Upload Carrier File (CSV/XLSX)</label>
     <input type="file" id="dbFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="onDBFileChosen(event)"/>
+    <input type="text" id="dbRateInput" class="db-rate-input disabled" placeholder="Stated rate, e.g. 6.25%" disabled oninput="onDBRateInput()"/>
     <span class="db-status" id="dbStatus"></span>
   </div>
   <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">EFS Life LLC &middot; Internal Advisor Tool</span>
@@ -298,6 +304,7 @@ async function parseDBCarrierFile(file) {
 
 let _dbCarrierRows = null;
 let _dbEnabled = false;
+let _dbAssumedRate = '';
 
 function renderLedger(){
   try {
@@ -310,6 +317,14 @@ function renderLedger(){
     const dateStr = d.date || new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const showQP = d.compareMode === 'both';
 
+    const pdaByYr = {};
+    (d.pdaSchedule||[]).forEach(r=>pdaByYr[r.yr]=r);
+    // PDA balance still un-deployed (not yet paid into the policy as premium) at a
+    // given policy year — it's the client's own money, sitting outside the policy,
+    // and at death it's available alongside the policy's own net value. Net figures
+    // below add this back rather than treating the loan as the only offset.
+    function pdaBalAtYr(polYr){ return Math.max(0, pdaByYr[polYr]?.eoy || 0); }
+
     // Pre-compute EP row derived fields (interest, lender rate, PDA balance, payoff flag)
     // for a given percentile's row array.
     function enrichEPRows(rows){
@@ -318,9 +333,9 @@ function renderLedger(){
         const interest = Math.max(0, r.loan - prevLoan - (r.financedTax||0) - (r.income||0));
         const isPayoff = r.polYr === d.refiYear;
         const lenderRate = r.polYr < d.refiYear ? getBankRateForYear(r.polYr, d.lenderIndex, d.lenderSpread, d.rateEnv) : null;
-        const pdaRow = d.pdaSchedule && r.polYr<=d.contribYears ? null : null; // placeholder, replaced below via closure
+        const csvNetTotal = r.csvNet + pdaBalAtYr(r.polYr);
         prevLoan = r.loan;
-        return {...r, interest, isPayoff, lenderRate};
+        return {...r, interest, isPayoff, lenderRate, csvNetTotal};
       });
     }
     const epRows50 = enrichEPRows(d.epRows50);
@@ -329,9 +344,6 @@ function renderLedger(){
     const epByAge50 = {}; epRows50.forEach(r=>epByAge50[r.age]=r);
     const epByAge25 = {}; epRows25.forEach(r=>epByAge25[r.age]=r);
     const epByAge75 = {}; epRows75.forEach(r=>epByAge75[r.age]=r);
-
-    const pdaByYr = {};
-    (d.pdaSchedule||[]).forEach(r=>pdaByYr[r.yr]=r);
 
     const ageRange = epRows50.map(r=>r.age);
     const totalPremium = (d.pdaSchedule||[]).reduce((s,r)=>s+r.premium,0);
@@ -367,12 +379,13 @@ function renderLedger(){
       carrierRows.forEach(r=>{
         const carrierAlreadyNet = r.year >= d.refiYear;
         const loanBal = carrierAlreadyNet ? 0 : (loanMap[r.year] || 0);
+        const pdaBal = pdaBalAtYr(r.year);
         byYear[r.year] = {
           age: r.age || (d.issueAge + r.year - 1),
           av: r.av,
-          csvNet: r.csv - loanBal,
-          dbNet: Math.max(0, r.db - loanBal),
-          loanBal
+          csvNet: (r.csv - loanBal) + pdaBal,
+          dbNet: Math.max(0, r.db - loanBal) + pdaBal,
+          loanBal, pdaBal
         };
       });
       return byYear;
@@ -406,7 +419,7 @@ function renderLedger(){
           </div>
           <div class="stat-box hl">
             <div class="sb-label">Net Asset Value at Age ${d.incEnd}<br>Net of All Loans</div>
-            <div class="sb-val">${$f(endEP.csvNet)}</div>
+            <div class="sb-val">${$f(endEP.csvNetTotal)}</div>
             <div class="sb-sub">Asset loan retires from death benefit</div>
           </div>
         </div>`;
@@ -448,7 +461,7 @@ function renderLedger(){
           <td>${isPayoff ? `<strong style="color:#c9a84c">${loanPayoff}</strong>` : loanPayoff}</td>
           <td class="${isIncome?'inc-val':''}">${taxFreeInc}</td>
           <td>${$f(ep.av)}</td>
-          <td>${$f(ep.csvNet)}</td>
+          <td>${$f(ep.csvNetTotal)}</td>
         </tr>`;
       });
 
@@ -488,6 +501,165 @@ function renderLedger(){
             <tbody>${rows}</tbody>
             <tfoot>${rightFoot}</tfoot>
           </table>
+        </div>
+        ${disc}`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // EP INCOME (left) vs DEATH BENEFIT FOCUSED (right) — dual panel
+    // Two distinct data sources, kept visually separate so the different
+    // assumptions behind each side are never confused: left is the
+    // bootstrapped Monte Carlo median path; right is the carrier's own
+    // stated/illustrated gross rate, entered by the advisor, assuming no
+    // income is ever drawn.
+    // ══════════════════════════════════════════════════════════
+    function buildEPvsDBPage(){
+      const incomeAges = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
+      const totalEPIncome = incomeAges.reduce((s,a)=>s+((epByAge50[a]||{}).income||0),0);
+      const endEP = epByAge50[d.incEnd] || {};
+      const maxDBYear = Math.max(...Object.keys(dbByYear).map(Number));
+      const endDB = dbByYear[maxDBYear];
+      const rateLabel = _dbAssumedRate ? _dbAssumedRate : 'not entered';
+
+      const statStrip = `
+        <div class="stat-strip">
+          <div class="stat-box">
+            <div class="sb-label">Annual Compensation<br>Contributed</div>
+            <div class="sb-val">${$f(d.comp)}</div>
+            <div class="sb-sub">${d.contribYears} years</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Total EP Premium<br>Into Tax-Free Asset</div>
+            <div class="sb-val">${$f(totalPremium)}</div>
+            <div class="sb-sub">PDA-funded, bank-financed tax</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Total EP Income<br>Tax-Free Drawdowns (Median)</div>
+            <div class="sb-val">${$f(totalEPIncome)}</div>
+            <div class="sb-sub">Left panel \u2014 bootstrapped Monte Carlo</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Death Benefit at Age ${d.issueAge+maxDBYear-1}<br>Net of Loan, Incl. PDA</div>
+            <div class="sb-val">${endDB?$f(endDB.dbNet):'\u2014'}</div>
+            <div class="sb-sub">Right panel \u2014 illustrated at ${rateLabel}, no income drawn</div>
+          </div>
+        </div>`;
+
+      let leftRows='', prevSection='';
+      ageRange.forEach(a=>{
+        const yr = a - d.issueAge + 1;
+        const isIncome = a>=d.incStart && a<=d.incEnd;
+        const isFund = yr<=d.contribYears;
+        const ep = epByAge50[a] || {};
+        const isPayoff = ep.isPayoff;
+
+        let secHdr='';
+        if (yr===1 && prevSection!=='fund'){ secHdr = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSection='fund'; }
+        if (isIncome && prevSection!=='income'){ secHdr = `DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME DISTRIBUTIONS BEGIN)`; prevSection='income'; }
+
+        const rowCls = isPayoff ? 'payoff-yr' : isIncome ? 'income-yr' : isFund ? 'fund-yr' : 'post-yr';
+        if (secHdr) leftRows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`;
+
+        const pdaRow = pdaByYr[yr];
+        const pdaToAsset = (pdaRow && yr<=d.contribYears) ? $f(pdaRow.premium) : '\u2014';
+        const pdaBalCell = (pdaRow && yr<=d.contribYears) ? $f(Math.max(0,pdaRow.eoy)) : '\u2014';
+        const lenderRate = ep.lenderRate!=null ? fmtPct(ep.lenderRate) : '\u2014';
+        const loanForTax = ep.financedTax>0 ? $f(ep.financedTax) : '\u2014';
+        const interest = ep.interest>0 ? $f(ep.interest) : '\u2014';
+        const loanBal = ep.loan!=null ? $f(ep.loan) : '\u2014';
+        const loanPayoff = isPayoff ? $f(ep.loan) : '\u2014';
+        const taxFreeInc = isIncome ? $f(ep.income) : '\u2014';
+
+        leftRows += `<tr class="${rowCls}">
+          <td>${yr}</td><td>${a}</td>
+          <td>${isFund?$f(d.comp):'\u2014'}</td>
+          <td>${pdaToAsset}</td>
+          <td>${pdaBalCell}</td>
+          <td>${lenderRate}</td>
+          <td>${loanForTax}</td>
+          <td>${interest}</td>
+          <td>${loanBal}</td>
+          <td>${isPayoff ? `<strong style="color:#c9a84c">${loanPayoff}</strong>` : loanPayoff}</td>
+          <td class="${isIncome?'inc-val':''}">${taxFreeInc}</td>
+          <td>${$f(ep.av)}</td>
+          <td>${$f(ep.csvNetTotal)}</td>
+        </tr>`;
+      });
+      const leftFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
+
+      let rightRows='', prevSectionR='';
+      ageRange.forEach(a=>{
+        const yr = a - d.issueAge + 1;
+        if (yr>maxDBYear) return;
+        const isFund = yr<=d.contribYears;
+        const isPayoff = yr === d.refiYear;
+        const dbRow = dbByYear[yr];
+
+        let secHdrR='';
+        if (yr===1 && prevSectionR!=='fund'){ secHdrR = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSectionR='fund'; }
+        else if (yr===d.refiYear && prevSectionR!=='post'){ secHdrR = 'POST-REFINANCE \u2014 CARRIER-ILLUSTRATED POLICY LOAN'; prevSectionR='post'; }
+        const rowClsR = isPayoff ? 'payoff-yr' : isFund ? 'fund-yr' : 'post-yr';
+        if (secHdrR) rightRows += `<tr class="sec-hdr"><td colspan="5">${secHdrR}</td></tr>`;
+
+        rightRows += `<tr class="${rowClsR}">
+          <td>${yr}</td><td>${a}</td>
+          <td>${dbRow?$f(dbRow.av):'\u2014'}</td>
+          <td style="color:${dbRow&&dbRow.csvNet<0?'var(--red)':'inherit'}">${dbRow?(dbRow.csvNet<0?'('+$f(Math.abs(dbRow.csvNet))+')':$f(dbRow.csvNet)):'\u2014'}</td>
+          <td style="font-weight:600">${dbRow?$f(dbRow.dbNet):'\u2014'}</td>
+        </tr>`;
+      });
+      const rightFoot = `<tr><td colspan="4" style="text-align:left">Death Benefit at Age ${d.issueAge+maxDBYear-1} (Net of Loan, Incl. PDA)</td><td>${endDB?$f(endDB.dbNet):'\u2014'}</td></tr>`;
+
+      const disc = `<div class="disc-3col">
+        <div>The hypothetical models in this summary assume certain crediting methods and index account charges that are purely hypothetical and do not represent any particular investment or product. Hypothetical crediting methods, charges, values and returns are not guaranteed. Left-panel returns are bootstrapped historical S&amp;P 500 returns (${d.dataYears}-yr pool); the right panel uses the carrier's own stated illustrated rate${_dbAssumedRate?' ('+_dbAssumedRate+')':''}, not a Monte Carlo simulation.</div>
+        <div>EFS Life LLC and its related entities' programs, strategies, solutions, and platforms are not intended to be investment advice. The Enhanced Pension structure and related benefits shown are hypothetical. The finance arrangement is offered by EFS Life LLC. Right-panel CSV/DB net figures assume no income is ever drawn; the tax-financing loan is projected through Policy Year ${d.refiYear-1}, and the carrier's uploaded figures are used as-is from Policy Year ${d.refiYear} forward, already reflecting the policy loan. Both net figures add back the PDA balance still un-deployed at that policy year.</div>
+        <div>The benefits and values shown are not guaranteed. The assumptions on which they are based are subject to change. Actual results may be more or less favorable. THIS IS A HYPOTHETICAL MODEL. REFER TO THE FULL ILLUSTRATION FOR DETAILS, CHARGES, GUARANTEES AND GUIDELINES. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr} \u00b7 Death benefit figures not valid without a complete carrier illustration.</div>
+      </div>`;
+
+      return `
+        <div class="eta-page-hdr">
+          <div>
+            <div class="eyebrow">Enhanced Pension \u2014 EP Income (Bootstrapped) vs. Death Benefit Focused (Illustrated)</div>
+            <div class="title">${d.clientName}</div>
+            <div class="meta-line">Client: ${d.clientName} &nbsp;|&nbsp; Advisor: ${d.advisor||'\u2014'} &nbsp;|&nbsp; Annual Compensation: ${$f(d.comp)} &nbsp;|&nbsp; Combined Tax Rate: ${fmtPct(d.taxRate)} &nbsp;|&nbsp; PDA Rate: ${fmtPct(d.pdaRate)} &nbsp;|&nbsp; PLR: ${fmtPct(d.plr)}</div>
+          </div>
+          <div class="ver-block">
+            <div class="vdate">${dateStr}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">${d.nSims.toLocaleString()} simulations \u00b7 ${d.dataYears}-yr pool</div>
+          </div>
+        </div>
+        ${statStrip}
+        <div class="dual-panel db-mode">
+          <div>
+            <table class="dual">
+              <colgroup><col style="width:3.5%"><col style="width:4.5%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:11%"><col style="width:9.5%"><col style="width:9.8%"></colgroup>
+              <thead>
+                <tr><th colspan="13" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px;border-left:3px solid var(--gold)">Enhanced Pension Income \u2014 Median (50th Percentile) \u00b7 Bootstrapped Monte Carlo</th></tr>
+                <tr>
+                  <th style="border-left:3px solid var(--gold)">Yr</th><th>Age</th>
+                  <th>Contrib \u2192 PDA</th><th>PDA \u2192 Asset</th><th>PDA Balance</th>
+                  <th>Lender Rate</th><th>Loan for Tax</th><th>Interest</th><th>Loan Balance</th>
+                  <th>Loan Payoff</th><th>Tax-Free Income</th><th>Asset Value</th><th>Net Asset Value</th>
+                </tr>
+              </thead>
+              <tbody>${leftRows}</tbody>
+              <tfoot>${leftFoot}</tfoot>
+            </table>
+          </div>
+          <div class="right-panel-wrap">
+            <table class="dual">
+              <colgroup><col style="width:10%"><col style="width:10%"><col style="width:26%"><col style="width:27%"><col style="width:27%"></colgroup>
+              <thead>
+                <tr><th colspan="5" style="background:rgba(42,110,69,.9);color:#fff;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px;border-left:3px solid var(--gold)">Death Benefit Focused \u2014 Illustrated at ${rateLabel}, No Income Drawn</th></tr>
+                <tr>
+                  <th style="border-left:3px solid var(--gold)">Yr</th><th>Age</th>
+                  <th>Gross Accumulated Value</th><th>CSV Net of Loan (Incl. PDA)</th><th>DB Net of Loan (Incl. PDA)</th>
+                </tr>
+              </thead>
+              <tbody>${rightRows}</tbody>
+              <tfoot>${rightFoot}</tfoot>
+            </table>
+          </div>
         </div>
         ${disc}`;
     }
@@ -535,7 +707,7 @@ function renderLedger(){
           </div>
           <div class="stat-box hl">
             <div class="sb-label">Net Asset Value at Age ${d.incEnd}<br>Net of All Loans</div>
-            <div class="sb-val">${$f(endEP.csvNet)}</div>
+            <div class="sb-val">${$f(endEP.csvNetTotal)}</div>
             <div class="sb-adv">EP Income Advantage: +${$f(incomeAdv)}</div>
           </div>
         </div>`;
@@ -605,7 +777,7 @@ function renderLedger(){
           <td>${isPayoff ? `<strong style="color:#c9a84c">${loanPayoff}</strong>` : loanPayoff}</td>
           <td class="${isIncome?'inc-val':''}">${taxFreeInc}</td>
           <td>${$f(ep.av)}</td>
-          <td>${$f(ep.csvNet)}</td>
+          <td>${$f(ep.csvNetTotal)}</td>
         </tr>`;
       });
 
@@ -627,7 +799,7 @@ function renderLedger(){
           </div>
           <div style="padding:11px 20px;border-right:1px solid var(--border)">
             <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Net Asset Value at Age ${d.incEnd}<br>Net of All Asset Loans</div>
-            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">${$f(endEP.csvNet)}</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--navy)">${$f(endEP.csvNetTotal)}</div>
             <div style="font-size:9px;color:var(--muted);margin-top:3px">Asset loan retires from death benefit</div>
           </div>
           <div style="padding:11px 20px">
@@ -775,7 +947,7 @@ function renderLedger(){
         if (showQP) summaryCols.push({label:'QP Net Distributions (Median)', val:$f(d.qpTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
         summaryCols.push({label:'EP Tax-Free Income Advantage (Median)', val:'+'+$f(incomeAdv), color:'var(--green)', sub:`${(totalByBand[50]/Math.max(primaryCompTotal,1)).toFixed(2)}\u00d7 more income vs. ${primaryCompLabel}`});
       }
-      summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNet), color:'var(--navy)', sub:'Net of all asset loans'});
+      summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNetTotal), color:'var(--navy)', sub:'Net of all asset loans'});
 
       const summaryRow = `<div style="display:grid;grid-template-columns:repeat(${summaryCols.length},1fr);border-bottom:1px solid var(--border)">
         ${summaryCols.map((c,i)=>`<div style="padding:14px 20px;${i<summaryCols.length-1?'border-right:1px solid var(--border)':''}">
@@ -833,7 +1005,11 @@ function renderLedger(){
     function buildScenarioLedgerPage(){
       const investByAge = {}; (d.investRows50||[]).forEach(r=>investByAge[r.age]=r);
       const qpByAge = {}; (d.qpRows50||[]).forEach(r=>qpByAge[r.age]=r);
-      const showDB = !!dbByYear;
+      // In standalone mode, the dedicated EP-vs-Death-Benefit two-panel page
+      // (buildEPvsDBPage) is the home for this comparison — don't also
+      // duplicate it as appended columns here. Only append here for the
+      // comparator (vs. investment/QP) case, which has no two-panel page.
+      const showDB = !!dbByYear && !isStandalone;
 
       const displayAges = [];
       ageRange.forEach(a=>{
@@ -886,7 +1062,7 @@ function renderLedger(){
           <td>${isIncome?$f(e75.income):'\u2014'}</td>
           <td style="border-left:2px solid rgba(13,27,46,.12)">${$f(e50.av)}</td>
           <td>${$f(e50.loan)}</td>
-          <td>${$f(e50.csvNet)}</td>
+          <td>${$f(e50.csvNetTotal)}</td>
           ${dbCells}
         </tr>`;
       });
@@ -969,7 +1145,9 @@ function renderLedger(){
     // ASSEMBLE PAGES
     // ══════════════════════════════════════════════════════════
     let pagesHTML = '';
-    if (isStandalone) {
+    if (isStandalone && dbByYear) {
+      pagesHTML += `<div class="page">${buildEPvsDBPage()}</div>`;
+    } else if (isStandalone) {
       pagesHTML += `<div class="page">${buildStandaloneIncomePage()}</div>`;
     } else if (showQP) {
       pagesHTML += `<div class="page">${buildGreensheetPage('Qualified Plan', d.qpRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Qualified Plan', 'qp')}</div>`;
@@ -995,6 +1173,8 @@ renderLedger();
 function onDBToggle(){
   _dbEnabled = document.getElementById('dbToggle').checked;
   document.getElementById('dbFileLabel').classList.toggle('disabled', !_dbEnabled);
+  document.getElementById('dbRateInput').classList.toggle('disabled', !_dbEnabled);
+  document.getElementById('dbRateInput').disabled = !_dbEnabled;
   const status = document.getElementById('dbStatus');
   if (_dbEnabled && !_dbCarrierRows){
     status.textContent = 'Upload the death-benefit-focused carrier illustration to enable this output.';
@@ -1002,6 +1182,10 @@ function onDBToggle(){
   } else if (!_dbEnabled){
     status.textContent = '';
   }
+  renderLedger();
+}
+function onDBRateInput(){
+  _dbAssumedRate = document.getElementById('dbRateInput').value.trim();
   renderLedger();
 }
 async function onDBFileChosen(evt){
@@ -1022,6 +1206,8 @@ async function onDBFileChosen(evt){
       _dbEnabled = true;
       label.classList.remove('disabled');
     }
+    document.getElementById('dbRateInput').classList.remove('disabled');
+    document.getElementById('dbRateInput').disabled = false;
     renderLedger();
   } catch(e){
     _dbCarrierRows = null;
