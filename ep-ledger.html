@@ -259,15 +259,21 @@ function parsePacificLifeXLSX_DB(arrayBuffer) {
   try { wb = XLSX.read(arrayBuffer, { type: 'array' }); } catch(e) { return null; }
   const ledgerSheet = findSheetByName_DB(wb, 'Non-Guaranteed Ledger', 'Non-Guaranteed', 'Tabular Detail');
   if (!ledgerSheet) return null;
+  const range = XLSX.utils.decode_range(ledgerSheet['!ref']);
   const grid = sheetToGrid_DB(ledgerSheet);
   const hIdx = findYearAgeHeaderRow_DB(grid);
   if (hIdx < 0) return null;
   const headers = buildColumnHeaders_DB(grid, hIdx);
   const findCol = (test) => headers.findIndex(h => test(h));
-  const avIdx  = findCol(h => h.includes('accumulated'));
+  // Gross Accumulated Value sits at worksheet column K on Pacific Life's
+  // tabular ledger. Header-text matching on "accumulated" picks up a
+  // net-of-loan column that carries the same label, so this one is pinned
+  // by position rather than by header text. Offset by the grid's actual
+  // starting column in case the sheet's used range doesn't begin at A.
+  const avIdx  = XLSX.utils.decode_col('K') - range.s.c;
   const csvIdx = findCol(h => h.includes('surrender') && h.includes('value'));
   const dbIdx  = findCol(h => h.includes('death') && h.includes('benefit'));
-  if (avIdx < 0 || csvIdx < 0 || dbIdx < 0) return null;
+  if (avIdx < 0 || avIdx >= headers.length || csvIdx < 0 || dbIdx < 0) return null;
 
   const rows = [];
   for (let r = hIdx + 1; r < grid.length; r++) {
@@ -545,7 +551,7 @@ function renderLedger(){
           </div>
         </div>`;
 
-      let leftRows='', prevSection='';
+      let leftRows='';
       ageRange.forEach(a=>{
         const yr = a - d.issueAge + 1;
         const isIncome = a>=d.incStart && a<=d.incEnd;
@@ -553,12 +559,7 @@ function renderLedger(){
         const ep = epByAge50[a] || {};
         const isPayoff = ep.isPayoff;
 
-        let secHdr='';
-        if (yr===1 && prevSection!=='fund'){ secHdr = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSection='fund'; }
-        if (isIncome && prevSection!=='income'){ secHdr = `DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME DISTRIBUTIONS BEGIN)`; prevSection='income'; }
-
         const rowCls = isPayoff ? 'payoff-yr' : isIncome ? 'income-yr' : isFund ? 'fund-yr' : 'post-yr';
-        if (secHdr) leftRows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`;
 
         const pdaRow = pdaByYr[yr];
         const pdaToAsset = (pdaRow && yr<=d.contribYears) ? $f(pdaRow.premium) : '\u2014';
@@ -587,7 +588,7 @@ function renderLedger(){
       });
       const leftFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
 
-      let rightRows='', prevSectionR='';
+      let rightRows='';
       ageRange.forEach(a=>{
         const yr = a - d.issueAge + 1;
         if (yr>maxDBYear) return;
@@ -595,11 +596,7 @@ function renderLedger(){
         const isPayoff = yr === d.refiYear;
         const dbRow = dbByYear[yr];
 
-        let secHdrR='';
-        if (yr===1 && prevSectionR!=='fund'){ secHdrR = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSectionR='fund'; }
-        else if (yr===d.refiYear && prevSectionR!=='post'){ secHdrR = 'POST-REFINANCE \u2014 CARRIER-ILLUSTRATED POLICY LOAN'; prevSectionR='post'; }
         const rowClsR = isPayoff ? 'payoff-yr' : isFund ? 'fund-yr' : 'post-yr';
-        if (secHdrR) rightRows += `<tr class="sec-hdr"><td colspan="5">${secHdrR}</td></tr>`;
 
         rightRows += `<tr class="${rowClsR}">
           <td>${yr}</td><td>${a}</td>
