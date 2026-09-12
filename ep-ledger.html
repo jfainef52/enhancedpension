@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>EFS Life — Enhanced Pension Ledger</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --navy:#0d1b2e; --navy-2:#152640; --navy-3:#1e3558;
@@ -29,6 +30,18 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#e8e4dc;color:var(--text)
 .ab-btn:hover{border-color:var(--gold);background:rgba(201,168,76,.1)}
 .ab-btn.primary{background:var(--gold);color:var(--navy);font-weight:600;border-color:var(--gold)}
 @media print{.actions-bar{display:none!important}}
+
+/* DB toggle control */
+.db-ctrl{display:flex;align-items:center;gap:10px;padding-left:16px;border-left:1px solid rgba(201,168,76,.25)}
+.db-switch{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.65);font-family:'IBM Plex Sans',sans-serif;user-select:none}
+.db-switch input{accent-color:#c9a84c;width:14px;height:14px;cursor:pointer}
+.db-file-label{border:1px dashed rgba(201,168,76,.4);color:var(--gold);background:transparent;font-size:9.5px;letter-spacing:.5px;padding:6px 12px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.db-file-label:hover{background:rgba(201,168,76,.1)}
+.db-file-label.disabled{opacity:.35;pointer-events:none}
+.db-file-label.has-file{border-style:solid;background:rgba(42,110,69,.12);color:#7fd9a3;border-color:rgba(127,217,163,.4)}
+.db-status{font-size:9.5px;color:rgba(255,255,255,.4);font-family:'IBM Plex Sans',sans-serif;max-width:260px}
+.db-status.err{color:#e08080}
+@media print{.db-ctrl{display:none!important}}
 
 /* ── PAGE HEADER (greensheet dual-panel pages) ── */
 .eta-page-hdr{background:var(--navy);padding:16px 32px;display:flex;align-items:flex-start;justify-content:space-between;width:100%;box-sizing:border-box}
@@ -103,6 +116,15 @@ table.sc-ldg tfoot td.gold-col{color:var(--gold)}
 <body>
 <div class="actions-bar">
   <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
+  <div class="db-ctrl">
+    <label class="db-switch">
+      <input type="checkbox" id="dbToggle" onchange="onDBToggle()"/>
+      Death Benefit Focused Output
+    </label>
+    <label class="db-file-label disabled" id="dbFileLabel" for="dbFileInput">Upload Carrier File (CSV/XLSX)</label>
+    <input type="file" id="dbFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="onDBFileChosen(event)"/>
+    <span class="db-status" id="dbStatus"></span>
+  </div>
   <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">EFS Life LLC &middot; Internal Advisor Tool</span>
 </div>
 <div id="pages"></div>
@@ -126,7 +148,158 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
   return Math.max(idx+spread, FLOOR);
 }
 
-(function(){
+// ══════════════════════════════════════════════════════════
+// DEATH-BENEFIT-FOCUSED OUTPUT — carrier file parsers
+// Ported verbatim from tef-pre-illus.html so a second, standalone carrier
+// illustration (run at the carrier's stated/current gross assumed rate —
+// NOT the Monte Carlo engine) can be uploaded here to drive a Gross
+// Accumulated Value / CSV Net of Loans / DB Net of Loans view. This is a
+// deliberately separate data source from the bootstrapped income ledger
+// above: the income ledger answers "what income can this produce," this
+// answers "what does the death benefit look like if income is never
+// drawn," off the carrier's own stated numbers.
+// ══════════════════════════════════════════════════════════
+function parseNLGCSV_DB(text) {
+  const allLines = text.replace(/\r/g, '').split('\n');
+  const hIdx = allLines.findIndex(l => {
+    const lower = l.toLowerCase();
+    return (lower.includes('policy year') || lower.includes('"year"') || lower.match(/^"?year"?,/))
+           && lower.includes('age');
+  });
+  if (hIdx < 0) return null;
+  const headers = allLines[hIdx].split(',').map(h => h.replace(/"/g,'').trim().toLowerCase());
+  const col = (...names) => {
+    for (const name of names) {
+      const idx = headers.findIndex(h => h === name || h.includes(name));
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+  const yearIdx = col('policy year', 'year');
+  const ageIdx  = col('age');
+  const avIdx   = col('accumulated value');
+  const csvIdx  = col('cash surrender value', 'surrender value');
+  const dbIdx   = col('net death benefit', 'death benefit');
+  if (yearIdx < 0 || avIdx < 0) return null;
+
+  const rows = [];
+  for (let i = hIdx + 1; i < allLines.length; i++) {
+    const line = allLines[i].trim();
+    if (!line) continue;
+    const parts = line.split(',').map(v => v.replace(/"/g,'').trim());
+    const yr = parseInt(parts[yearIdx]);
+    if (isNaN(yr) || yr < 1) continue;
+    rows.push({
+      year: yr,
+      age:  parseInt(parts[ageIdx]) || 0,
+      av:   avIdx  >= 0 ? parseFloat(parts[avIdx])  || 0 : 0,
+      csv:  csvIdx >= 0 ? parseFloat(parts[csvIdx]) || 0 : 0,
+      db:   dbIdx  >= 0 ? parseFloat(parts[dbIdx])  || 0 : 0,
+    });
+  }
+  return rows.length ? rows : null;
+}
+
+function sheetToGrid_DB(ws) {
+  if (!ws || !ws['!ref']) return [];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const grid = [];
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row = [];
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      row.push(cell ? cell.v : null);
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+function findSheetByName_DB(wb, ...candidates) {
+  for (const name of candidates) {
+    const lower = name.toLowerCase();
+    let match = wb.SheetNames.find(sn => sn.trim().toLowerCase() === lower);
+    if (!match) match = wb.SheetNames.find(sn => sn.trim().toLowerCase().includes(lower));
+    if (match) return wb.Sheets[match];
+  }
+  return null;
+}
+function findYearAgeHeaderRow_DB(grid) {
+  for (let i = 0; i < grid.length; i++) {
+    const a = (grid[i][0] ?? '').toString().trim().toLowerCase();
+    const b = (grid[i][1] ?? '').toString().trim().toLowerCase();
+    if (a === 'year' && b === 'age') return i;
+  }
+  return -1;
+}
+function buildColumnHeaders_DB(grid, headerRowIdx, lookback = 6) {
+  const start = Math.max(0, headerRowIdx - lookback);
+  const numCols = grid[headerRowIdx].length;
+  const headers = [];
+  for (let c = 0; c < numCols; c++) {
+    const parts = [];
+    for (let r = start; r <= headerRowIdx; r++) {
+      const v = grid[r] ? grid[r][c] : null;
+      if (v !== null && v !== undefined) {
+        const s = String(v).replace(/\u00a0/g, ' ').trim();
+        if (s) parts.push(s);
+      }
+    }
+    headers.push(parts.join(' ').toLowerCase());
+  }
+  return headers;
+}
+function parsePacificLifeXLSX_DB(arrayBuffer) {
+  let wb;
+  try { wb = XLSX.read(arrayBuffer, { type: 'array' }); } catch(e) { return null; }
+  const ledgerSheet = findSheetByName_DB(wb, 'Non-Guaranteed Ledger', 'Non-Guaranteed', 'Tabular Detail');
+  if (!ledgerSheet) return null;
+  const grid = sheetToGrid_DB(ledgerSheet);
+  const hIdx = findYearAgeHeaderRow_DB(grid);
+  if (hIdx < 0) return null;
+  const headers = buildColumnHeaders_DB(grid, hIdx);
+  const findCol = (test) => headers.findIndex(h => test(h));
+  const avIdx  = findCol(h => h.includes('accumulated'));
+  const csvIdx = findCol(h => h.includes('surrender') && h.includes('value'));
+  const dbIdx  = findCol(h => h.includes('death') && h.includes('benefit'));
+  if (avIdx < 0 || csvIdx < 0 || dbIdx < 0) return null;
+
+  const rows = [];
+  for (let r = hIdx + 1; r < grid.length; r++) {
+    const yr = parseInt(grid[r][0]);
+    if (isNaN(yr) || yr < 1) continue;
+    rows.push({
+      year: yr, age: parseInt(grid[r][1]) || 0,
+      av:  parseFloat(grid[r][avIdx])  || 0,
+      csv: parseFloat(grid[r][csvIdx]) || 0,
+      db:  parseFloat(grid[r][dbIdx])  || 0,
+    });
+  }
+  return rows.length ? rows : null;
+}
+async function parseDBCarrierFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xls' || ext === 'xlsx') {
+    if (typeof XLSX === 'undefined') throw new Error('Excel parser did not load — check your connection and try again.');
+    const buf = await file.arrayBuffer();
+    const rows = parsePacificLifeXLSX_DB(buf);
+    if (!rows) throw new Error('Could not find Year/Age columns with Accumulated Value, Cash Surrender Value, and Death Benefit on the "Non-Guaranteed Ledger" sheet.');
+    return rows;
+  }
+  const text = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('File read failed'));
+    r.readAsText(file);
+  });
+  const rows = parseNLGCSV_DB(text);
+  if (!rows) throw new Error('Could not find Policy Year/Age/Accumulated Value columns in the CSV.');
+  return rows;
+}
+
+let _dbCarrierRows = null;
+let _dbEnabled = false;
+
+function renderLedger(){
   try {
     const raw = localStorage.getItem('ep_ledger_data');
     if (!raw) {
@@ -162,6 +335,162 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
 
     const ageRange = epRows50.map(r=>r.age);
     const totalPremium = (d.pdaSchedule||[]).reduce((s,r)=>s+r.premium,0);
+    const isStandalone = d.compareMode === 'none';
+
+    // ══════════════════════════════════════════════════════════
+    // DEATH-BENEFIT-FOCUSED COLUMNS — bank-phase loan projection + netting
+    // Mirrors tef-pre-illus.html's netting pattern exactly: EFS projects
+    // the BANK loan ourselves (it's external to the policy, years 1 through
+    // refiYear-1). From the refinance year forward, the loan lives on the
+    // policy as a carrier policy loan — and the uploaded carrier file (run
+    // by the advisor assuming no income is ever drawn) already reflects
+    // that policy loan in its own CSV/DB figures. So nothing further is
+    // subtracted from Policy Year refiYear onward; the carrier's numbers
+    // are used as-is. Accumulated Value is always shown gross, throughout.
+    // ══════════════════════════════════════════════════════════
+    function computeBankPhaseLoanMap(){
+      let loan = 0;
+      const map = {};
+      for (let polYr=1; polYr<d.refiYear; polYr++){
+        const rate = getBankRateForYear(polYr, d.lenderIndex, d.lenderSpread, d.rateEnv)/100;
+        const compI = polYr<=d.contribYears ? d.comp : 0;
+        const financedTax = polYr<=d.contribYears ? compI*(d.taxRate/100) : 0;
+        loan = (loan + financedTax) * (1+rate);
+        map[polYr] = loan;
+      }
+      return map;
+    }
+    function buildDBColumnsByYear(carrierRows){
+      if (!carrierRows || !carrierRows.length) return null;
+      const loanMap = computeBankPhaseLoanMap();
+      const byYear = {};
+      carrierRows.forEach(r=>{
+        const carrierAlreadyNet = r.year >= d.refiYear;
+        const loanBal = carrierAlreadyNet ? 0 : (loanMap[r.year] || 0);
+        byYear[r.year] = {
+          age: r.age || (d.issueAge + r.year - 1),
+          av: r.av,
+          csvNet: r.csv - loanBal,
+          dbNet: Math.max(0, r.db - loanBal),
+          loanBal
+        };
+      });
+      return byYear;
+    }
+    const dbByYear = (_dbEnabled && _dbCarrierRows) ? buildDBColumnsByYear(_dbCarrierRows) : null;
+
+    // ══════════════════════════════════════════════════════════
+    // STANDALONE PAGE — EP income only, no comparator (single panel)
+    // ══════════════════════════════════════════════════════════
+    function buildStandaloneIncomePage(){
+      const incomeAges = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
+      const totalEPIncome = incomeAges.reduce((s,a)=>s+((epByAge50[a]||{}).income||0),0);
+      const endEP = epByAge50[d.incEnd] || {};
+
+      const statStrip = `
+        <div class="stat-strip">
+          <div class="stat-box">
+            <div class="sb-label">Annual Compensation<br>Contributed</div>
+            <div class="sb-val">${$f(d.comp)}</div>
+            <div class="sb-sub">${d.contribYears} years</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-label">Total EP Premium<br>Into Tax-Free Asset</div>
+            <div class="sb-val">${$f(totalPremium)}</div>
+            <div class="sb-sub">PDA-funded, bank-financed tax</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Total EP Income<br>Tax-Free Drawdowns</div>
+            <div class="sb-val">${$f(totalEPIncome)}</div>
+            <div class="sb-sub">Median (50th percentile)</div>
+          </div>
+          <div class="stat-box hl">
+            <div class="sb-label">Net Asset Value at Age ${d.incEnd}<br>Net of All Loans</div>
+            <div class="sb-val">${$f(endEP.csvNet)}</div>
+            <div class="sb-sub">Asset loan retires from death benefit</div>
+          </div>
+        </div>`;
+
+      let rows='', prevSection='';
+      ageRange.forEach(a=>{
+        const yr = a - d.issueAge + 1;
+        const isIncome = a>=d.incStart && a<=d.incEnd;
+        const isFund = yr<=d.contribYears;
+        const ep = epByAge50[a] || {};
+        const isPayoff = ep.isPayoff;
+
+        let secHdr='';
+        if (yr===1 && prevSection!=='fund'){ secHdr = `ACCUMULATION PHASE \u2014 YEARS 1\u2013${d.incStart-d.issueAge} (NO DISTRIBUTIONS)`; prevSection='fund'; }
+        if (isIncome && prevSection!=='income'){ secHdr = `DISTRIBUTION PHASE \u2014 YEARS ${d.incStart-d.issueAge+1}\u2013${d.incEnd-d.issueAge+1} (INCOME DISTRIBUTIONS BEGIN)`; prevSection='income'; }
+
+        const rowCls = isPayoff ? 'payoff-yr' : isIncome ? 'income-yr' : isFund ? 'fund-yr' : 'post-yr';
+        if (secHdr) rows += `<tr class="sec-hdr"><td colspan="13">${secHdr}</td></tr>`;
+
+        const pdaRow = pdaByYr[yr];
+        const pdaToAsset = (pdaRow && yr<=d.contribYears) ? $f(pdaRow.premium) : '\u2014';
+        const pdaBal = (pdaRow && yr<=d.contribYears) ? $f(Math.max(0,pdaRow.eoy)) : '\u2014';
+        const lenderRate = ep.lenderRate!=null ? fmtPct(ep.lenderRate) : '\u2014';
+        const loanForTax = ep.financedTax>0 ? $f(ep.financedTax) : '\u2014';
+        const interest = ep.interest>0 ? $f(ep.interest) : '\u2014';
+        const loanBal = ep.loan!=null ? $f(ep.loan) : '\u2014';
+        const loanPayoff = isPayoff ? $f(ep.loan) : '\u2014';
+        const taxFreeInc = isIncome ? $f(ep.income) : '\u2014';
+
+        rows += `<tr class="${rowCls}">
+          <td>${yr}</td><td>${a}</td>
+          <td>${isFund?$f(d.comp):'\u2014'}</td>
+          <td>${pdaToAsset}</td>
+          <td>${pdaBal}</td>
+          <td>${lenderRate}</td>
+          <td>${loanForTax}</td>
+          <td>${interest}</td>
+          <td>${loanBal}</td>
+          <td>${isPayoff ? `<strong style="color:#c9a84c">${loanPayoff}</strong>` : loanPayoff}</td>
+          <td class="${isIncome?'inc-val':''}">${taxFreeInc}</td>
+          <td>${$f(ep.av)}</td>
+          <td>${$f(ep.csvNet)}</td>
+        </tr>`;
+      });
+
+      const rightFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
+
+      const disc = `<div class="disc-3col">
+        <div>The hypothetical models in this summary assume certain crediting methods and index account charges that are purely hypothetical and do not represent any particular investment or product. Hypothetical crediting methods, charges, values and returns are not guaranteed. Hypothetical returns used in this summary are bootstrapped historical S&amp;P 500 returns (${d.dataYears}-yr pool) used purely as a hypothetical example of index volatility over a period of time.</div>
+        <div>EFS Life LLC and its related entities' programs, strategies, solutions, and platforms are not intended to be investment advice or a recommendation of any stock or index. The Enhanced Pension structure and related benefits shown are hypothetical. The finance arrangement is offered by EFS Life LLC. All platforms, programs, solutions, media mediums, and collateral pieces are not valid unless accompanied by a complete illustration.</div>
+        <div>The benefits and values shown are not guaranteed. The assumptions on which they are based are subject to change. Actual results may be more or less favorable. THIS IS A HYPOTHETICAL MODEL. REFER TO THE FULL ILLUSTRATION FOR DETAILS, CHARGES, GUARANTEES AND GUIDELINES. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}</div>
+      </div>`;
+
+      return `
+        <div class="eta-page-hdr">
+          <div>
+            <div class="eyebrow">Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 Standalone Income Ledger</div>
+            <div class="title">${d.clientName}</div>
+            <div class="meta-line">Client: ${d.clientName} &nbsp;|&nbsp; Advisor: ${d.advisor||'\u2014'} &nbsp;|&nbsp; Annual Compensation: ${$f(d.comp)} &nbsp;|&nbsp; Combined Tax Rate: ${fmtPct(d.taxRate)} &nbsp;|&nbsp; PDA Rate: ${fmtPct(d.pdaRate)} &nbsp;|&nbsp; PLR: ${fmtPct(d.plr)}</div>
+          </div>
+          <div class="ver-block">
+            <div class="vdate">${dateStr}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:2px">${d.nSims.toLocaleString()} simulations \u00b7 ${d.dataYears}-yr pool</div>
+          </div>
+        </div>
+        ${statStrip}
+        <div style="padding:0 32px">
+          <table class="dual" style="width:100%">
+            <colgroup><col style="width:3.5%"><col style="width:4.5%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:7.7%"><col style="width:11%"><col style="width:9.5%"><col style="width:9.8%"></colgroup>
+            <thead>
+              <tr><th colspan="13" style="background:var(--navy);color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:left;padding:8px 12px;border-left:3px solid var(--gold)">Enhanced Pension \u2014 Median (50th Percentile)</th></tr>
+              <tr>
+                <th style="border-left:3px solid var(--gold)">Yr</th><th>Age</th>
+                <th>Contrib \u2192 PDA</th><th>PDA \u2192 Asset</th><th>PDA Balance</th>
+                <th>Lender Rate</th><th>Loan for Tax</th><th>Interest</th><th>Loan Balance</th>
+                <th>Loan Payoff</th><th>Tax-Free Income</th><th>Asset Value</th><th>Net Asset Value</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+            <tfoot>${rightFoot}</tfoot>
+          </table>
+        </div>
+        ${disc}`;
+    }
 
     // ══════════════════════════════════════════════════════════
     // DUAL-PANEL GREENSHEET PAGE — Comparator (left) vs EP (right), median
@@ -375,8 +704,8 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         {label:'50th Median \u2014 EP', color:'#c9a84c', dash:'', width:3, data:ci50},
         {label:'25th (Conservative)', color:'#8a8070', dash:'4,4', width:1.5, data:ci25},
       ];
-      if (d.investRows50) series.push({label:'Investment Acct Net \u2014 Median', color:'rgba(100,140,200,.9)', dash:'6,3', width:1.5, data:cumComp(d.investRows50)});
-      if (showQP && d.qpRows50) series.push({label:'QP Taxable Net \u2014 Median', color:'rgba(139,32,32,.7)', dash:'2,3', width:1.5, data:cumComp(d.qpRows50)});
+      if (!isStandalone && d.investRows50) series.push({label:'Investment Acct Net \u2014 Median', color:'rgba(100,140,200,.9)', dash:'6,3', width:1.5, data:cumComp(d.investRows50)});
+      if (!isStandalone && showQP && d.qpRows50) series.push({label:'QP Taxable Net \u2014 Median', color:'rgba(139,32,32,.7)', dash:'2,3', width:1.5, data:cumComp(d.qpRows50)});
 
       const maxVal = Math.max(...series.flatMap(s=>s.data))*1.08||1;
       const xS = i=>PL+(i/(ages.length-1))*cW;
@@ -440,11 +769,12 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
           </div>
         </div>`;
 
-      const summaryCols = [
-        {label:'Investment Acct Net Income (Median)', val:$f(d.investTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`},
-      ];
-      if (showQP) summaryCols.push({label:'QP Net Distributions (Median)', val:$f(d.qpTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
-      summaryCols.push({label:'EP Tax-Free Income Advantage (Median)', val:'+'+$f(incomeAdv), color:'var(--green)', sub:`${(totalByBand[50]/Math.max(primaryCompTotal,1)).toFixed(2)}\u00d7 more income vs. ${primaryCompLabel}`});
+      const summaryCols = [];
+      if (!isStandalone){
+        summaryCols.push({label:'Investment Acct Net Income (Median)', val:$f(d.investTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
+        if (showQP) summaryCols.push({label:'QP Net Distributions (Median)', val:$f(d.qpTotalMed), color:'var(--red)', sub:`Ages ${d.incStart}\u2013${d.incEnd}`});
+        summaryCols.push({label:'EP Tax-Free Income Advantage (Median)', val:'+'+$f(incomeAdv), color:'var(--green)', sub:`${(totalByBand[50]/Math.max(primaryCompTotal,1)).toFixed(2)}\u00d7 more income vs. ${primaryCompLabel}`});
+      }
       summaryCols.push({label:`Net Asset Value at Age ${d.incEnd} (Median)`, val:$f(endEP.csvNet), color:'var(--navy)', sub:'Net of all asset loans'});
 
       const summaryRow = `<div style="display:grid;grid-template-columns:repeat(${summaryCols.length},1fr);border-bottom:1px solid var(--border)">
@@ -472,21 +802,21 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         </div>`;
 
       const chartSVG = buildChart();
-      const compTitle = showQP ? 'Qualified Plan & Taxable Investment Account' : 'Taxable Investment Account';
+      const compTitle = isStandalone ? null : (showQP ? 'Qualified Plan & Taxable Investment Account' : 'Taxable Investment Account');
 
       return `
         <div class="pg2-hdr">
           <div>
             <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">Enhanced Pension \u00b7 Monte Carlo Scenario Analysis</div>
             <div class="title">${d.clientName} \u2014 ${d.nSims.toLocaleString()} Market Sequences \u00b7 ${d.dataYears}-yr pool</div>
-            <div class="sub">Ages ${d.incStart}\u2013${d.incEnd} \u00b7 ${d.cola}% COLA \u00b7 vs. ${compTitle} \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
+            <div class="sub">Ages ${d.incStart}\u2013${d.incEnd} \u00b7 ${d.cola}% COLA${compTitle?` \u00b7 vs. ${compTitle}`:' \u00b7 Standalone (EP Only)'} \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
           </div>
         </div>
         ${scenarioStrip}
         ${summaryRow}
         ${pctExplain}
         <div style="padding:12px 28px 0">
-          <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:3px">Cumulative Income \u2014 EP Tax-Free vs. ${compTitle} (Median)</div>
+          <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:3px">Cumulative Income \u2014 EP Tax-Free${compTitle?` vs. ${compTitle} (Median)`:''}</div>
           <div style="font-size:9px;color:var(--muted);margin-bottom:8px">${d.nSims.toLocaleString()} bootstrapped S&amp;P 500 sequences (${d.dataYears}-yr pool) \u00b7 ${d.capRate}% cap / 0% floor</div>
           ${chartSVG}
         </div>
@@ -503,6 +833,7 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
     function buildScenarioLedgerPage(){
       const investByAge = {}; (d.investRows50||[]).forEach(r=>investByAge[r.age]=r);
       const qpByAge = {}; (d.qpRows50||[]).forEach(r=>qpByAge[r.age]=r);
+      const showDB = !!dbByYear;
 
       const displayAges = [];
       ageRange.forEach(a=>{
@@ -512,6 +843,9 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
           displayAges.push({a, tranche:true});
         }
       });
+
+      const baseCols = isStandalone ? 8 : 10; // Yr/Age + (comparator x2, standalone drops these) + EP25/50/75 + AV/Loan/NetAV
+      const totalCols = baseCols + (showDB ? 3 : 0);
 
       let rows='', prevSection='';
       displayAges.forEach(({a,tranche})=>{
@@ -532,63 +866,92 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
         const yrCell = tranche?`<td style="font-weight:700;background:rgba(201,168,76,.08)">${yr}</td>`:`<td>${yr}</td>`;
         const ageCell = tranche?`<td style="font-weight:700;color:var(--gold);background:rgba(201,168,76,.08)">${a}</td>`:`<td>${a}</td>`;
 
-        if (secHdr) rows += `<tr class="sec-hdr"><td colspan="${showQP?10:10}">${secHdr}</td></tr>`;
+        if (secHdr) rows += `<tr class="sec-hdr"><td colspan="${totalCols}">${secHdr}</td></tr>`;
+
+        const comparatorCells = isStandalone ? '' : `
+          <td class="${isIncome?'green-col':''}">${isIncome?$f(showQP?qp.net:inv.net):'\u2014'}</td>
+          ${showQP?`<td class="${isIncome?'green-col':''}">${isIncome?$f(inv.net):'\u2014'}</td>`:`<td>${$f(inv.bal)}</td>`}`;
+
+        const dbRow = showDB ? dbByYear[yr] : null;
+        const dbCells = showDB ? `
+          <td style="border-left:2px solid rgba(139,101,20,.3)">${dbRow?$f(dbRow.av):'\u2014'}</td>
+          <td style="color:${dbRow&&dbRow.csvNet<0?'var(--red)':'inherit'}">${dbRow?(dbRow.csvNet<0?'('+$f(Math.abs(dbRow.csvNet))+')':$f(dbRow.csvNet)):'\u2014'}</td>
+          <td style="font-weight:600">${dbRow?$f(dbRow.dbNet):'\u2014'}</td>` : '';
 
         rows += `<tr class="${rowCls}">
           ${yrCell}${ageCell}
-          <td class="${isIncome?'green-col':''}">${isIncome?$f(showQP?qp.net:inv.net):'\u2014'}</td>
-          ${showQP?`<td class="${isIncome?'green-col':''}">${isIncome?$f(inv.net):'\u2014'}</td>`:`<td>${$f(inv.bal)}</td>`}
+          ${comparatorCells}
           <td style="border-left:2px solid rgba(201,168,76,.25)">${isIncome?$f(e25.income):'\u2014'}</td>
           <td class="${isIncome?'gold-col':''}">${isIncome?$f(e50.income):'\u2014'}</td>
           <td>${isIncome?$f(e75.income):'\u2014'}</td>
           <td style="border-left:2px solid rgba(13,27,46,.12)">${$f(e50.av)}</td>
           <td>${$f(e50.loan)}</td>
           <td>${$f(e50.csvNet)}</td>
+          ${dbCells}
         </tr>`;
       });
 
       const totalByBand = d.totalByBand;
       const foot = `<tr>
         <td colspan="2">Totals (Income Period)</td>
+        ${isStandalone ? '' : `
         <td class="green-col">${$f(showQP?d.qpTotalMed:d.investTotalMed)}</td>
-        <td class="green-col">${showQP?$f(d.investTotalMed):'\u2014'}</td>
+        <td class="green-col">${showQP?$f(d.investTotalMed):'\u2014'}</td>`}
         <td style="border-left:2px solid rgba(201,168,76,.25)">${$f(totalByBand[25])}</td>
         <td class="gold-col">${$f(totalByBand[50])}</td>
         <td>${$f(totalByBand[75])}</td>
         <td style="border-left:2px solid rgba(13,27,46,.12)">\u2014</td><td>\u2014</td><td>\u2014</td>
+        ${showDB ? '<td>\u2014</td><td>\u2014</td><td>\u2014</td>' : ''}
       </tr>`;
 
       const col3Label = showQP ? 'QP Net' : 'Investment Net';
       const col4Label = showQP ? 'Invest Net' : 'Investment Balance';
+      const colLabelsLine = isStandalone
+        ? `Yr / Age / EP 25th / EP 50th / EP 75th / Asset Value / Loan Balance / Net Asset Value${showDB?' / Gross AV / CSV Net of Loans / DB Net of Loans':''}`
+        : `Yr / Age / ${col3Label} / ${col4Label} / EP 25th / EP 50th / EP 75th / Asset Value / Loan Balance / Net Asset Value${showDB?' / Gross AV / CSV Net of Loans / DB Net of Loans':''}`;
 
       return `
         <div class="pg2-hdr">
           <div>
-            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">Enhanced Pension \u00b7 Year-by-Year Scenario Ledger</div>
+            <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">Enhanced Pension \u00b7 Year-by-Year Scenario Ledger${showDB?' \u00b7 Income + Death Benefit Focused':''}</div>
             <div class="title">${d.clientName} \u2014 ${d.nSims.toLocaleString()} Simulations \u00b7 ${d.dataYears}-yr pool</div>
-            <div class="sub">Column order: Yr / Age / ${col3Label} / ${col4Label} / EP 25th / EP 50th / EP 75th / Asset Value / Loan Balance / Net Asset Value \u00b7 Median (50th) path for balance columns \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
+            <div class="sub">Column order: ${colLabelsLine} \u00b7 Median (50th) path for income-side balance columns \u00b7 ${dateStr}${d.advisor?' \u00b7 '+d.advisor:''}</div>
           </div>
         </div>
         <div style="padding:12px 28px;overflow-x:auto">
-          <table class="sc-ldg" style="font-size:10.5px;min-width:1100px">
-            <colgroup><col style="width:4%"><col style="width:5%"><col style="width:11%"><col style="width:11%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:13%"></colgroup>
+          <table class="sc-ldg" style="font-size:${showDB?'9.5px':'10.5px'};min-width:${showDB?'1420':'1100'}px">
+            <colgroup>${(() => {
+              const w = [4,5]; // Yr, Age
+              if (!isStandalone) w.push(11,11); // comparator x2
+              w.push(9,9,9); // EP 25/50/75
+              w.push(11,11,11); // AV/Loan/NetAV
+              if (showDB) w.push(11,11,11); // Gross AV/CSV Net/DB Net
+              const scale = 100/w.reduce((s,v)=>s+v,0);
+              return w.map(v=>`<col style="width:${(v*scale).toFixed(2)}%">`).join('');
+            })()}</colgroup>
             <thead>
               <tr>
                 <th colspan="2" style="text-align:center;background:var(--navy);color:rgba(255,255,255,.7)">Year</th>
-                <th colspan="2" style="text-align:center;background:rgba(100,20,20,.85);color:#fff">Comparator(s) \u2014 Net Distributions</th>
+                ${isStandalone?'':'<th colspan="2" style="text-align:center;background:rgba(100,20,20,.85);color:#fff">Comparator(s) \u2014 Net Distributions</th>'}
                 <th colspan="3" style="text-align:center;background:rgba(140,100,20,.9);color:#fff;border-left:2px solid rgba(201,168,76,.6)">EP Tax-Free Income</th>
                 <th colspan="3" style="text-align:center;background:var(--navy);color:rgba(255,255,255,.7);border-left:2px solid rgba(255,255,255,.15)">EP Balance Summary (Median)</th>
+                ${showDB?'<th colspan="3" style="text-align:center;background:rgba(42,110,69,.85);color:#fff;border-left:2px solid rgba(139,101,20,.5)">Death Benefit Focused \u2014 Stated Gross Rate, No Income Drawn</th>':''}
               </tr>
               <tr>
                 <th>Yr</th><th>Age</th>
+                ${isStandalone?'':`
                 <th style="background:rgba(100,20,20,.7);color:#fff">${col3Label}</th>
-                <th style="background:rgba(100,20,20,.5);color:#fff">${col4Label}</th>
+                <th style="background:rgba(100,20,20,.5);color:#fff">${col4Label}</th>`}
                 <th class="gold-col" style="border-left:2px solid rgba(201,168,76,.4)">25th</th>
                 <th style="background:rgba(140,100,20,.7);color:#fff">50th \u2605</th>
                 <th class="gold-col">75th</th>
                 <th style="border-left:2px solid rgba(255,255,255,.15)">Asset Value</th>
                 <th>Loan Balance</th>
                 <th>Net Asset Value</th>
+                ${showDB?`
+                <th style="border-left:2px solid rgba(139,101,20,.3)">Gross AV</th>
+                <th>CSV Net of Loans</th>
+                <th>DB Net of Loans</th>`:''}
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -596,9 +959,9 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
           </table>
         </div>
         <div class="disc-3col">
-          <div>Hypothetical models assume crediting methods and charges that do not represent any particular investment or product. Returns shown are bootstrapped historical S&amp;P 500 sequences (${d.dataYears}-yr pool). Values are not guaranteed.</div>
+          <div>Hypothetical models assume crediting methods and charges that do not represent any particular investment or product. Returns shown are bootstrapped historical S&amp;P 500 sequences (${d.dataYears}-yr pool). Values are not guaranteed.${showDB?' Death Benefit Focused columns use the carrier\u2019s own stated (non-Monte Carlo) illustrated values, assuming no income is ever drawn. EFS projects the bank loan through Policy Year '+(d.refiYear-1)+'; from Policy Year '+d.refiYear+' (refinance) forward, the loan lives on the policy and the carrier\u2019s uploaded figures are used as-is, already net of that policy loan.':''}</div>
           <div>EFS Life LLC is not providing investment advice. The EP structure shown is hypothetical. Income reflects median (50th percentile) and scenario bands across ${d.nSims.toLocaleString()} simulations.</div>
-          <div>THIS IS A HYPOTHETICAL MODEL. Refer to the full illustration for details, charges, and guarantees. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}</div>
+          <div>THIS IS A HYPOTHETICAL MODEL. Refer to the full illustration for details, charges, and guarantees. EnhancedPension.com \u00b7 EFS Life LLC${d.advisor?' \u00b7 '+d.advisor:''} \u00b7 ${dateStr}${showDB?' \u00b7 Death benefit figures not valid without a complete carrier illustration.':''}</div>
         </div>`;
     }
 
@@ -606,7 +969,9 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
     // ASSEMBLE PAGES
     // ══════════════════════════════════════════════════════════
     let pagesHTML = '';
-    if (showQP) {
+    if (isStandalone) {
+      pagesHTML += `<div class="page">${buildStandaloneIncomePage()}</div>`;
+    } else if (showQP) {
       pagesHTML += `<div class="page">${buildGreensheetPage('Qualified Plan', d.qpRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Qualified Plan', 'qp')}</div>`;
       pagesHTML += `<div class="page">${buildGreensheetPage('Taxable Investment Account', d.investRows50, epRows50, 'Enhanced Pension \u2014 EP \u00b7 Median Market Sequence \u00b7 vs. Taxable Investment Account', 'invest')}</div>`;
     } else {
@@ -621,7 +986,50 @@ function getBankRateForYear(policyYr, indexBase, spread, rateEnv){
     document.getElementById('pages').innerHTML = '<div style="padding:60px;font-family:monospace;color:red">Error building ledger: '+e.message+'<br><pre>'+e.stack+'</pre></div>';
     console.error(e);
   }
-})();
+}
+renderLedger();
+
+// ══════════════════════════════════════════════════════════
+// DEATH-BENEFIT TOGGLE / UPLOAD — wiring
+// ══════════════════════════════════════════════════════════
+function onDBToggle(){
+  _dbEnabled = document.getElementById('dbToggle').checked;
+  document.getElementById('dbFileLabel').classList.toggle('disabled', !_dbEnabled);
+  const status = document.getElementById('dbStatus');
+  if (_dbEnabled && !_dbCarrierRows){
+    status.textContent = 'Upload the death-benefit-focused carrier illustration to enable this output.';
+    status.classList.remove('err');
+  } else if (!_dbEnabled){
+    status.textContent = '';
+  }
+  renderLedger();
+}
+async function onDBFileChosen(evt){
+  const file = evt.target.files && evt.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('dbStatus');
+  const label = document.getElementById('dbFileLabel');
+  status.classList.remove('err');
+  status.textContent = 'Reading ' + file.name + '\u2026';
+  try {
+    const rows = await parseDBCarrierFile(file);
+    _dbCarrierRows = rows;
+    label.classList.add('has-file');
+    label.textContent = '\u2713 ' + file.name;
+    status.textContent = rows.length + ' years parsed \u2014 Accumulated Value, CSV, and Death Benefit found.';
+    if (!_dbEnabled){
+      document.getElementById('dbToggle').checked = true;
+      _dbEnabled = true;
+      label.classList.remove('disabled');
+    }
+    renderLedger();
+  } catch(e){
+    _dbCarrierRows = null;
+    status.classList.add('err');
+    status.textContent = 'Could not read file: ' + e.message;
+    console.error(e);
+  }
+}
 </script>
 </body>
 </html>
