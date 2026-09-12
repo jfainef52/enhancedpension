@@ -852,7 +852,7 @@ function feasibleIncome(returns, income, floor, p){
     const age=p.issueAge+i, polYr=i+1, ret=returns[i];
     const cp = params[Math.min(i, params.length-1)];
     const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
-    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
+    const prem = polYr<=p.premiumYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
     av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
     const compI = polYr<=p.contribYears ? p.comp : 0;
     const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
@@ -889,7 +889,7 @@ function simEPPathFull(returns, income, p){
     const age=p.issueAge+i, polYr=i+1, ret=returns[i];
     const cp = params[Math.min(i, params.length-1)];
     const carrierRow = p.carrierRows[Math.min(i, p.carrierRows.length-1)]||{};
-    const prem = polYr<=p.contribYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
+    const prem = polYr<=p.premiumYears ? (p.pdaSchedule[polYr-1]?.premium||0) : 0;
     av = creditOneYear(av, prem, carrierRow, cp, p.capRate, p.floorRate, ret, p.carrierKey);
     const compI = polYr<=p.contribYears ? p.comp : 0;
     const rate = polYr < p.refiYear ? getBankRateForYear(polYr, p.lenderIndex, p.lenderSpread)/100 : p.plr/100;
@@ -931,20 +931,33 @@ function loanOriginationFeeTier(depositAmt){
 // origination + mail away fees are deducted from THAT remaining share
 // before it reaches the policy (not from the PDA side).
 // From retentionYears+1 on: the full annual deposit goes into the PDA,
-// and a level premium is drawn from the PDA balance — solved by
-// bisection so the PDA depletes to ~$0 by the end of the funding period.
+// and a level premium is drawn from the PDA balance.
+//
+// PREMIUM-YEARS FLOOR: policy premium keeps flowing for a minimum of 7
+// years regardless of how long the client actually contributes comp.
+// contribYears governs comp inflow into the PDA only. The premium
+// schedule itself spans premiumYears = max(contribYears, 7): if
+// contribYears < 7, comp stops flowing at contribYears but the PDA
+// balance keeps earning net interest and keeps paying the level premium
+// on its own through year premiumYears, solved so it depletes to ~$0
+// exactly then — the same mechanism as a client whose own contributions
+// already ran 7+ years, just self-funded for the tail years. This
+// maximizes the level premium the 7-pay-minimum funding period can
+// support without changing when comp itself stops.
 function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionYears, retentionPct, mailAwayFee){
   const loanOrigFee = loanOriginationFeeTier(comp);
   const yr1Fees = loanOrigFee + (mailAwayFee||0);
+  const premiumYears = Math.max(contribYears, 7);
   function simulate(L){
     let bal=0;
     const rows=[];
-    for (let yr=1; yr<=contribYears; yr++){
+    for (let yr=1; yr<=premiumYears; yr++){
       const boy = bal;
+      const compIn = yr<=contribYears ? comp : 0;
       let premium, retainedAmt, fees=0;
       if (yr<=retentionYears){
-        retainedAmt = comp*(retentionPct/100);
-        const premiumBound = comp*(1-retentionPct/100);
+        retainedAmt = compIn*(retentionPct/100);
+        const premiumBound = compIn*(1-retentionPct/100);
         fees = yr===1 ? yr1Fees : 0;
         premium = Math.max(0, premiumBound-fees);
         bal += retainedAmt;
@@ -954,8 +967,8 @@ function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionY
         bal += netInt;
         rows.push({yr, boy, retainedAmt, fees, interest, taxOnInt, netInt, premium, eoy:bal});
       } else {
-        retainedAmt = comp;
-        bal += comp;
+        retainedAmt = compIn;
+        bal += compIn;
         const interest = bal*(pdaRate/100);
         const taxOnInt = interest*(combinedTaxRate/100);
         const netInt = interest-taxOnInt;
@@ -975,7 +988,7 @@ function buildEPFunding(comp, contribYears, pdaRate, combinedTaxRate, retentionY
   }
   const levelPremium=(lo+hi)/2;
   const rows = simulate(levelPremium).rows.map(r=>({...r, eoy:Math.max(0,r.eoy)}));
-  return {levelPremium, retentionYears, loanOrigFee, mailAwayFee:(mailAwayFee||0), rows};
+  return {levelPremium, premiumYears, retentionYears, loanOrigFee, mailAwayFee:(mailAwayFee||0), rows};
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1005,6 +1018,7 @@ function calculateFundingSchedule(){
   if (!contribYears){ errEl.textContent='Enter contribution years.'; errEl.style.display='block'; return; }
 
   const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
+  const premiumYears = funding.premiumYears;
   const totalPremium = funding.rows.reduce((s,r)=>s+r.premium,0);
   const totalDeposits = comp*contribYears;
   const totalFinancedTax = comp*contribYears*(taxRate/100);
@@ -1032,21 +1046,21 @@ function calculateFundingSchedule(){
         <div class="premium-callout">
           <div>
             <div class="pc-label">Level Premium — Input This Into ${carrierKey==='NLG'?'NLG':'Pacific Life'}'s Illustration Software</div>
-            <div class="pc-value">${fmt$(funding.levelPremium)}<span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">/yr, Yrs ${pdaRetentionYears+1}\u2013${contribYears}</span></div>
-            <div class="pc-sub">${carrierName} · Issue Age ${issueAge} · ${name}</div>
+            <div class="pc-value">${fmt$(funding.levelPremium)}<span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">/yr, Yrs ${pdaRetentionYears+1}\u2013${premiumYears}</span></div>
+            <div class="pc-sub">${carrierName} · Issue Age ${issueAge} · ${name}${premiumYears>contribYears?` · Premium funded ${premiumYears-contribYears} extra yr${premiumYears-contribYears>1?'s':''} past the ${contribYears}-yr contribution period to meet the 7-year funding floor`:''}</div>
           </div>
           <div class="pc-stats">
             <div class="pc-stat"><div class="psl">Yr 1 Premium (net of fees)</div><div class="psv">${fmt$(funding.rows[0]?.premium||0)}</div></div>
             <div class="pc-stat"><div class="psl">Yr 2 Premium</div><div class="psv">${fmt$(funding.rows[1]?.premium||0)}</div></div>
             <div class="pc-stat"><div class="psl">Total Into Policy</div><div class="psv">${fmt$(totalPremium)}</div></div>
-            <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${contribYears} yrs</div></div>
+            <div class="pc-stat"><div class="psl">Funding Period</div><div class="psv">${premiumYears} yrs${premiumYears>contribYears?` (${contribYears} contributed)`:''}</div></div>
             <div class="pc-stat"><div class="psl">Yr 1 Fees</div><div class="psv">${fmt$(funding.loanOrigFee+funding.mailAwayFee)}</div></div>
           </div>
         </div>
 
         <div class="carrier-instr">
           <h4>Next Step <span class="tag">Illustration Software</span></h4>
-          <div class="hint" style="margin:0">Enter the premium amounts above into ${carrierName}'s illustration software (Yrs 1\u2013${pdaRetentionYears} at the lower amount, Yrs ${pdaRetentionYears+1}\u2013${contribYears} at the level amount) at issue age ${issueAge}, running the illustration to age 100. Export the resulting CSV (NLG) or XLSX (Pacific Life) and upload it below to run the Monte Carlo analysis.</div>
+          <div class="hint" style="margin:0">Enter the premium amounts above into ${carrierName}'s illustration software (Yrs 1\u2013${pdaRetentionYears} at the lower amount, Yrs ${pdaRetentionYears+1}\u2013${premiumYears} at the level amount) at issue age ${issueAge}, running the illustration to age 100. Export the resulting CSV (NLG) or XLSX (Pacific Life) and upload it below to run the Monte Carlo analysis.</div>
         </div>
 
         <div class="stag" style="margin-bottom:10px">Premium Deposit Account — Year by Year</div>
@@ -1057,12 +1071,12 @@ function calculateFundingSchedule(){
             </tr></thead>
             <tbody>${tableRows}</tbody>
             <tfoot><tr>
-              <td colspan="7" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${contribYears}</td>
+              <td colspan="7" style="text-align:left">Total premium into policy · $0 PDA depleted by Yr ${premiumYears}</td>
               <td colspan="2">${fmt$(totalPremium)}</td>
             </tr></tfoot>
           </table>
         </div>
-        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years. Loan origination fee (${fmt$(funding.loanOrigFee)}, tiered by contribution size) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from Year 1's premium — not the retained PDA share — before it reaches the policy. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
+        <div class="ldg-disc" style="padding:14px 0 0">Total gross compensation deposited: ${fmt$(totalDeposits)} over ${contribYears} years.${premiumYears>contribYears?` Premium continues into the policy through Year ${premiumYears} — the PDA balance self-funds the remaining ${premiumYears-contribYears} year${premiumYears-contribYears>1?'s':''} of level premium off its own retained balance and interest, with no further compensation deposits, to meet a 7-year funding minimum.`:''} Loan origination fee (${fmt$(funding.loanOrigFee)}, tiered by contribution size) and mail away fee (${fmt$(funding.mailAwayFee)}) are deducted once, from Year 1's premium — not the retained PDA share — before it reaches the policy. Bank-financed income tax on the compensation deposits: ${fmt$(totalFinancedTax)} at a ${taxRate.toFixed(2)}% combined rate — financed separately from the PDA/premium schedule above; it accrues on the loan balance, not paid from the PDA.</div>
       </div>
     </div>`;
 
@@ -1252,7 +1266,7 @@ async function calculate(){
 
   sub.textContent='Solving PDA funding schedule…'; fill.style.width='4%'; await tick();
   const funding = buildEPFunding(comp, contribYears, pdaRate, taxRate, pdaRetentionYears, pdaRetentionPct, mailAwayFee);
-  const p = {issueAge, contribYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
+  const p = {issueAge, contribYears, premiumYears:funding.premiumYears, comp, lenderIndex, lenderSpread, plr, taxRate, rateEnv, capRate, floorRate,
              refiYear, incStart, incEnd, cola, carrierKey, carrierRows,
              pdaSchedule:funding.rows, levelPremium:funding.levelPremium};
   const pathLen = incEnd - issueAge + 1;
@@ -1355,6 +1369,7 @@ function renderOutput(d){
       <div class="sc-stat"><span class="sk">Level premium to policy (Yr ${p.pdaSchedule.filter(r=>r.premium===p.levelPremium).length?p.pdaSchedule.findIndex(r=>r.premium===p.levelPremium)+1:'—'}+)</span><span class="sv">${fmt$(p.levelPremium)}</span></div>
     </div>
       <div class="sc-stat"><span class="sk">Contribution years</span><span class="sv">${p.contribYears}</span></div>
+      ${p.premiumYears>p.contribYears?`<div class="sc-stat"><span class="sk">Premium funding years</span><span class="sv">${p.premiumYears} (7-yr floor)</span></div>`:''}
     </div>
     <div class="stat-crd hl"><div class="sc-label g">Median Lifetime Income — EP</div><div class="sc-value">${fmt$(totalByBand[50])}</div>
       <div class="sc-stat"><span class="sk">Year 1 income</span><span class="sv g">${fmt$(bandIncome[50])}</span></div>
@@ -1431,7 +1446,7 @@ function renderOutput(d){
 
     localStorage.setItem('ep_mc_data', JSON.stringify({
       clientName: name, advisor, date: dateStr,
-      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
+      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, premiumYears: p.premiumYears, contribTotal,
       incStart: p.incStart, incEnd: p.incEnd, cola: p.cola,
       bankRate: (p.lenderIndex+p.lenderSpread), lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate, refiYear: p.refiYear,
       capRate: p.capRate, csvFloor: parseNum('csvFloor'),
@@ -1458,7 +1473,7 @@ function renderOutput(d){
     // ── Full year-by-year data for the standalone EP Ledger (ep-ledger.html) ──
     localStorage.setItem('ep_ledger_data', JSON.stringify({
       clientName: name, advisor, date: dateStr, nSims, dataYears,
-      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, contribTotal,
+      issueAge: p.issueAge, comp: p.comp, contribYears: p.contribYears, premiumYears: p.premiumYears, contribTotal,
       incStart: p.incStart, incEnd: p.incEnd, cola: p.cola, refiYear: p.refiYear,
       lenderIndex: p.lenderIndex, lenderSpread: p.lenderSpread, rateEnv: p.rateEnv, plr: p.plr, taxRate: p.taxRate,
       carrierKey: p.carrierKey, levelPremium: p.levelPremium, capRate: p.capRate,
@@ -1500,7 +1515,7 @@ function showLedger(pct){
   let body='';
   rows.forEach(r=>{
     const cls = [];
-    if (r.polYr<=params.contribYears) cls.push('contrib-yr');
+    if (r.polYr<=params.premiumYears) cls.push('contrib-yr');
     if (r.polYr===params.refiYear) cls.push('refi-yr');
     if (r.income>0) cls.push('income-yr');
     const iv = invByAge[r.age]||{bal:0};
