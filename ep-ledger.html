@@ -257,26 +257,49 @@ function buildColumnHeaders_DB(grid, headerRowIdx, lookback = 6) {
 function parsePacificLifeXLSX_DB(arrayBuffer) {
   let wb;
   try { wb = XLSX.read(arrayBuffer, { type: 'array' }); } catch(e) { return null; }
-  const ledgerSheet = findSheetByName_DB(wb, 'Non-Guaranteed Ledger', 'Non-Guaranteed', 'Tabular Detail');
-  if (!ledgerSheet) return null;
-  const range = XLSX.utils.decode_range(ledgerSheet['!ref']);
-  const grid = sheetToGrid_DB(ledgerSheet);
-  const hIdx = findYearAgeHeaderRow_DB(grid);
-  if (hIdx < 0) return null;
-  const headers = buildColumnHeaders_DB(grid, hIdx);
-  const findCol = (test) => headers.findIndex(h => test(h));
-  // Gross Accumulated Value sits at worksheet column K on Pacific Life's
-  // tabular ledger. Header-text matching on "accumulated" picks up a
-  // net-of-loan column that carries the same label, so this one is pinned
-  // by position rather than by header text. Offset by the grid's actual
-  // starting column in case the sheet's used range doesn't begin at A.
-  const avIdx  = XLSX.utils.decode_col('K') - range.s.c;
-  const csvIdx = findCol(h => h.includes('surrender') && h.includes('value'));
-  const dbIdx  = findCol(h => h.includes('death') && h.includes('benefit'));
-  if (avIdx < 0 || avIdx >= headers.length || csvIdx < 0 || dbIdx < 0) return null;
+  // Pacific Life's real export is the "Tabular Detail" sheet, not a simple
+  // single-scale ledger: it lays out THREE scenario blocks side by side
+  // (Guaranteed / Non-Guaranteed Alternate Scale / Non-Guaranteed), each
+  // with its own Accumulated (gross) / Surrender (net) / Death trio, and the
+  // Year/Age columns carry no header text at all (they're implicit). We want
+  // the current-scale "Non-Guaranteed" block specifically — not "Alternate
+  // Scale" — found by its title text rather than a fixed column letter, so
+  // this still resolves correctly if a different run shifts the column count.
+  const sheet = findSheetByName_DB(wb, 'Tabular Detail', 'Non-Guaranteed Ledger', 'Non-Guaranteed');
+  if (!sheet) return null;
+  const grid = sheetToGrid_DB(sheet);
 
+  let blockStartCol = -1, blockTitleRow = -1;
+  for (let r = 0; r < Math.min(grid.length, 15); r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      const v = (grid[r][c] || '').toString().trim().toLowerCase();
+      if (v.includes('non-guaranteed') && v.includes('values') && !v.includes('alternate')) {
+        blockStartCol = c; blockTitleRow = r;
+      }
+    }
+  }
+  if (blockStartCol < 0) return null;
+
+  // The Accumulated/Surrender/Death sub-headers sit a few rows below the
+  // block title. Search rightward from blockStartCol only, so a match in an
+  // earlier (Guaranteed / Alternate Scale) block is never picked up.
+  let labelRow = -1, avIdx = -1, csvIdx = -1, dbIdx = -1;
+  for (let r = blockTitleRow; r < Math.min(grid.length, blockTitleRow + 8); r++) {
+    for (let c = blockStartCol; c < grid[r].length; c++) {
+      const v = (grid[r][c] || '').toString().trim().toLowerCase();
+      if (v === 'accumulated' && avIdx < 0) { avIdx = c; labelRow = r; }
+      else if (v === 'surrender' && csvIdx < 0) csvIdx = c;
+      else if (v === 'death' && dbIdx < 0) dbIdx = c;
+    }
+    if (avIdx >= 0 && csvIdx >= 0 && dbIdx >= 0) break;
+  }
+  if (avIdx < 0 || csvIdx < 0 || dbIdx < 0) return null;
+
+  // Data starts the row after the label row. Year/Age columns (0, 1) have
+  // no header text — just take the first row where column 0 parses as a
+  // policy year.
   const rows = [];
-  for (let r = hIdx + 1; r < grid.length; r++) {
+  for (let r = labelRow + 1; r < grid.length; r++) {
     const yr = parseInt(grid[r][0]);
     if (isNaN(yr) || yr < 1) continue;
     rows.push({
