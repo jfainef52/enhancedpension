@@ -451,7 +451,7 @@
         <p id="doc-outcomes-meta">—</p>
       </div>
       <div class="outcomes-chart">
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Cumulative Income — EP Tax-Free vs. Comparators (50th Percentile)</div>
+        <div id="doc-chart-caption" style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Cumulative Income — EP Tax-Free vs. Comparators (50th Percentile)</div>
         <svg id="doc-chart-svg" viewBox="0 0 1060 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;flex:1">
           <line id="doc-g3" x1="60" y1="20"  x2="1050" y2="20"  stroke="#e2ddd6" stroke-width=".5"/>
           <line id="doc-g2" x1="60" y1="95"  x2="1050" y2="95"  stroke="#e2ddd6" stroke-width=".5"/>
@@ -473,8 +473,8 @@
           <text x="255" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 50th — Median</text>
           <line x1="400" y1="16" x2="420" y2="14" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
           <text x="425" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 25th (Conservative)</text>
-          <line x1="600" y1="16" x2="620" y2="14" stroke="rgba(100,140,200,.9)" stroke-width="2.5"/>
-          <text x="625" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">Taxable Acct Net (50th)</text>
+          <line x1="600" y1="16" x2="620" y2="14" stroke="rgba(100,140,200,.9)" stroke-width="2.5" id="doc-invest-legend-line"/>
+          <text x="625" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif" id="doc-invest-legend-text">Taxable Acct Net (50th)</text>
           <line id="doc-qp-legend-line" x1="810" y1="16" x2="830" y2="14" stroke="rgba(180,90,90,.9)" stroke-width="2.5" stroke-dasharray="2,3" style="display:none"/>
           <text id="doc-qp-legend-text" x="835" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif" style="display:none">QP/DB Net (50th)</text>
           <g id="doc-xlabels"></g>
@@ -491,12 +491,12 @@
           <div class="fact-value green" id="doc-ep-total">—</div>
           <div class="fact-sub">Ages <span id="doc-inc-ages2">65–100</span> · Median (50th)</div>
         </div>
-        <div class="fact-block">
+        <div class="fact-block" id="doc-cmp-block">
           <div class="fact-label" id="doc-cmp-label">Taxable Acct Net · 50th</div>
           <div class="fact-value" id="doc-cmp-total">—</div>
           <div class="fact-sub" id="doc-cmp-sub">Pay tax, invest the difference</div>
         </div>
-        <div class="fact-block">
+        <div class="fact-block" id="doc-advantage-block">
           <div class="fact-label">EP Income Advantage</div>
           <div class="fact-value green" id="doc-advantage">—</div>
           <div class="fact-vs" id="doc-ratio" style="font-size:10.5px;font-weight:600;color:var(--green);margin-top:2px">—</div>
@@ -507,6 +507,51 @@
           <div class="fact-sub">Net of all policy loans · Retires from death benefit</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 6B: DEATH BENEFIT (shown only when a carrier illustration has been uploaded) ══ -->
+<div class="page sidebar-page" id="db-page">
+  <div class="sidebar">
+    <div class="sidebar-section">The Alternative</div>
+    <div class="sidebar-title">If Income Is<br>Never Drawn</div>
+    <div class="sidebar-subtitle">ILLUSTRATED<br>DEATH<br>BENEFIT</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-tagline" id="doc-db-sidebar-desc">Illustrated at the carrier's stated rate — not a Monte Carlo simulation.</div>
+  </div>
+  <div class="main-content">
+    <div class="outcomes-main">
+      <div class="outcomes-header">
+        <div class="eyebrow">Enhanced Pension — Death Benefit Focused</div>
+        <h2>The Same Asset, Grown Toward a Death Benefit Instead</h2>
+        <p id="doc-db-meta">—</p>
+      </div>
+      <div class="outcomes-facts-row" style="margin-top:.4in">
+        <div class="fact-block">
+          <div class="fact-label">Age 80</div>
+          <div class="fact-value" id="doc-db80-val">—</div>
+          <div class="fact-sub">Net of loan, incl. PDA · CSV <span id="doc-db80-csv">—</span></div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label">Age 90</div>
+          <div class="fact-value" id="doc-db90-val">—</div>
+          <div class="fact-sub">Net of loan, incl. PDA · CSV <span id="doc-db90-csv">—</span></div>
+        </div>
+        <div class="fact-block">
+          <div class="fact-label">Age 100</div>
+          <div class="fact-value" id="doc-db100-val">—</div>
+          <div class="fact-sub">Net of loan, incl. PDA · CSV <span id="doc-db100-csv">—</span></div>
+        </div>
+      </div>
+      <p style="font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:.35in;max-width:8in">
+        These figures come from the carrier's own illustration, run at its stated assumed rate — not the bootstrapped
+        Monte Carlo simulation used for the income projections on the previous page. They assume no income is ever
+        drawn: the tax-financing loan is projected through the year before refinance, and the carrier's own figures
+        are used as-is from the refinance year forward, since that illustration already reflects the policy loan.
+        Both net figures add back whatever balance is still sitting, un-deployed, in the Premium Deposit Account
+        at that point.
+      </p>
     </div>
   </div>
 </div>
@@ -621,10 +666,17 @@
     if (advEl && adv) advEl.textContent = adv;
 
     var sidebarDesc = document.getElementById('doc-sidebar-desc');
+    var isStandalone = r.compareMode === 'none';
     var cmpLabel = showQP ? 'Taxable Account &amp; QP/DB' : 'Taxable Account';
-    if (sidebarDesc) sidebarDesc.innerHTML = 'EP vs. ' + cmpLabel + ' — Median Market Sequence · ' + (r.nSims||10000).toLocaleString() + ' Simulations';
+    if (sidebarDesc) sidebarDesc.innerHTML = isStandalone
+      ? ('Enhanced Pension — Median Market Sequence · ' + (r.nSims||10000).toLocaleString() + ' Simulations')
+      : ('EP vs. ' + cmpLabel + ' — Median Market Sequence · ' + (r.nSims||10000).toLocaleString() + ' Simulations');
 
-    setHTML('doc-outcomes-headline', 'Tax-Free Income vs. ' + (showQP ? 'Comparators' : 'Taxable Account') + ' — Ages <span id="doc-inc-ages">' + incStart + '–' + incEnd + '</span>');
+    if (isStandalone) {
+      setHTML('doc-outcomes-headline', 'Your Tax-Free Income — Ages <span id="doc-inc-ages">' + incStart + '–' + incEnd + '</span>');
+    } else {
+      setHTML('doc-outcomes-headline', 'Tax-Free Income vs. ' + (showQP ? 'Comparators' : 'Taxable Account') + ' — Ages <span id="doc-inc-ages">' + incStart + '–' + incEnd + '</span>');
+    }
     set('doc-outcomes-meta', contribYears + ' contribution years of ' + $f(comp) + '/yr · refinances Policy Year ' + (r.refiYear||contribYears+1) + ' · ' + (r.nSims||10000).toLocaleString() + ' bootstrapped simulations, 1975–2024');
 
     set('doc-inc-start', incStart);
@@ -635,26 +687,34 @@
     set('doc-inc-ages2', incStart + '–' + incEnd);
     set('doc-nav-end', $f(r.navAtEnd||0));
 
-    if (showQP) {
-      set('doc-cmp-label', 'Best Comparator Net · 50th');
-      set('doc-cmp-total', $f(cmpTotal));
-      set('doc-cmp-sub', investTotal>=qpTotal ? ('Taxable investment account, ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee') : ('Qualified plan (DB/CB), ' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee'));
-      var qline = document.getElementById('doc-qp-legend-line'), qtext = document.getElementById('doc-qp-legend-text');
-      if (qline) qline.style.display='inline'; if (qtext) qtext.style.display='inline';
+    var cmpBlock = document.getElementById('doc-cmp-block');
+    var advBlock = document.getElementById('doc-advantage-block');
+    if (isStandalone) {
+      if (cmpBlock) cmpBlock.style.display = 'none';
+      if (advBlock) advBlock.style.display = 'none';
+      var chartCaption = document.getElementById('doc-chart-caption');
+      if (chartCaption) chartCaption.textContent = 'Cumulative Income — EP Tax-Free, 25th / 50th / 75th Percentile Bands';
     } else {
-      set('doc-cmp-label', 'Taxable Acct Net · 50th');
-      set('doc-cmp-total', $f(investTotal));
-      set('doc-cmp-sub', 'Pay tax, invest the difference · ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee, ' + (r.ltcgRate||20) + '% LTCG on gains');
+      if (showQP) {
+        set('doc-cmp-label', 'Best Comparator Net · 50th');
+        set('doc-cmp-total', $f(cmpTotal));
+        set('doc-cmp-sub', investTotal>=qpTotal ? ('Taxable investment account, ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee') : ('Qualified plan (DB/CB), ' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee'));
+        var qline = document.getElementById('doc-qp-legend-line'), qtext = document.getElementById('doc-qp-legend-text');
+        if (qline) qline.style.display='inline'; if (qtext) qtext.style.display='inline';
+      } else {
+        set('doc-cmp-label', 'Taxable Acct Net · 50th');
+        set('doc-cmp-total', $f(investTotal));
+        set('doc-cmp-sub', 'Pay tax, invest the difference · ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee, ' + (r.ltcgRate||20) + '% LTCG on gains');
+      }
+      set('doc-advantage', $f(epTotal50-cmpTotal));
+      set('doc-ratio', ratio.toFixed(2) + '× more lifetime income');
     }
-
-    set('doc-advantage', $f(epTotal50-cmpTotal));
-    set('doc-ratio', ratio.toFixed(2) + '× more lifetime income');
 
     // ── CHART ─────────────────────────────────────────────────────────
     var ages = r.incomeAges || [];
     var seriesEP50 = r.cumEP50 || [], seriesEP25 = r.cumEP25 || [], seriesEP75 = r.cumEP75 || [];
     var seriesInvest = r.cumInvest50 || [], seriesQP = r.cumQP50 || [];
-    var maxVal = Math.max(1, ...seriesEP75, ...seriesEP50, ...seriesInvest, ...(showQP?seriesQP:[0]));
+    var maxVal = Math.max(1, ...seriesEP75, ...seriesEP50, ...(isStandalone?[0]:seriesInvest), ...(showQP&&!isStandalone?seriesQP:[0]));
     var x0=60, x1=1050, y0=335, y1=20;
     function xFor(i){ return ages.length>1 ? x0 + (x1-x0)*(i/(ages.length-1)) : x0; }
     function yFor(v){ return y0 - (y0-y1)*(v/maxVal); }
@@ -668,8 +728,16 @@
     if (pEP75) pEP75.setAttribute('d', pathFor(seriesEP75));
     if (pEP50) pEP50.setAttribute('d', pathFor(seriesEP50));
     if (pEP25) pEP25.setAttribute('d', pathFor(seriesEP25));
-    if (pInv) pInv.setAttribute('d', pathFor(seriesInvest));
-    if (pQP && showQP) pQP.setAttribute('d', pathFor(seriesQP));
+    var investLegendLine = document.getElementById('doc-invest-legend-line'), investLegendText = document.getElementById('doc-invest-legend-text');
+    if (isStandalone) {
+      if (pInv) pInv.setAttribute('d', '');
+      if (pQP) pQP.setAttribute('d', '');
+      if (investLegendLine) investLegendLine.style.display = 'none';
+      if (investLegendText) investLegendText.style.display = 'none';
+    } else {
+      if (pInv) pInv.setAttribute('d', pathFor(seriesInvest));
+      if (pQP && showQP) pQP.setAttribute('d', pathFor(seriesQP));
+    }
 
     [0,1,2,3].forEach(function(i){
       var v = maxVal * (i/3);
@@ -687,6 +755,25 @@
         }
       });
       xlabels.innerHTML = html;
+    }
+
+    // ── DEATH BENEFIT PAGE (only shown when carrier data was uploaded) ──
+    var dbPage = document.getElementById('db-page');
+    var dbCallouts = r.dbCallouts;
+    var hasDB = dbCallouts && dbCallouts.some(function(c){ return c.found; });
+    if (dbPage) {
+      if (!hasDB) {
+        dbPage.style.display = 'none';
+      } else {
+        var rateLabel = r.dbAssumedRate || 'the carrier\u2019s stated rate';
+        set('doc-db-sidebar-desc', 'Illustrated at ' + rateLabel + ' — not a Monte Carlo simulation.');
+        set('doc-db-meta', 'Assumes no income is ever drawn · illustrated at ' + rateLabel + ' · refinances Policy Year ' + (r.refiYear||contribYears+1));
+        dbCallouts.forEach(function(c){
+          if (!c.found) return;
+          set('doc-db' + c.age + '-val', $f(c.dbNet));
+          set('doc-db' + c.age + '-csv', $f(c.csvNet));
+        });
+      }
     }
 
   } catch(e) { console.warn('EP discussion doc data load failed:', e); }
