@@ -465,10 +465,10 @@
           <line id="doc-g1" x1="60" y1="170" x2="1050" y2="170" stroke="#e2ddd6" stroke-width=".5"/>
           <line id="doc-g0" x1="60" y1="245" x2="1050" y2="245" stroke="#e2ddd6" stroke-width=".5"/>
           <line x1="60" y1="335" x2="1050" y2="335" stroke="rgba(200,168,75,.4)" stroke-width="1.5"/>
-          <text id="doc-yl3" x="54" y="24"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-yl2" x="54" y="99"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-yl1" x="54" y="174" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-yl0" x="54" y="249" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl3" x="54" y="24"  font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl2" x="54" y="99"  font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl1" x="54" y="174" font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-yl0" x="54" y="249" font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
           <path id="doc-path-ep75" fill="none" stroke="#2a6e45" stroke-width="2" stroke-dasharray="6,3"/>
           <path id="doc-path-ep50" fill="none" stroke="#c9a84c" stroke-width="3.5"/>
           <path id="doc-path-ep25" fill="none" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
@@ -532,10 +532,10 @@
           <line id="doc-dbg1" x1="60" y1="170" x2="1050" y2="170" stroke="#e2ddd6" stroke-width=".5"/>
           <line id="doc-dbg0" x1="60" y1="245" x2="1050" y2="245" stroke="#e2ddd6" stroke-width=".5"/>
           <line x1="60" y1="335" x2="1050" y2="335" stroke="rgba(200,168,75,.4)" stroke-width="1.5"/>
-          <text id="doc-dbyl3" x="54" y="24"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-dbyl2" x="54" y="99"  font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-dbyl1" x="54" y="174" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
-          <text id="doc-dbyl0" x="54" y="249" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-dbyl3" x="54" y="24"  font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-dbyl2" x="54" y="99"  font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-dbyl1" x="54" y="174" font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
+          <text id="doc-dbyl0" x="54" y="249" font-size="15" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
           <path id="doc-path-dbnet" fill="none" stroke="var(--green)" stroke-width="3.5"/>
           <g id="doc-db-agemarkers"></g>
           <g id="doc-dbxlabels"></g>
@@ -763,7 +763,7 @@
       var html='';
       ages.forEach(function(a,i){
         if (i % step === 0 || i===ages.length-1) {
-          html += '<text x="'+xFor(i).toFixed(1)+'" y="'+(y0+18)+'" font-size="10.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
+          html += '<text x="'+xFor(i).toFixed(1)+'" y="'+(y0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
         }
       });
       xlabels.innerHTML = html;
@@ -816,7 +816,7 @@
           var dhtml='';
           dbAges.forEach(function(a,i){
             if (i % dstep === 0 || i===dbAges.length-1) {
-              dhtml += '<text x="'+dbXFor(i).toFixed(1)+'" y="'+(dy0+18)+'" font-size="10.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
+              dhtml += '<text x="'+dbXFor(i).toFixed(1)+'" y="'+(dy0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
             }
           });
           dbxlabels.innerHTML = dhtml;
