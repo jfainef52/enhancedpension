@@ -135,6 +135,7 @@ table.sc-ldg tfoot td.gold-col{color:var(--gold)}
     <label class="db-file-label disabled" id="dbFileLabel" for="dbFileInput">Upload Carrier File (CSV/XLSX)</label>
     <input type="file" id="dbFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="onDBFileChosen(event)"/>
     <input type="text" id="dbRateInput" class="db-rate-input disabled" placeholder="Stated rate, e.g. 6.25%" disabled oninput="onDBRateInput()"/>
+    <button class="ab-btn" id="dbSummaryBtn" onclick="produceDeathBenefitSummary()" disabled style="opacity:.35;pointer-events:none;background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">🎯 Produce Death Benefit Summary</button>
     <span class="db-status" id="dbStatus"></span>
   </div>
   <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px;letter-spacing:1.5px;text-transform:uppercase">EFS Life LLC &middot; Internal Advisor Tool</span>
@@ -426,6 +427,36 @@ function renderLedger(){
       return byYear;
     }
     const dbByYear = (_dbEnabled && _dbCarrierRows) ? buildDBColumnsByYear(_dbCarrierRows) : null;
+
+    // ══════════════════════════════════════════════════════════
+    // ONE-PAGE DEATH BENEFIT SUMMARY — reuses whatever carrier file is
+    // already uploaded here (no second upload on another page). Pulled
+    // fresh off buildDBColumnsByYear each click, independent of whether
+    // the two-panel view is currently toggled on, so turning that off
+    // to print something else doesn't disable this.
+    // ══════════════════════════════════════════════════════════
+    window.produceDeathBenefitSummary = function(){
+      if (!_dbCarrierRows){ alert('Upload a death-benefit carrier illustration file first.'); return; }
+      const byYear = buildDBColumnsByYear(_dbCarrierRows);
+      const callouts = [80, 90, 100].map(age=>{
+        const polYr = age - d.issueAge + 1;
+        const row = byYear[polYr];
+        if (!row) return {age, found:false};
+        return {age, found:true, av:row.av, csvNet:row.csvNet, dbNet:row.dbNet};
+      });
+      const incomeAgesForTotal = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
+      const totalEPIncome = incomeAgesForTotal.reduce((s,a)=>s+((epByAge50[a]||{}).income||0),0);
+      localStorage.setItem('ep_onepage_db_data', JSON.stringify({
+        clientName: d.clientName, advisor: d.advisor, date: d.date, nSims: d.nSims, dataYears: d.dataYears,
+        issueAge: d.issueAge, comp: d.comp, contribYears: d.contribYears, premiumYears: d.premiumYears,
+        incStart: d.incStart, incEnd: d.incEnd, cola: d.cola, refiYear: d.refiYear,
+        taxRate: d.taxRate, pdaRate: d.pdaRate, plr: d.plr,
+        totalPremium, totalEPIncome,
+        assumedRate: _dbAssumedRate,
+        callouts
+      }));
+      window.open('ep-onepage-db-summary.html','_blank');
+    };
 
     // ══════════════════════════════════════════════════════════
     // STANDALONE PAGE — EP income only, no comparator (single panel)
@@ -1241,12 +1272,20 @@ async function onDBFileChosen(evt){
     }
     document.getElementById('dbRateInput').classList.remove('disabled');
     document.getElementById('dbRateInput').disabled = false;
+    const summaryBtn = document.getElementById('dbSummaryBtn');
+    summaryBtn.disabled = false;
+    summaryBtn.style.opacity = '1';
+    summaryBtn.style.pointerEvents = 'auto';
     renderLedger();
   } catch(e){
     _dbCarrierRows = null;
     status.classList.add('err');
     status.textContent = 'Could not read file: ' + e.message;
     console.error(e);
+    const summaryBtn = document.getElementById('dbSummaryBtn');
+    summaryBtn.disabled = true;
+    summaryBtn.style.opacity = '.35';
+    summaryBtn.style.pointerEvents = 'none';
   }
 }
 </script>
