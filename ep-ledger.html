@@ -126,6 +126,7 @@ table.sc-ldg tfoot td.gold-col{color:var(--gold)}
 </head>
 <body>
 <div class="actions-bar">
+  <button class="ab-btn" onclick="produceDiscussionDocument()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📄 Produce Discussion Document</button>
   <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
   <div class="db-ctrl">
     <label class="db-switch">
@@ -456,6 +457,54 @@ function renderLedger(){
         callouts
       }));
       window.open('ep-onepage-db-summary.html','_blank');
+    };
+
+    // ══════════════════════════════════════════════════════════
+    // DISCUSSION DOCUMENT — reuses this page's income data (and, if a
+    // death-benefit carrier file is already uploaded here, its data too)
+    // instead of requiring a separate trip back to the modeler.
+    // ══════════════════════════════════════════════════════════
+    window.produceDiscussionDocument = function(){
+      const incomeAgesFull = ageRange.filter(a=>a>=d.incStart && a<=d.incEnd);
+      let c25=0,c50=0,c75=0,ci=0,cq=0;
+      const cumEP25=[],cumEP50=[],cumEP75=[],cumInvest50=[],cumQP50=[];
+      const investByAge={}; (d.investRows50||[]).forEach(r=>investByAge[r.age]=r.net);
+      const qpByAge={}; (d.qpRows50||[]).forEach(r=>qpByAge[r.age]=r.net);
+      incomeAgesFull.forEach(a=>{
+        c25+=((epByAge25[a]||{}).income||0); c50+=((epByAge50[a]||{}).income||0); c75+=((epByAge75[a]||{}).income||0);
+        ci+=(investByAge[a]||0); cq+=(qpByAge[a]||0);
+        cumEP25.push(c25); cumEP50.push(c50); cumEP75.push(c75); cumInvest50.push(ci); cumQP50.push(cq);
+      });
+      const endEP = epByAge50[d.incEnd] || {};
+
+      let dbCallouts = null, dbAssumedRateOut = null;
+      if (_dbCarrierRows){
+        const byYear = buildDBColumnsByYear(_dbCarrierRows);
+        dbCallouts = [80, 90, 100].map(age=>{
+          const polYr = age - d.issueAge + 1;
+          const row = byYear[polYr];
+          if (!row) return {age, found:false};
+          return {age, found:true, av:row.av, csvNet:row.csvNet, dbNet:row.dbNet};
+        });
+        dbAssumedRateOut = _dbAssumedRate;
+      }
+
+      localStorage.setItem('ep_mc_data', JSON.stringify({
+        clientName: d.clientName, advisor: d.advisor, date: d.date, nSims: d.nSims, dataYears: d.dataYears,
+        issueAge: d.issueAge, comp: d.comp, contribYears: d.contribYears, premiumYears: d.premiumYears, contribTotal: d.contribTotal,
+        incStart: d.incStart, incEnd: d.incEnd, cola: d.cola,
+        lenderIndex: d.lenderIndex, lenderSpread: d.lenderSpread, plr: d.plr, taxRate: d.taxRate, refiYear: d.refiYear,
+        levelPremium: d.levelPremium, pdaRate: d.pdaRate, pdaRetentionYears: d.pdaRetentionYears,
+        ltcgRate: d.ltcgRate, investFee: d.investFee, investEqWt: d.investEqWt,
+        qpFee: d.qpFee, qpEqWt: d.qpEqWt,
+        compareMode: d.compareMode,
+        epYr1_50: d.bandIncome[50], epTotal50: d.totalByBand[50],
+        investTotalMed: d.investTotalMed, qpTotalMed: d.qpTotalMed,
+        navAtEnd: endEP.csvNetTotal || 0,
+        incomeAges: incomeAgesFull, cumEP25, cumEP50, cumEP75, cumInvest50, cumQP50,
+        dbCallouts, dbAssumedRate: dbAssumedRateOut
+      }));
+      window.open('ep-discussion-doc.html','_blank');
     };
 
     // ══════════════════════════════════════════════════════════
