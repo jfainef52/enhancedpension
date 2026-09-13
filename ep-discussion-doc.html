@@ -528,7 +528,7 @@
         <p id="doc-db-meta">—</p>
       </div>
       <div class="outcomes-chart">
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Death Benefit &amp; Cash Surrender Value — Net of Loan, Incl. PDA</div>
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Death Benefit — Net of Loan, Incl. PDA</div>
         <svg id="doc-db-chart-svg" viewBox="0 0 1060 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;flex:1">
           <line id="doc-dbg3" x1="60" y1="20"  x2="1050" y2="20"  stroke="#e2ddd6" stroke-width=".5"/>
           <line id="doc-dbg2" x1="60" y1="95"  x2="1050" y2="95"  stroke="#e2ddd6" stroke-width=".5"/>
@@ -540,12 +540,9 @@
           <text id="doc-dbyl1" x="54" y="174" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
           <text id="doc-dbyl0" x="54" y="249" font-size="12" fill="#8a8070" text-anchor="end" font-family="IBM Plex Mono,monospace">—</text>
           <path id="doc-path-dbnet" fill="none" stroke="var(--green)" stroke-width="3.5"/>
-          <path id="doc-path-dbcsv" fill="none" stroke="rgba(100,140,200,.9)" stroke-width="2" stroke-dasharray="5,3"/>
           <g id="doc-db-agemarkers"></g>
-          <line x1="230" y1="16" x2="250" y2="14" stroke="var(--green)" stroke-width="3.5"/>
-          <text x="255" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">Death Benefit, Net of Loan (Incl. PDA)</text>
-          <line x1="590" y1="16" x2="610" y2="14" stroke="rgba(100,140,200,.9)" stroke-width="2" stroke-dasharray="5,3"/>
-          <text x="615" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">Cash Surrender Value, Net of Loan (Incl. PDA)</text>
+          <line x1="60" y1="16" x2="80" y2="14" stroke="var(--green)" stroke-width="3.5"/>
+          <text x="85" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">Death Benefit, Net of Loan (Incl. PDA)</text>
           <g id="doc-dbxlabels"></g>
         </svg>
       </div>
@@ -566,11 +563,8 @@
           <div class="fact-sub">Net of loan, incl. PDA · CSV <span id="doc-db100-csv">—</span></div>
         </div>
       </div>
-      <p style="font-size:9.5px;color:var(--muted);line-height:1.5;margin-top:.15in;max-width:9in">
-        Illustrated at the carrier's own stated assumed rate — not the bootstrapped Monte Carlo simulation used for
-        income. Assumes no income is ever drawn: the tax-financing loan is projected through the year before
-        refinance, and the carrier's own figures are used as-is from the refinance year forward. Both lines add
-        back whatever balance is still sitting, un-deployed, in the Premium Deposit Account at that point.
+      <p style="font-size:9.5px;color:var(--muted);line-height:1.5;margin-top:.12in;max-width:9.5in">
+        Illustrated at the carrier's stated rate — not the Monte Carlo simulation used for income. Assumes no income is drawn; the loan is projected through refinance, then the carrier's own figures apply, plus whatever PDA balance is still un-deployed at that point.
       </p>
     </div>
   </div>
@@ -796,8 +790,12 @@
 
         var dbAges = r.dbAges || [];
         var dbNetSeries = r.dbNetSeries || [];
-        var dbCsvSeries = r.dbCsvSeries || [];
-        var dbMaxVal = Math.max(1, ...dbNetSeries, ...dbCsvSeries);
+        // Cap the chart at Age 100 to match the call-out points below — the
+        // carrier data often runs to age 120, which just stretches the line
+        // out past anything actually being discussed.
+        var cutIdx = dbAges.findIndex(function(a){ return a > 100; });
+        if (cutIdx >= 0) { dbAges = dbAges.slice(0, cutIdx); dbNetSeries = dbNetSeries.slice(0, cutIdx); }
+        var dbMaxVal = Math.max(1, ...dbNetSeries);
         var dx0=60, dx1=1050, dy0=335, dy1=20;
         function dbXFor(i){ return dbAges.length>1 ? dx0 + (dx1-dx0)*(i/(dbAges.length-1)) : dx0; }
         function dbYFor(v){ return dy0 - (dy0-dy1)*(v/dbMaxVal); }
@@ -805,9 +803,8 @@
           if (!series.length) return '';
           return series.map(function(v,i){ return (i===0?'M':'L') + dbXFor(i).toFixed(1) + ',' + dbYFor(v).toFixed(1); }).join(' ');
         }
-        var pDBNet=document.getElementById('doc-path-dbnet'), pDBCsv=document.getElementById('doc-path-dbcsv');
+        var pDBNet=document.getElementById('doc-path-dbnet');
         if (pDBNet) pDBNet.setAttribute('d', dbPathFor(dbNetSeries));
-        if (pDBCsv) pDBCsv.setAttribute('d', dbPathFor(dbCsvSeries));
 
         [0,1,2,3].forEach(function(i){
           var v = dbMaxVal * (i/3);
@@ -827,8 +824,9 @@
           dbxlabels.innerHTML = dhtml;
         }
 
-        // Small markers + labels at the Age 80/90/100 call-out points, so the
-        // chart and the fact-blocks below visibly connect.
+        // Markers + labels at the Age 80/90/100 call-out points, so the
+        // chart and the fact-blocks below visibly connect. Sized up so
+        // they read clearly as the headline numbers on this page.
         var markersEl = document.getElementById('doc-db-agemarkers');
         if (markersEl) {
           var mhtml = '';
@@ -837,8 +835,8 @@
             var idx = dbAges.indexOf(c.age);
             if (idx < 0) return;
             var mx = dbXFor(idx).toFixed(1), my = dbYFor(c.dbNet).toFixed(1);
-            mhtml += '<circle cx="'+mx+'" cy="'+my+'" r="4" fill="var(--green)" stroke="white" stroke-width="1.5"/>';
-            mhtml += '<text x="'+mx+'" y="'+(parseFloat(my)-10)+'" font-size="10.5" fill="#1c2b3a" text-anchor="middle" font-weight="600" font-family="IBM Plex Mono,monospace">'+$fk(c.dbNet)+'</text>';
+            mhtml += '<circle cx="'+mx+'" cy="'+my+'" r="5" fill="var(--green)" stroke="white" stroke-width="2"/>';
+            mhtml += '<text x="'+mx+'" y="'+(parseFloat(my)-14)+'" font-size="16" fill="#1c2b3a" text-anchor="middle" font-weight="700" font-family="IBM Plex Mono,monospace">'+$fk(c.dbNet)+'</text>';
           });
           markersEl.innerHTML = mhtml;
         }
