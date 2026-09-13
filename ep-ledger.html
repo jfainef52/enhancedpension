@@ -323,7 +323,7 @@ async function parseDBCarrierFile(file) {
     if (typeof XLSX === 'undefined') throw new Error('Excel parser did not load — check your connection and try again.');
     const buf = await file.arrayBuffer();
     const rows = parsePacificLifeXLSX_DB(buf);
-    if (!rows) throw new Error('Could not find Year/Age columns with Accumulated Value, Cash Surrender Value, and Death Benefit on the "Non-Guaranteed Ledger" sheet.');
+    if (!rows) throw new Error('Could not find the Non-Guaranteed block (Accumulated/Surrender/Death columns) on the "Tabular Detail" sheet.');
     return rows;
   }
   const text = await new Promise((res, rej) => {
