@@ -477,7 +477,7 @@ function renderLedger(){
       });
       const endEP = epByAge50[d.incEnd] || {};
 
-      let dbCallouts = null, dbAssumedRateOut = null;
+      let dbCallouts = null, dbAssumedRateOut = null, dbAges = null, dbNetSeries = null, dbCsvSeries = null;
       if (_dbCarrierRows){
         const byYear = buildDBColumnsByYear(_dbCarrierRows);
         dbCallouts = [80, 90, 100].map(age=>{
@@ -487,6 +487,15 @@ function renderLedger(){
           return {age, found:true, av:row.av, csvNet:row.csvNet, dbNet:row.dbNet};
         });
         dbAssumedRateOut = _dbAssumedRate;
+        const maxYr = Math.max(...Object.keys(byYear).map(Number));
+        dbAges = []; dbNetSeries = []; dbCsvSeries = [];
+        for (let yr=1; yr<=maxYr; yr++){
+          const row = byYear[yr];
+          if (!row) continue;
+          dbAges.push(d.issueAge + yr - 1);
+          dbNetSeries.push(row.dbNet);
+          dbCsvSeries.push(row.csvNet);
+        }
       }
 
       localStorage.setItem('ep_mc_data', JSON.stringify({
@@ -502,7 +511,7 @@ function renderLedger(){
         investTotalMed: d.investTotalMed, qpTotalMed: d.qpTotalMed,
         navAtEnd: endEP.csvNetTotal || 0,
         incomeAges: incomeAgesFull, cumEP25, cumEP50, cumEP75, cumInvest50, cumQP50,
-        dbCallouts, dbAssumedRate: dbAssumedRateOut
+        dbCallouts, dbAssumedRate: dbAssumedRateOut, dbAges, dbNetSeries, dbCsvSeries
       }));
       window.open('ep-discussion-doc.html','_blank');
     };
