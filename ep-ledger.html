@@ -89,6 +89,7 @@ table.dual tbody tr.income-yr td{background:rgba(42,110,69,.03)}
 table.dual tbody tr.income-yr td.inc-val{color:var(--green);font-weight:700}
 table.dual tbody tr.post-yr td{background:rgba(201,168,76,.02)}
 table.dual tfoot td{padding:5px 6px;text-align:center;font-weight:700;border-top:2px solid var(--navy);font-size:9.5px;background:var(--off)}
+table.dual tbody tr.totals-row td{padding:5px 6px;text-align:center;font-weight:700;border-top:2px solid var(--navy);font-size:9.5px;background:var(--off)}
 .right-panel-wrap table.dual td:first-child,.right-panel-wrap table.dual th:first-child{border-left:3px solid var(--gold)}
 .disc-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:8px 32px;border-top:1px solid var(--border);font-size:8px;color:var(--muted);line-height:1.5}
 
@@ -613,7 +614,7 @@ function renderLedger(){
           <td>${$f(ep.csvNetTotal)}</td>
         </tr>`;
       });
-      const leftFoot = `<tr><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
+      const leftTotalsRow = `<tr class="totals-row"><td colspan="10" style="text-align:left">TOTALS \u2014 Tax-Free Income (Median)</td><td style="color:#c9a84c">${$f(totalEPIncome)}</td><td>\u2014</td><td>\u2014</td></tr>`;
 
       let rightRows='';
       ageRange.forEach(a=>{
@@ -665,8 +666,7 @@ function renderLedger(){
                   <th>Loan Payoff</th><th>Tax-Free Income</th><th>Asset Value</th><th>Net Asset Value</th>
                 </tr>
               </thead>
-              <tbody>${leftRows}</tbody>
-              <tfoot>${leftFoot}</tfoot>
+              <tbody>${leftRows}${leftTotalsRow}</tbody>
             </table>
           </div>
           <div class="right-panel-wrap">
