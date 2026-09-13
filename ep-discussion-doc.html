@@ -452,6 +452,13 @@
       </div>
       <div class="outcomes-chart">
         <div id="doc-chart-caption" style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600">Cumulative Income — EP Tax-Free vs. Comparators (50th Percentile)</div>
+        <div id="doc-chart-legend" style="display:flex;flex-wrap:wrap;gap:18px;margin-bottom:8px;font-size:11.5px;color:#6b7c8d;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0">
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;border-top:2px dashed #2a6e45"></span>EP 75th (Favorable)</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;border-top:3px solid #c9a84c"></span>EP 50th — Median</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;border-top:1.5px dashed #8a8070"></span>EP 25th (Conservative)</span>
+          <span id="doc-invest-legend-item" style="display:inline-flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;border-top:2.5px solid rgba(100,140,200,.9)"></span>Taxable Acct Net (50th)</span>
+          <span id="doc-qp-legend-item" style="display:none;align-items:center;gap:6px"><span style="display:inline-block;width:18px;border-top:2.5px dashed rgba(180,90,90,.9)"></span>QP/DB Net (50th)</span>
+        </div>
         <svg id="doc-chart-svg" viewBox="0 0 1060 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;flex:1">
           <line id="doc-g3" x1="60" y1="20"  x2="1050" y2="20"  stroke="#e2ddd6" stroke-width=".5"/>
           <line id="doc-g2" x1="60" y1="95"  x2="1050" y2="95"  stroke="#e2ddd6" stroke-width=".5"/>
@@ -467,20 +474,10 @@
           <path id="doc-path-ep25" fill="none" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
           <path id="doc-path-invest50" fill="none" stroke="rgba(100,140,200,.9)" stroke-width="2.5"/>
           <path id="doc-path-qp50" fill="none" stroke="rgba(180,90,90,.9)" stroke-width="2.5" stroke-dasharray="2,3"/>
-          <line x1="65"  y1="16" x2="85"  y2="14" stroke="#2a6e45" stroke-width="1.5" stroke-dasharray="5,3"/>
-          <text x="90"  y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 75th (Favorable)</text>
-          <line x1="230" y1="16" x2="250" y2="14" stroke="#c9a84c" stroke-width="2.5"/>
-          <text x="255" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 50th — Median</text>
-          <line x1="400" y1="16" x2="420" y2="14" stroke="#8a8070" stroke-width="1.5" stroke-dasharray="4,4"/>
-          <text x="425" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif">EP 25th (Conservative)</text>
-          <line x1="600" y1="16" x2="620" y2="14" stroke="rgba(100,140,200,.9)" stroke-width="2.5" id="doc-invest-legend-line"/>
-          <text x="625" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif" id="doc-invest-legend-text">Taxable Acct Net (50th)</text>
-          <line id="doc-qp-legend-line" x1="810" y1="16" x2="830" y2="14" stroke="rgba(180,90,90,.9)" stroke-width="2.5" stroke-dasharray="2,3" style="display:none"/>
-          <text id="doc-qp-legend-text" x="835" y="19" font-size="13" fill="#6b7c8d" font-family="IBM Plex Sans,sans-serif" style="display:none">QP/DB Net (50th)</text>
           <g id="doc-xlabels"></g>
         </svg>
       </div>
-      <div class="outcomes-facts-row">
+      <div class="outcomes-facts-row" id="doc-facts-row">
         <div class="fact-block">
           <div class="fact-label">EP Year 1 · Age <span id="doc-inc-start">65</span></div>
           <div class="fact-value green" id="doc-ep-yr1">—</div>
@@ -703,9 +700,11 @@
 
     var cmpBlock = document.getElementById('doc-cmp-block');
     var advBlock = document.getElementById('doc-advantage-block');
+    var factsRow = document.getElementById('doc-facts-row');
     if (isStandalone) {
       if (cmpBlock) cmpBlock.style.display = 'none';
       if (advBlock) advBlock.style.display = 'none';
+      if (factsRow) factsRow.style.gridTemplateColumns = '1fr 1fr 1fr';
       var chartCaption = document.getElementById('doc-chart-caption');
       if (chartCaption) chartCaption.textContent = 'Cumulative Income — EP Tax-Free, 25th / 50th / 75th Percentile Bands';
     } else {
@@ -713,8 +712,8 @@
         set('doc-cmp-label', 'Best Comparator Net · 50th');
         set('doc-cmp-total', $f(cmpTotal));
         set('doc-cmp-sub', investTotal>=qpTotal ? ('Taxable investment account, ' + (r.investEqWt||70) + '/' + (100-(r.investEqWt||70)) + ' blend, ' + (r.investFee||0) + '% fee') : ('Qualified plan (DB/CB), ' + (r.qpEqWt||50) + '/' + (100-(r.qpEqWt||50)) + ' blend, ' + (r.qpFee||0) + '% fee'));
-        var qline = document.getElementById('doc-qp-legend-line'), qtext = document.getElementById('doc-qp-legend-text');
-        if (qline) qline.style.display='inline'; if (qtext) qtext.style.display='inline';
+        var qitem = document.getElementById('doc-qp-legend-item');
+        if (qitem) qitem.style.display='inline-flex';
       } else {
         set('doc-cmp-label', 'Taxable Acct Net · 50th');
         set('doc-cmp-total', $f(investTotal));
@@ -742,12 +741,11 @@
     if (pEP75) pEP75.setAttribute('d', pathFor(seriesEP75));
     if (pEP50) pEP50.setAttribute('d', pathFor(seriesEP50));
     if (pEP25) pEP25.setAttribute('d', pathFor(seriesEP25));
-    var investLegendLine = document.getElementById('doc-invest-legend-line'), investLegendText = document.getElementById('doc-invest-legend-text');
+    var investLegendItem = document.getElementById('doc-invest-legend-item');
     if (isStandalone) {
       if (pInv) pInv.setAttribute('d', '');
       if (pQP) pQP.setAttribute('d', '');
-      if (investLegendLine) investLegendLine.style.display = 'none';
-      if (investLegendText) investLegendText.style.display = 'none';
+      if (investLegendItem) investLegendItem.style.display = 'none';
     } else {
       if (pInv) pInv.setAttribute('d', pathFor(seriesInvest));
       if (pQP && showQP) pQP.setAttribute('d', pathFor(seriesQP));
