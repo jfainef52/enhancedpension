@@ -1335,7 +1335,6 @@ function renderOutput(d){
   const html = `
   <div class="actions-bar">
     <button class="ab-btn" onclick="document.getElementById('intake-panel').style.display='block';document.getElementById('ledger-output').style.display='none'">← Edit Inputs</button>
-    <button class="ab-btn" onclick="openDiscussionDoc()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📄 Produce Discussion Document</button>
     <button class="ab-btn" onclick="openOnePageSummary()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📋 Produce One-Page Summary</button>
     <button class="ab-btn" onclick="openEPLedger()" style="background:var(--navy);color:var(--gold);border:1.5px solid var(--gold)">📑 Produce EP Ledger</button>
     <button class="ab-btn primary" onclick="window.print()">Print / Export PDF</button>
@@ -1487,7 +1486,6 @@ function renderOutput(d){
   } catch(e) { console.warn('EP discussion doc data write failed:', e); }
 }
 
-function openDiscussionDoc(){ window.open('ep-discussion-doc.html','_blank'); }
 function openOnePageSummary(){ window.open('ep-onepage-summary.html','_blank'); }
 function openEPLedger(){ window.open('ep-ledger.html','_blank'); }
 function showLedger(pct){
