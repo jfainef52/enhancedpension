@@ -763,7 +763,10 @@
       var html='';
       ages.forEach(function(a,i){
         if (i % step === 0 || i===ages.length-1) {
-          html += '<text x="'+xFor(i).toFixed(1)+'" y="'+(y0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
+          var isLast = i===ages.length-1;
+          var anchor = isLast ? 'end' : 'middle';
+          var lx = isLast ? (xFor(i) - 4).toFixed(1) : xFor(i).toFixed(1);
+          html += '<text x="'+lx+'" y="'+(y0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="'+anchor+'" font-family="IBM Plex Mono,monospace">'+a+'</text>';
         }
       });
       xlabels.innerHTML = html;
@@ -816,7 +819,10 @@
           var dhtml='';
           dbAges.forEach(function(a,i){
             if (i % dstep === 0 || i===dbAges.length-1) {
-              dhtml += '<text x="'+dbXFor(i).toFixed(1)+'" y="'+(dy0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="middle" font-family="IBM Plex Mono,monospace">'+a+'</text>';
+              var dIsLast = i===dbAges.length-1;
+              var dAnchor = dIsLast ? 'end' : 'middle';
+              var dlx = dIsLast ? (dbXFor(i) - 4).toFixed(1) : dbXFor(i).toFixed(1);
+              dhtml += '<text x="'+dlx+'" y="'+(dy0+18)+'" font-size="13.5" fill="#8a8070" text-anchor="'+dAnchor+'" font-family="IBM Plex Mono,monospace">'+a+'</text>';
             }
           });
           dbxlabels.innerHTML = dhtml;
