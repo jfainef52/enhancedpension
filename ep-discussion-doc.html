@@ -563,9 +563,11 @@
           <div class="fact-sub">Net of loan, incl. PDA · CSV <span id="doc-db100-csv">—</span></div>
         </div>
       </div>
-      <p style="font-size:9.5px;color:var(--muted);line-height:1.5;margin-top:.12in;max-width:9.5in">
-        Illustrated at the carrier's stated rate — not the Monte Carlo simulation used for income. Assumes no income is drawn; the loan is projected through refinance, then the carrier's own figures apply, plus whatever PDA balance is still un-deployed at that point.
-      </p>
+      <div style="padding:12px .4in 16px;border-top:1px solid var(--border);background:white;flex-shrink:0">
+        <p style="font-size:9.5px;color:var(--muted);line-height:1.5;max-width:9.5in">
+          Illustrated at the carrier's stated rate — not the Monte Carlo simulation used for income. Assumes no income is drawn; the loan is projected through refinance, then the carrier's own figures apply, plus whatever PDA balance is still un-deployed at that point.
+        </p>
+      </div>
     </div>
   </div>
 </div>
@@ -830,13 +832,20 @@
         var markersEl = document.getElementById('doc-db-agemarkers');
         if (markersEl) {
           var mhtml = '';
+          var lastIdx = dbAges.length - 1;
           dbCallouts.forEach(function(c){
             if (!c.found) return;
             var idx = dbAges.indexOf(c.age);
             if (idx < 0) return;
             var mx = dbXFor(idx).toFixed(1), my = dbYFor(c.dbNet).toFixed(1);
             mhtml += '<circle cx="'+mx+'" cy="'+my+'" r="5" fill="var(--green)" stroke="white" stroke-width="2"/>';
-            mhtml += '<text x="'+mx+'" y="'+(parseFloat(my)-14)+'" font-size="16" fill="#1c2b3a" text-anchor="middle" font-weight="700" font-family="IBM Plex Mono,monospace">'+$fk(c.dbNet)+'</text>';
+            // The rightmost point (Age 100) sits right at the chart's edge —
+            // a centered label there runs off the page, so anchor it to end
+            // at the point instead of straddling it.
+            var isEdge = idx >= lastIdx - 1;
+            var anchor = isEdge ? 'end' : 'middle';
+            var lx = isEdge ? (parseFloat(mx) - 4) : mx;
+            mhtml += '<text x="'+lx+'" y="'+(parseFloat(my)-14)+'" font-size="16" fill="#1c2b3a" text-anchor="'+anchor+'" font-weight="700" font-family="IBM Plex Mono,monospace">'+$fk(c.dbNet)+'</text>';
           });
           markersEl.innerHTML = mhtml;
         }
